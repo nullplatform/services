@@ -14,7 +14,7 @@
         "data": {
         "cmdline": "nullplatform/services/databases/postgres/k8s/handle-service-agent",
         "environment": {
-            "NP_ACTION_CONTEXT": "'${NOTIFICATION_CONTEXT}'"
+            "NP_ACTION_CONTEXT": "${NOTIFICATION_CONTEXT}"
         }
         },
         "type": "exec"
