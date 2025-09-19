@@ -7,7 +7,7 @@
         "run-ddl-query",
         "run-dml-query"
     ],
-    "avalable_links": [
+    "available_links": [
         "database-user"
     ],
     "agent_command":{
