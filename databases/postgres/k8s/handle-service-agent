@@ -1,0 +1,9 @@
+#!/bin/bash -x
+
+WORKING_DIRECTORY="$(dirname "$(realpath "$0")")"
+cd "$WORKING_DIRECTORY" || exit 1
+
+echo "Starting handle agent service"
+
+np service-action exec --live-output --live-report --debug 
+exit $?
