@@ -6,11 +6,9 @@ This repository contains a collection of service definitions for the null platfo
 
 ## Table of Contents
 
-- [Service Catalog](#service-catalog)
-  - [Databases](#databases)
-    - [PostgreSQL Database](#postgresql-database-postgres-db)
-- [Installation](#installation)
-- [Directory Structure](#directory-structure)
+- Service Catalog
+  - Databases
+    - [PostgreSQL Database](./databases/postgres/k8s/README.md)
 - [Usage](#usage)
 - [Contributing](#contributing)
 
