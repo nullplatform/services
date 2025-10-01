@@ -10,10 +10,12 @@ SERVICE_PORT=$ACTION_SERVICE_ATTRIBUTES_PORT
 SERVICE_DBNAME=$ACTION_SERVICE_ATTRIBUTES_DBNAME
 SECRET_NAME=$ACTION_SERVICE_ATTRIBUTES_K_8_S_SECRET_NAME
 
+
 # Re export due encoding
 eval "echo $(np service-action export-action-data --format bash --bash-prefix ACTION)"
 # Get query parameter
 QUERY="$ACTION_PARAMETERS_QUERY"
+
 # Validate that this is a DDL query
 if ! echo "$QUERY" | grep -iE "^\s*(CREATE|ALTER|DROP|TRUNCATE)" > /dev/null; then
     ERROR_MSG="Only DDL queries (CREATE, ALTER, DROP, TRUNCATE) are allowed in this action. Use run-dml-query for SELECT, INSERT, UPDATE, DELETE."

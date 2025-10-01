@@ -11,10 +11,23 @@ auth:
   database: "{{ .dbName }}"
   username: "postgres"
 
+global:
+  security:
+    allowInsecureImages: true
+
+image:
+  registry: docker.io
+  repository: bitnamisecure/postgresql
+  tag: latest
+
 # Persistence configuration
+readReplicas:
+  persistence:
+    enabled: false
+
 primary:
   persistence:
-    enabled: true
+    enabled: false
     size: 10Gi
   
   resources:

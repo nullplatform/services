@@ -25,9 +25,32 @@ if [[ -z "$SERVICE_IP" || "$SERVICE_IP" == "null" ]]; then
     exit 1
 fi
 
-# Wait for PostgreSQL pod to be ready
-echo "Waiting for PostgreSQL pod to be ready..."
-kubectl wait --for=condition=ready pod -l app.kubernetes.io/instance=$PROJECT-postgres -n postgres-db --timeout=300s || true
+# Wait for PostgreSQL pod to exist first
+echo "Waiting for PostgreSQL pod to be created..."
+POD_RETRY=0
+POD_MAX_RETRIES=30
+#kubectl get pods -n postgres-db
+#kubectl get pod aaa-1589585888-postgres-0 -n postgres-db -o yaml
+while [[ $POD_RETRY -lt $POD_MAX_RETRIES ]]; do
+    POD_COUNT=$(kubectl get pods -l app.kubernetes.io/instance=$PROJECT-postgres -n postgres-db --no-headers 2>/dev/null | wc -l)
+    if [[ $POD_COUNT -gt 0 ]]; then
+        echo "Pod found, waiting for it to be ready..."
+        break
+    fi
+    echo "Waiting for pod to be created... (attempt $((POD_RETRY + 1))/$POD_MAX_RETRIES)"
+    sleep 5
+    ((POD_RETRY++))
+done
+
+if [[ $POD_RETRY -ge $POD_MAX_RETRIES ]]; then
+    echo "Warning: Pod not found after $POD_MAX_RETRIES attempts, continuing anyway..."
+else
+    # Now wait for the pod to be ready
+    echo "Waiting for PostgreSQL pod to be ready..."
+    kubectl wait --for=condition=ready pod -l app.kubernetes.io/instance=$PROJECT-postgres -n postgres-db --timeout=300s || {
+        echo "Warning: Pod readiness check failed or timed out"
+    }
+fi
 
 # Get database name and generate secret name
 DB_NAME="${ACTION_PARAMETERS_USAGE_TYPE:-app}_db"

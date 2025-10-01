@@ -33,7 +33,7 @@ cleanup() {
     rm -f /tmp/${POD_NAME}-pod.yaml 2>/dev/null || true
     rm -f /tmp/${POD_NAME}-query.sql 2>/dev/null || true
 }
-trap cleanup EXIT
+#trap cleanup EXIT
 
 # Create temporary SQL file
 SQL_FILE="/tmp/${POD_NAME}-query.sql"
@@ -70,7 +70,7 @@ spec:
   restartPolicy: Never
   containers:
   - name: psql-client
-    image: bitnami/postgresql:latest
+    image: bitnamisecure/postgresql:latest
     command: ["/bin/bash", "-c"]
     args: 
     - |
@@ -119,6 +119,7 @@ POD_STATUS=$(kubectl get pod $POD_NAME -n postgres-db -o jsonpath='{.status.phas
 MAX_RETRIES=30
 RETRY_COUNT=0
 while [[ "$POD_STATUS" == "Pending" || "$POD_STATUS" == "ContainerCreating" || "$POD_STATUS" == "Running" ]] && [[ $RETRY_COUNT -lt $MAX_RETRIES ]]; do
+    kubectl get pod $POD_NAME -n postgres-db -o yaml
     echo "Pod is still pending or creating, waiting..."
     sleep 5
     POD_STATUS=$(kubectl get pod $POD_NAME -n postgres-db -o jsonpath='{.status.phase}' 2>/dev/null || echo "NotFound")
@@ -127,8 +128,7 @@ done
 echo "Pod status: $POD_STATUS"
 
 # Show logs
-echo "Pod logs:"
-export QUERY_LOGS=$(kubectl logs $POD_NAME -n postgres-db --follow || true)
+export QUERY_LOGS=$(kubectl logs $POD_NAME -n postgres-db || true)
 
 # Check final status
 
@@ -144,5 +144,6 @@ if [ "$POD_STATUS" = "Succeeded" ]; then
     exit 0
 else
     echo "Query execution failed or pod did not complete successfully."
+    echo "Pod logs: $QUERY_LOGS"
     exit 1;
 fi
