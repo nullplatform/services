@@ -1,0 +1,45 @@
+#!/bin/bash
+
+set -euo pipefail
+
+echo "=== Fetching existing HTTPRoute from Kubernetes ==="
+echo "SERVICE_ID: $SERVICE_ID"
+echo "SERVICE_NAME: $SERVICE_NAME"
+echo "K8S_NAMESPACE: $K8S_NAMESPACE"
+
+# Build the HTTPRoute name using the same pattern as the template
+HTTPROUTE_NAME="${SERVICE_NAME}-${SERVICE_ID}-route"
+echo "HTTPRoute name: $HTTPROUTE_NAME"
+
+# Define output file
+HTTPROUTE_FILE="$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml"
+
+# Create output directory if it doesn't exist
+mkdir -p "$OUTPUT_DIR"
+
+# Fetch the existing HTTPRoute from Kubernetes
+echo "Fetching HTTPRoute '$HTTPROUTE_NAME' from namespace '$K8S_NAMESPACE'..."
+if kubectl get httproute "$HTTPROUTE_NAME" -n "$K8S_NAMESPACE" -o yaml > "$HTTPROUTE_FILE" 2>/dev/null; then
+  echo "HTTPRoute fetched successfully"
+
+  # Remove only managed fields and status, but keep important metadata
+  yq eval 'del(.metadata.managedFields, .status)' -i "$HTTPROUTE_FILE"
+
+  echo "HTTPRoute cleaned and saved to: $HTTPROUTE_FILE"
+else
+  echo "ERROR: HTTPRoute '$HTTPROUTE_NAME' not found in namespace '$K8S_NAMESPACE'"
+  echo "Creating new HTTPRoute from template instead..."
+
+  # If HTTPRoute doesn't exist, create from template as fallback
+  CONTEXT_PATH="$OUTPUT_DIR/context-$SERVICE_ID.json"
+  echo "$CONTEXT" > "$CONTEXT_PATH"
+
+  gomplate -c .="$CONTEXT_PATH" \
+    --file "$SERVICE_PATH/templates/istio/empty.yaml.tpl" \
+    --out "$HTTPROUTE_FILE"
+
+  rm "$CONTEXT_PATH"
+  echo "New HTTPRoute created from template"
+fi
+
+echo "HTTPRoute file ready at: $HTTPROUTE_FILE"

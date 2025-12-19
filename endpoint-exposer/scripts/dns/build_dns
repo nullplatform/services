@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# Build DNS context based on DNS_TYPE
+echo "=== DEBUG: Starting build_dns ==="
+echo "DNS_TYPE=$DNS_TYPE"
+
+case "$DNS_TYPE" in
+  external_dns)
+    "$SERVICE_PATH/scripts/dns/build_dns_endpoint"
+    ;;
+  *)
+    echo "Error: Unsupported DNS type '$DNS_TYPE'"
+    exit 1
+    ;;
+esac

@@ -1,0 +1,62 @@
+#!/bin/bash
+
+set -euo pipefail
+
+find_rule_index() {
+  local hr_yaml="$1"
+  local target_path="$2"
+
+  local num_rules
+  local i
+  local current_path
+
+  num_rules=$(yq '.spec.rules | length' <<< "$hr_yaml")
+
+  for ((i=0; i<num_rules; i++)); do
+    current_path=$(yq ".spec.rules[$i].matches[0].path.value" <<< "$hr_yaml")
+    if [[ "$current_path" == "\"$target_path\"" || "$current_path" == "$target_path" ]]; then
+      echo "$i"
+      return
+    fi
+  done
+
+  echo "-1"  # Not found
+}
+
+echo "=== Starting build_ingress_without_rule for HTTPRoute ==="
+echo "K8S_NAMESPACE: $K8S_NAMESPACE"
+echo "SERVICE_ID: $SERVICE_ID"
+echo "SCOPE_ID: $SCOPE_ID"
+echo "RULE_PATH: $RULE_PATH"
+
+HTTPROUTE_NAME=$(kubectl get httproute -n "$K8S_NAMESPACE" -l "service_id=$SERVICE_ID" -o jsonpath="{.items[0].metadata.name}")
+echo "Found HTTPRoute: $HTTPROUTE_NAME"
+
+HTTPROUTE=$(kubectl get httproute -n "$K8S_NAMESPACE" "$HTTPROUTE_NAME" -o yaml)
+HTTPROUTE_FILE="$OUTPUT_DIR/httproute-$SERVICE_ID-$SCOPE_ID-public.yaml"
+
+updated_hr="$HTTPROUTE"
+
+RULE_INDEX=$(find_rule_index "$HTTPROUTE" "$RULE_PATH")
+echo "Found rule index for path '$RULE_PATH': $RULE_INDEX"
+
+# if there is a rule for the path we remove it
+if [[ "$RULE_INDEX" != "-1" ]]; then
+  echo "Removing rule at index $RULE_INDEX"
+  updated_hr=$(echo "$updated_hr" | yq eval "del(.spec.rules[$RULE_INDEX])" -)
+
+  remaining_rules=$(echo "$updated_hr" | yq '.spec.rules | length')
+  echo "Remaining rules: $remaining_rules"
+
+  if [[ "$remaining_rules" == "0" ]]; then
+    # If no rules remain, add the default 404 route with weight 0
+    echo "No rules remain, adding default 404 route"
+    updated_hr=$(echo "$updated_hr" | yq eval '.spec.rules = [{"matches": [{"path": {"type": "PathPrefix", "value": "/"}}], "backendRefs": [{"name": "response-404", "port": 80, "weight": 0}]}]' -)
+  fi
+else
+  echo "Rule not found for path '$RULE_PATH', nothing to remove"
+fi
+
+echo "$updated_hr" | yq "." > "$HTTPROUTE_FILE"
+
+echo "=== HTTPRoute configuration saved to: $HTTPROUTE_FILE ==="

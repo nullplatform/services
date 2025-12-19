@@ -1,0 +1,12 @@
+#!/bin/bash
+
+EXISTS=$(echo "$CONTEXT" | jq --arg path "$RULE_PATH" '
+  (.service.attributes.rules // [])
+  | map(select(.path == $path))
+  | length
+')
+
+if [[ "$EXISTS" -gt 0 ]]; then
+  echo "Error: A rule with path '$RULE_PATH' already exists."
+  exit 1
+fi

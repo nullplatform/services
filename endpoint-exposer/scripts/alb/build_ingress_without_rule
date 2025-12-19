@@ -1,0 +1,47 @@
+#!/bin/bash
+
+set -euo pipefail
+
+find_path_index() {
+  local ingress_yaml="$1"
+  local target_path="$2"
+
+  local num_paths
+  local i
+  local current_path
+
+  num_paths=$(yq '.spec.rules[0].http.paths | length' <<< "$ingress_yaml")
+
+  for ((i=0; i<num_paths; i++)); do
+    current_path=$(yq ".spec.rules[0].http.paths[$i].path" <<< "$ingress_yaml")
+    if [[ "$current_path" == "\"$target_path\"" || "$current_path" == "$target_path" ]]; then
+      echo "$i"
+      return
+    fi
+  done
+
+  echo "-1"  # Not found
+}
+
+INGRESS_NAME=$(kubectl get ingress -n "$K8S_NAMESPACE" -l "service_id=$SERVICE_ID" -o jsonpath="{.items[0].metadata.name}")
+INGRESS=$(kubectl get ingress -n "$K8S_NAMESPACE" "$INGRESS_NAME" -o yaml)
+INGRESS_FILE="$OUTPUT_DIR/ingress-$SERVICE_ID-$SCOPE_ID-public.yaml"
+
+annotation_key="alb.ingress.kubernetes.io/actions.bg-deployment-${SCOPE_ID}"
+updated_ingress=$(echo "$INGRESS" | yq eval "del(.metadata.annotations.\"$annotation_key\")")
+
+PATH_INDEX=$(find_path_index "$INGRESS" "$RULE_PATH")
+
+# if there is a rule for the path we replace it
+if [[ "$PATH_INDEX" != "-1" ]]; then
+  updated_ingress=$(echo "$updated_ingress" | yq eval "del(.spec.rules[0].http.paths[$PATH_INDEX])" -)
+
+  remaining_paths=$(echo "$updated_ingress" | yq '.spec.rules[0].http.paths | length')
+  if [[ "$remaining_paths" == "0" ]]; then
+    updated_ingress=$(echo "$updated_ingress" | yq eval '.spec.rules[0].http.paths = [{"path": "/", "pathType": "Prefix", "backend": {"service": {"name": "response-404", "port": {"name": "use-annotation"}}}}]' -)
+  fi
+fi
+
+echo "$updated_ingress" | yq "." > "$INGRESS_FILE"
+
+

@@ -1,0 +1,22 @@
+#!/bin/bash
+
+set -euo pipefail
+
+INGRESS_NAME=$(kubectl get ingress -n "$K8S_NAMESPACE" -l "scope_id=$SCOPE_ID" -o jsonpath="{.items[0].metadata.name}" 2>/dev/null || echo "")
+
+# Check if ingress exists
+if [ -z "$INGRESS_NAME" ]; then
+    echo "There is no ingress for scope $SCOPE_ID. Publishing the rule with an empty backend"
+
+    SCOPE_RULE='{"blue_green_annotation": null, "service": {"name": "response-404", "port": { "name": "use-annotation"} }}'
+else
+    echo "Found ingress for scope $SCOPE_ID. Publishing the backend service configuration"
+    INGRESS=$(kubectl get ingress -n "$K8S_NAMESPACE" "$INGRESS_NAME" -o json)
+
+    SCOPE_RULE=$(echo "$INGRESS" | jq '{
+        blue_green_annotation: .metadata.annotations["alb.ingress.kubernetes.io/actions.bg-deployment"],
+        service: .spec.rules[0].http.paths[0].backend.service
+    }')
+fi
+
+export SCOPE_RULE

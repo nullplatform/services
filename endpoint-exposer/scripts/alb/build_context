@@ -1,0 +1,36 @@
+#!/bin/bash
+
+set -euo pipefail
+
+SERVICE_ID=$(echo "$CONTEXT" | jq -r .service.id)
+SERVICE_NAME=$(echo "$CONTEXT" | jq -r .service.slug)
+
+ACTION_ID=$(echo "$CONTEXT" | jq -r .id)
+ACTION_NAME=$(echo "$CONTEXT" | jq -r .slug)
+
+LINK_ID=$(echo "$CONTEXT" | jq -r .link.id)
+LINK_NAME=$(echo "$CONTEXT" | jq -r .link.slug)
+
+CONTEXT=$(echo "$CONTEXT" | jq \
+          --arg k8s_namespace "$K8S_NAMESPACE" \
+          --arg alb_name "$ALB_NAME" \
+          '. + {k8s_namespace: $k8s_namespace, alb_name: $alb_name}')
+
+SCOPE_ID=$(echo "$CONTEXT" | jq -r .tags.scope_id)
+SCOPE_SLUG=$(echo "$CONTEXT" | jq -r .tags.scope)
+
+RULE_PATH=$(echo "$CONTEXT" | jq -r '.link.attributes.path // .parameters.path')
+
+export OUTPUT_DIR="$SERVICE_PATH/output/$SERVICE_NAME-$SERVICE_ID/$ACTION_NAME-$ACTION_ID"
+
+mkdir -p "$OUTPUT_DIR"
+
+export SERVICE_ID
+export SERVICE_NAME
+export ACTION_ID
+export ACTION_NAME
+export LINK_ID
+export LINK_NAME
+export SCOPE_ID
+export SCOPE_SLUG
+export RULE_PATH

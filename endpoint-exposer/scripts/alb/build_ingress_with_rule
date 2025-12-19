@@ -1,0 +1,199 @@
+#!/bin/bash
+
+set -euo pipefail
+
+is_ingress_empty() {
+  local yaml_content="$1"
+
+  local num_rules
+  local num_paths
+  local path
+  local service_name
+  local service_port
+
+  num_rules=$(yq '.spec.rules | length' <<< "$yaml_content")
+  num_paths=$(yq '.spec.rules[0].http.paths | length' <<< "$yaml_content")
+  path=$(yq '.spec.rules[0].http.paths[0].path' <<< "$yaml_content")
+  service_name=$(yq '.spec.rules[0].http.paths[0].backend.service.name' <<< "$yaml_content")
+  service_port=$(yq '.spec.rules[0].http.paths[0].backend.service.port.name' <<< "$yaml_content")
+
+  if [[ "$num_rules" -eq 1 && \
+        "$num_paths" -eq 1 && \
+        "$path" == "/" && \
+        "$service_name" == "response-404" && \
+        "$service_port" == "use-annotation" ]]; then
+    echo "true"
+  else
+    echo "false"
+  fi
+}
+
+create_path_rule() {
+  local rule_path="$1"
+  local service_json="$2"
+
+  jq -n \
+    --arg path "$rule_path" \
+    --argjson service "$service_json" \
+    '{
+      path: $path,
+      pathType: "Prefix",
+      backend: {
+        service: $service
+      }
+    }'
+}
+
+add_annotation_if_needed() {
+  local ingress_yaml="$1"
+  local annotation="$2"
+  local scope_id="$3"
+
+  if [[ "$annotation" != "null" && -n "$annotation" ]]; then
+    local annotation_key="alb.ingress.kubernetes.io/actions.bg-deployment-$scope_id"
+
+    # Escape the value so it’s properly quoted in YAML
+    local escaped_annotation
+    escaped_annotation=$(printf '%s\n' "$annotation" | jq -Rs .)  # wrap & escape as JSON string
+
+    echo "$ingress_yaml" | yq eval ".metadata.annotations.\"$annotation_key\" = $escaped_annotation"
+  else
+    echo "$ingress_yaml"
+  fi
+}
+
+update_ingress_rule() {
+  local ingress_yaml="$1"
+  local rule_path="$2"
+  local service_json="$3"
+  local annotation="$4"
+  local scope_id="$5"
+
+  local updated_ingress
+
+  # Replace the current rule with the new rule data
+  updated_ingress=$(echo "$ingress_yaml" | yq eval '.spec.rules[0].http.paths[0].path = "'$rule_path'"')
+  updated_ingress=$(echo "$updated_ingress" | yq eval '.spec.rules[0].http.paths[0].pathType = "Prefix"')
+  updated_ingress=$(echo "$updated_ingress" | yq eval '.spec.rules[0].http.paths[0].backend.service = '"$service_json")
+
+  # Add annotation if needed
+  updated_ingress=$(add_annotation_if_needed "$updated_ingress" "$annotation" "$scope_id")
+
+  echo "$updated_ingress"
+}
+
+find_path_index() {
+  local ingress_yaml="$1"
+  local target_path="$2"
+
+  local num_paths
+  local i
+  local current_path
+
+  num_paths=$(yq '.spec.rules[0].http.paths | length' <<< "$ingress_yaml")
+
+  for ((i=0; i<num_paths; i++)); do
+    current_path=$(yq ".spec.rules[0].http.paths[$i].path" <<< "$ingress_yaml")
+    if [[ "$current_path" == "\"$target_path\"" || "$current_path" == "$target_path" ]]; then
+      echo "$i"
+      return
+    fi
+  done
+
+  echo "-1"  # Not found
+}
+
+replace_existing_rule() {
+  local ingress_yaml="$1"
+  local rule_path="$2"
+  local service_json="$3"
+  local annotation="$4"
+  local scope_id="$5"
+  local path_index="$6"
+
+  local updated_ingress
+  local new_rule
+
+
+  # Create the new rule
+  new_rule=$(create_path_rule "$rule_path" "$service_json")
+
+  # Replace the existing rule at the found index
+  updated_ingress=$(echo "$ingress_yaml" | yq eval -o=json '.' | \
+    jq --argjson newrule "$new_rule" ".spec.rules[0].http.paths[$path_index] = \$newrule" | \
+    yq eval -P '.')
+
+
+  # Remove old blue green anotation
+  annotation_key="alb.ingress.kubernetes.io/actions.bg-deployment-${SCOPE_ID}"
+  updated_ingress=$(echo "$updated_ingress" | yq eval "del(.metadata.annotations.\"$annotation_key\")")
+
+  # Add annotation if needed
+  updated_ingress=$(add_annotation_if_needed "$updated_ingress" "$annotation" "$scope_id")
+
+  echo "$updated_ingress" | yq .
+}
+
+add_new_rule() {
+  local ingress_yaml="$1"
+  local rule_path="$2"
+  local service_json="$3"
+  local annotation="$4"
+  local scope_id="$5"
+
+  local updated_ingress
+  local new_rule
+
+  # Create the new path rule
+  new_rule=$(create_path_rule "$rule_path" "$service_json")
+
+  # Add the new path rule to the existing paths array
+  updated_ingress=$(echo "$ingress_yaml" | yq eval ".spec.rules[0].http.paths += [$new_rule]")
+
+  # Remove old blue green anotation
+  annotation_key="alb.ingress.kubernetes.io/actions.bg-deployment-${SCOPE_ID}"
+  updated_ingress=$(echo "$updated_ingress" | yq eval "del(.metadata.annotations.\"$annotation_key\")")
+
+  # Add annotation if needed
+  updated_ingress=$(add_annotation_if_needed "$updated_ingress" "$annotation" "$scope_id")
+
+  echo "$updated_ingress"
+}
+
+# Main script logic
+INGRESS_NAME=$(kubectl get ingress -n "$K8S_NAMESPACE" -l "service_id=$SERVICE_ID" -o jsonpath="{.items[0].metadata.name}")
+
+INGRESS=$(kubectl get ingress -n "$K8S_NAMESPACE" "$INGRESS_NAME" -o yaml)
+ANNOTATION=$(echo "$SCOPE_RULE" | jq -r .blue_green_annotation)
+
+SERVICE=$(echo "$SCOPE_RULE" | jq .service)
+
+if [[ "$ANNOTATION" != "null" && -n "$ANNOTATION" ]]; then
+  SERVICE=$(echo "$SERVICE" | jq --arg scope_id "$SCOPE_ID" '.name = "bg-deployment-" + $scope_id')
+fi
+
+# Define output file
+INGRESS_FILE="$OUTPUT_DIR/ingress-$SERVICE_ID-$SCOPE_ID-public.yaml"
+
+# Create output directory if it doesn't exist
+mkdir -p "$OUTPUT_DIR"
+
+# Use case 1 - empty ingress
+if [[ "$(is_ingress_empty "$INGRESS")" == "true" ]]; then
+  UPDATED_INGRESS=$(update_ingress_rule "$INGRESS" "$RULE_PATH" "$SERVICE" "$ANNOTATION" "$SCOPE_ID")
+  echo "$UPDATED_INGRESS" | yq "." > "$INGRESS_FILE"
+else
+  PATH_INDEX=$(find_path_index "$INGRESS" "$RULE_PATH")
+
+  # if there is a rule for the path we replace it
+  if [[ "$PATH_INDEX" != "-1" ]]; then
+    UPDATED_INGRESS=$(replace_existing_rule "$INGRESS" "$RULE_PATH" "$SERVICE" "$ANNOTATION" "$SCOPE_ID" "$PATH_INDEX")
+    echo "$UPDATED_INGRESS" | yq "." > "$INGRESS_FILE"
+  else
+    # if there is no rule for the path we add a new one
+    UPDATED_INGRESS=$(add_new_rule "$INGRESS" "$RULE_PATH" "$SERVICE" "$ANNOTATION" "$SCOPE_ID")
+    echo "$UPDATED_INGRESS" | yq "." > "$INGRESS_FILE"
+  fi
+fi
+
+echo "Ingress configuration saved to: $INGRESS_FILE"

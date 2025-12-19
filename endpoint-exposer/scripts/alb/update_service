@@ -1,0 +1,21 @@
+#!/bin/bash
+
+if [[ $ACTION == "add" ]]; then
+  UPDATED_ATTRIBUTES=$(echo "$CONTEXT" | jq --arg path "$RULE_PATH" --arg scope "$SCOPE_SLUG" '
+    .service.attributes |= (.rules //= [] | .rules += [{path: $path, scope: $scope}]) |
+    {
+      attributes: .service.attributes,
+      entity_nrn: (.entity_nrn | sub(":scope=[^:]+$"; ""))
+    }
+  ')
+elif [[ $ACTION == "remove" ]]; then
+  UPDATED_ATTRIBUTES=$(echo "$CONTEXT" | jq --arg path "$RULE_PATH" '
+    .service.attributes |= (.rules //= [] | .rules |= map(select(.path != $path))) |
+    {
+      attributes: .service.attributes,
+      entity_nrn: (.entity_nrn | sub(":scope=[^:]+$"; ""))
+    }
+  ')
+fi
+
+np service patch --id "$SERVICE_ID" --body "$UPDATED_ATTRIBUTES"

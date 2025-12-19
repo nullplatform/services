@@ -1,0 +1,162 @@
+#!/bin/bash
+
+set -euo pipefail
+
+# Colors
+GREEN="\033[0;32m"
+BLUE="\033[0;34m"
+YELLOW="\033[1;33m"
+RED="\033[0;31m"
+NC="\033[0m"
+
+# Spinner state
+SPINNER_PID=""
+SPINNER_MSG=""
+
+start_spinner() {
+  SPINNER_MSG="$1"
+  echo -ne "${BLUE}==>${NC} $SPINNER_MSG..."
+  (
+    while true; do
+      for c in / - \\ \|; do
+        echo -ne "\r${BLUE}==>${NC} $SPINNER_MSG... $c"
+        sleep 0.1
+      done
+    done
+  ) &
+  SPINNER_PID=$!
+  disown
+}
+
+stop_spinner_success() {
+  kill "$SPINNER_PID" >/dev/null 2>&1 || true
+  wait "$SPINNER_PID" 2>/dev/null || true
+  echo -ne "\r\033[K"
+  echo -e "${GREEN}✔${NC} $SPINNER_MSG"
+}
+
+stop_spinner_error() {
+  kill "$SPINNER_PID" >/dev/null 2>&1 || true
+  wait "$SPINNER_PID" 2>/dev/null || true
+  echo -ne "\r\033[K"
+  echo -e "${RED}✖${NC} $SPINNER_MSG"
+  exit 1
+}
+
+# --- Step 1: Environment Validation ---
+
+start_spinner "Validating that the NRN has been loaded into the environment."
+if [ -z "${NRN:-}" ]; then
+  stop_spinner_error "NRN is not set. Please export the NRN environment variable before running this script."
+fi
+stop_spinner_success "NRN found and loaded successfully."
+
+start_spinner "Validating that the ENVIRONMENT has been loaded into the environment."
+if [ -z "${ENVIRONMENT:-}" ]; then
+  stop_spinner_error "ENVIRONMENT is not set. Please export the ENVIRONMENT environment variable before running this script."
+fi
+stop_spinner_success "ENVIRONMENT found and loaded successfully."
+
+start_spinner "Validating that the REPO_PATH has been loaded into the environment."
+if [ -z "${REPO_PATH:-}" ]; then
+  stop_spinner_error "REPO_PATH is not set. Please export the REPO_PATH environment variable before running this script."
+fi
+stop_spinner_success "REPO_PATH found and loaded successfully."
+
+# --- Step 2: Generate and Create Service Specification ---
+
+SERVICE_SPEC_PATH="specs/service-spec.json"
+LINK_SPEC_PATH="specs/link-spec.json"
+LINK_ACTION_DIR="specs/link-actions"
+SERVICE_ACTION_DIR="specs/service-actions"
+
+gomplate --file "$SERVICE_SPEC_PATH.tpl" --out "$SERVICE_SPEC_PATH"
+
+start_spinner "Creating the service specification in the platform."
+{
+  SERVICE_SPEC_BODY=$(cat "$SERVICE_SPEC_PATH")
+  SERVICE_SPEC=$(np service specification create --body "$SERVICE_SPEC_BODY" --format json)
+  SERVICE_SPECIFICATION_ID=$(echo "$SERVICE_SPEC" | jq -r .id)
+  SERVICE_SLUG=$(echo "$SERVICE_SPEC" | jq -r .slug)
+} || stop_spinner_error "Failed to create or parse the service specification."
+stop_spinner_success "Service specification created successfully (id=$SERVICE_SPECIFICATION_ID, slug=$SERVICE_SLUG)."
+
+rm "$SERVICE_SPEC_PATH"
+export SERVICE_SPECIFICATION_ID
+export SERVICE_SLUG
+
+# --- Step 3: Generate and Create Link Specification ---
+gomplate --file "$LINK_SPEC_PATH.tpl" --out "$LINK_SPEC_PATH"
+
+start_spinner "Creating the link specification in the platform."
+{
+  LINK_SPEC_BODY=$(cat "$LINK_SPEC_PATH")
+  LINK_SPEC=$(np link specification create --body "$LINK_SPEC_BODY" --format json)
+  LINK_SPECIFICATION_ID=$(echo "$LINK_SPEC" | jq -r .id)
+  LINK_SLUG=$(echo "$LINK_SPEC" | jq -r .slug)
+} || stop_spinner_error "Failed to create or parse the service specification."
+stop_spinner_success "Link specification created successfully (id=$LINK_SPECIFICATION_ID, slug=$LINK_SLUG)."
+
+rm "$LINK_SPEC_PATH"
+export LINK_SPECIFICATION_ID
+export LINK_SLUG
+
+# --- Step 4: Create Action Specifications ---
+
+find "$LINK_ACTION_DIR" -type f -name "*.tpl" | while read -r TEMPLATE_FILE; do
+    REL_PATH="${TEMPLATE_FILE#$LINK_ACTION_DIR/}"
+    OUTPUT_PATH="$LINK_ACTION_DIR/${REL_PATH%.tpl}"
+
+    gomplate --file "$TEMPLATE_FILE" --out "$OUTPUT_PATH"
+
+    ACTION_SPEC_BODY=$(cat "$OUTPUT_PATH")
+
+    start_spinner "Registering action specification: ${REL_PATH%.json.tpl}."
+    {
+      ACTION_SPEC=$(np link specification action specification create \
+        --linkSpecificationId "$LINK_SPECIFICATION_ID" \
+        --body "$ACTION_SPEC_BODY" \
+        --format json)
+      ACTION_SPEC_ID=$(echo "$ACTION_SPEC" | jq -r .id)
+    } || stop_spinner_error "Failed to create action specification: $REL_PATH."
+
+    rm "$OUTPUT_PATH"
+    stop_spinner_success "Action specification created successfully (id=$ACTION_SPEC_ID)."
+done
+
+find "$SERVICE_ACTION_DIR" -type f -name "*.tpl" | while read -r TEMPLATE_FILE; do
+    REL_PATH="${TEMPLATE_FILE#$SERVICE_ACTION_DIR/}"
+    OUTPUT_PATH="$SERVICE_ACTION_DIR/${REL_PATH%.tpl}"
+
+    gomplate --file "$TEMPLATE_FILE" --out "$OUTPUT_PATH"
+
+    ACTION_SPEC_BODY=$(cat "$OUTPUT_PATH")
+
+    start_spinner "Registering action specification: ${REL_PATH%.json.tpl}."
+    {
+      ACTION_SPEC=$(np service specification action specification create \
+        --serviceSpecificationId "$SERVICE_SPECIFICATION_ID" \
+        --body "$ACTION_SPEC_BODY" \
+        --format json)
+      ACTION_SPEC_ID=$(echo "$ACTION_SPEC" | jq -r .id)
+    } || stop_spinner_error "Failed to create action specification: $REL_PATH."
+
+    rm "$OUTPUT_PATH"
+    stop_spinner_success "Action specification created successfully (id=$ACTION_SPEC_ID)."
+done
+
+# --- Step 5: Create Notification Channel ---
+
+NOTIFICATION_CHANNEL_PATH="specs/notification-channel.json"
+
+gomplate --file "$NOTIFICATION_CHANNEL_PATH.tpl" --out "$NOTIFICATION_CHANNEL_PATH"
+
+start_spinner "Creating the notification channel."
+{
+NOTIFICATION_CHANNEL_BODY=$(cat "$NOTIFICATION_CHANNEL_PATH")
+NOTIFICATION_CHANNEL=$(np notification channel create --format json --body "$NOTIFICATION_CHANNEL_BODY")
+NOTIFICATION_CHANNEL_ID=$(echo "$NOTIFICATION_CHANNEL" | jq -r .id)
+} || stop_spinner_error "Failed to create the notification channel."
+
+rm "$NOTIFICATION_CHANNEL_PATH"
+stop_spinner_success "Notification channel created successfully (id=$NOTIFICATION_CHANNEL_ID)."

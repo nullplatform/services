@@ -1,0 +1,134 @@
+#!/bin/bash
+
+echo "=== DEBUG: Starting sync_exposer script ==="
+echo "DEBUG: CONTEXT=$CONTEXT"
+echo "DEBUG: SERVICE_SPECIFICATION_SLUG=$SERVICE_SPECIFICATION_SLUG"
+
+SCOPE_NRN=$(echo "$CONTEXT" | jq -r .scope.nrn)
+
+echo "SERVICE SPECIFICATION SLUG: $SERVICE_SPECIFICATION_SLUG, SCOPE_NRN: $SCOPE_NRN"
+
+# Step 1: Get service specification by slug
+echo "DEBUG: Fetching service specifications..."
+SERVICE_SPECS=$(np service specification list --nrn "$SCOPE_NRN" --type dependency --format json)
+echo "DEBUG: Service specifications fetched: $SERVICE_SPECS"
+
+SERVICE_SPEC=$(echo "$SERVICE_SPECS" | jq -c --arg slug "$SERVICE_SPECIFICATION_SLUG" '
+  .results
+  | map(select(.slug == $slug))
+  | .[0]
+')
+echo "DEBUG: Filtered service spec: $SERVICE_SPEC"
+
+SERVICE_SPEC_ID=$(echo "$SERVICE_SPEC" | jq -r .id)
+
+if [[ -z "$SERVICE_SPEC_ID" || "$SERVICE_SPEC_ID" == "null" ]]; then
+  echo "Error: Could not find service specification with slug '$SERVICE_SPECIFICATION_SLUG'"
+  exit 1
+fi
+
+echo "DEBUG: SERVICE_SPEC_ID=$SERVICE_SPEC_ID"
+
+# Step 2: Get link specification with slug "publish"
+echo "DEBUG: Fetching link specifications for service spec..."
+LINK_SPECS=$(np service specification link specification list --id "$SERVICE_SPEC_ID" --format json)
+echo "DEBUG: Link specifications fetched: $LINK_SPECS"
+
+PUBLISH_LINK_SPEC=$(echo "$LINK_SPECS" | jq -c '
+  .results
+  | map(select(.slug == "publish"))
+  | .[0]
+')
+echo "DEBUG: Filtered publish link spec: $PUBLISH_LINK_SPEC"
+
+LINK_SPECIFICATION_ID=$(echo "$PUBLISH_LINK_SPEC" | jq -r .id)
+
+if [[ -z "$LINK_SPECIFICATION_ID" || "$LINK_SPECIFICATION_ID" == "null" ]]; then
+  echo "Error: Could not find link specification with slug 'publish' for service specification '$SERVICE_SPEC_ID'"
+  exit 1
+fi
+
+echo "DEBUG: LINK_SPECIFICATION_ID=$LINK_SPECIFICATION_ID"
+
+echo "DEBUG: Fetching links for scope..."
+LINKS=$(np link list --nrn "$SCOPE_NRN" --format json --status active)
+echo "DEBUG: Links fetched. Response: $LINKS"
+
+EXPOSER_LINKS=$(echo "$LINKS" | jq -c --arg spec "$LINK_SPECIFICATION_ID" '
+  .results
+  | map(select(.specification_id == $spec))
+')
+echo "DEBUG: EXPOSER_LINKS filtered: $EXPOSER_LINKS"
+
+COUNT=$(echo "$EXPOSER_LINKS" | jq 'length')
+echo "DEBUG: COUNT=$COUNT"
+
+if [[ "$COUNT" -eq 0 ]]; then
+  echo "This scope is not public, skipping public ingress synchronization"
+  return
+fi
+
+echo "This is a public scope, starting public ingress synchronization"
+
+ACTIONS=$(np link specification action specification list --linkSpecificationId "$LINK_SPECIFICATION_ID" --format json)
+
+REFRESH_ACTION=$(echo "$ACTIONS" | jq -c '
+  .results
+  | map(select(.slug == "refresh"))
+  | .[0]
+')
+
+REFRESH_ACTION_ID=$(echo "$REFRESH_ACTION" | jq -r .id)
+echo "DEBUG: REFRESH_ACTION_ID=$REFRESH_ACTION_ID"
+
+# Iterate over matches
+echo "DEBUG: Starting iteration over exposer links..."
+echo "$EXPOSER_LINKS" | jq -c '.[]' | while read -r link; do
+  echo "DEBUG: Processing link: $link"
+
+  # Extract useful values
+  LINK_ID=$(echo "$link" | jq -r '.id')
+  echo "DEBUG: LINK_ID=$LINK_ID"
+
+  echo "DEBUG: Creating link action..."
+  ACTION=$(np link action create --linkId "$LINK_ID" --body "{\"name\": \"refresh\", \"parameters\":{}, \"specification_id\": \"$REFRESH_ACTION_ID\"}" --format json)
+  echo "DEBUG: Action created: $ACTION"
+
+  ACTION_ID=$(echo "$ACTION" | jq -r .id)
+  echo "DEBUG: ACTION_ID=$ACTION_ID"
+
+  echo "Created public ingress synchronization action[id=$ACTION_ID], waiting for its completion"
+
+  MAX_ITERATIONS=20
+  iteration=0
+
+  echo "DEBUG: Starting polling loop for action status..."
+  while true; do
+     ((iteration++))
+      echo "DEBUG: Iteration $iteration/$MAX_ITERATIONS"
+
+      if [ "$iteration" -gt $MAX_ITERATIONS ]; then
+          echo "Error: Maximum number of iterations (${MAX_ITERATIONS}) reached. Could not refresh the exposer."
+          exit 1
+      fi
+
+      echo "DEBUG: Reading action status..."
+      ACTION_STATUS=$(np link action read --linkId "$LINK_ID" --id "$ACTION_ID" --format json | jq -r .status)
+
+      echo "Checking public ingress synchronization action[id=$ACTION_ID, status=$ACTION_STATUS]"
+
+      if [[ "$ACTION_STATUS" == "success" ]]; then
+        echo "✅ Public ingress successfully synchronized"
+        break
+      elif [[ "$ACTION_STATUS" == "failed" ]]; then
+        echo "❌ Could not synchronize public ingress, deployment will be rollbacked"
+        exit 1
+      fi
+
+      echo "DEBUG: Sleeping for 5 seconds..."
+      sleep 5
+  done
+  echo "DEBUG: Finished processing link $LINK_ID"
+done
+
+echo "=== DEBUG: sync_exposer script completed successfully ==="

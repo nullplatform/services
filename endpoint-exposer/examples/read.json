@@ -1,0 +1,50 @@
+{
+  "id": "c266d1aa-23d7-4a23-8954-346824186c9a",
+  "source": "service",
+  "event": "service:action:write",
+  "created_at": "2025-06-17T15:24:05.861Z",
+  "notification": {
+    "action": "service:action:write",
+    "id": "b9a9971b-acce-421b-b7b7-4e940e73fac8",
+    "name": "Read",
+    "slug": "read",
+    "status": "pending",
+    "created_at": "2025-06-17T15:24:05.861Z",
+    "updated_at": "2025-06-17T15:24:05.861Z",
+    "parameters": {
+    },
+    "results": {},
+    "type": "custom",
+    "specification": {
+      "id": "03bcdc47-212c-4b64-a2cc-ed0365e4228c",
+      "slug": "read"
+    },
+    "service": {
+      "id": "4f3fc1da-10bf-47e7-8dd8-b9febc3ddea1",
+      "slug": "the-service-name-from-the-user",
+      "attributes": {
+        "rules": [],
+        "domain": "domain.com"
+      },
+      "specification": {
+        "id": "f66f5e37-0303-48aa-bc9d-aeda1f909a10",
+        "slug": "service-exposer"
+      },
+      "dimensions": {
+        "environment": "development"
+      }
+    },
+    "link": null,
+    "tags": {
+      "organization_id": "1255165411",
+      "organization": "kwik-e-mart",
+      "account_id": "95118862",
+      "account": "kwik-e-mart-main",
+      "namespace_id": "1068437903",
+      "namespace": "fede-m",
+      "application_id": "857154851",
+      "application": "scope-exposer"
+    },
+    "entity_nrn": "organization=1255165411:account=95118862:namespace=1068437903:application=857154851"
+  }
+}

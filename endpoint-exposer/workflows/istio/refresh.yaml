@@ -1,0 +1,7 @@
+include:
+  - "$SERVICE_PATH/workflows/istio/link.yaml"
+steps:
+  - name: "validate_unique_rule"
+    action: skip
+  - name: "add_rule_to_service"
+    action: skip

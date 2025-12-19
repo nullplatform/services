@@ -1,0 +1,6 @@
+include:
+  - "$SERVICE_PATH/workflows/alb/create.yaml"
+steps:
+  - name: apply
+    configuration:
+      ACTION: delete

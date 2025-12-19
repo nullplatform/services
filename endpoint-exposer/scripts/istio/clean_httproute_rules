@@ -1,0 +1,30 @@
+#!/bin/bash
+
+set -euo pipefail
+
+echo "=== Cleaning HTTPRoute rules ==="
+echo "HTTPROUTE_FILE: $HTTPROUTE_FILE"
+
+# Read the HTTPRoute
+HTTPROUTE=$(cat "$HTTPROUTE_FILE")
+echo "$HTTPROUTE" > "$HTTPROUTE_FILE.before"
+
+# Keep only the first rule (the fallback rule with response-404)
+# Reset to empty state with just the fallback rule
+CLEANED_HR=$(echo "$HTTPROUTE" | yq eval 'del(.spec.rules[1:])' -)
+
+# Ensure the first rule is the fallback rule
+FIRST_RULE_BACKEND=$(echo "$CLEANED_HR" | yq eval '.spec.rules[0].backendRefs[0].name' -)
+
+if [[ "$FIRST_RULE_BACKEND" != "response-404" ]]; then
+  echo "WARNING: First rule is not the fallback rule. Resetting to fallback rule..."
+
+  # Create a clean HTTPRoute with only the fallback rule
+  CLEANED_HR=$(echo "$CLEANED_HR" | yq eval '.spec.rules = [{"matches": [{"path": {"type": "PathPrefix", "value": "/"}}], "backendRefs": [{"name": "response-404", "port": 80, "weight": 0}]}]' -)
+fi
+
+# Save the cleaned HTTPRoute
+echo "$CLEANED_HR" > "$HTTPROUTE_FILE"
+echo "$CLEANED_HR" > "$HTTPROUTE_FILE.cleaned"
+
+echo "HTTPRoute rules cleaned. Only fallback rule remains."

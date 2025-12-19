@@ -1,0 +1,61 @@
+{
+  "id": "ba21e8e6-dcc1-4b9f-87a4-3610c61dfda4",
+  "source": "service",
+  "event": "service:action:update",
+  "created_at": "2025-06-18T13:01:20.204Z",
+  "notification": {
+    "action": "service:action:update",
+    "id": "5b426145-cc25-429e-88d2-83407a6f08b3",
+    "name": "Refresh",
+    "slug": "refresh",
+    "status": "pending",
+    "created_at": "2025-06-18T13:01:20.207Z",
+    "updated_at": "2025-06-18T13:01:20.207Z",
+    "parameters": {},
+    "results": {},
+    "type": "custom",
+    "specification": {
+      "id": "0dc917a7-180c-4155-ad84-767dc5be61a4",
+      "slug": "delete-publish"
+    },
+    "service": {
+      "id": "4f3fc1da-10bf-47e7-8dd8-b9febc3ddea1",
+      "slug": "the-service-name-from-the-user",
+      "attributes": {},
+      "specification": {
+        "id": "e820250b-62e3-4e20-8647-dd41b20d1bb9",
+        "slug": "publish"
+      },
+      "dimensions": {
+        "environment": "development",
+        "country": "argentina"
+      }
+    },
+    "link": {
+      "id": "64cc013c-9545-495e-a2ac-40df06af84d6",
+      "slug": "the-link-name-from-the-user",
+      "attributes": {
+        "path": "/users",
+        "scope": "dev-us"
+      },
+      "specification": {
+        "id": "39d2d131-50b5-41b9-a739-1c3edde913ec",
+        "slug": "publish"
+      },
+      "dimensions": {}
+    },
+    "tags": {
+      "organization_id": "1255165411",
+      "organization": "kwik-e-mart",
+      "account_id": "95118862",
+      "account": "kwik-e-mart-main",
+      "namespace_id": "1068437903",
+      "namespace": "fede-m",
+      "application_id": "857154851",
+      "application": "scope-exposer",
+      "scope_id": "704207903",
+      "scope": "public-argentina"
+    },
+    "entity_nrn": "organization=1255165411:account=95118862:namespace=1249051863:application=454567105:scope=704207903"
+  }
+}

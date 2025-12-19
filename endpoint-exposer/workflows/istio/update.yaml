@@ -1,0 +1,60 @@
+steps:
+  - name: "find k8s namespace"
+    type: script
+    file: "$SERVICE_PATH/scripts/istio/fetch_provider_data"
+    output:
+      - name: K8S_NAMESPACE
+        type: environment
+      - name: ALB_NAME
+        type: environment
+  - name: "build context"
+    type: script
+    file: "$SERVICE_PATH/scripts/istio/build_context"
+    output:
+      - name: SERVICE_ID
+        type: environment
+      - name: SERVICE_NAME
+        type: environment
+      - name: ACTION_ID
+        type: environment
+      - name: ACTION_NAME
+        type: environment
+      - name: PUBLIC_DOMAIN
+        type: environment
+      - name: PRIVATE_DOMAIN
+        type: environment
+      - name: ROUTES_JSON
+        type: environment
+  - name: "fetch existing httproute"
+    type: script
+    file: "$SERVICE_PATH/scripts/istio/fetch_httproute"
+    output:
+      - name: HTTPROUTE_FILE
+        type: file
+        file: "$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml"
+  - name: "update httproute hostname"
+    type: script
+    file: "$SERVICE_PATH/scripts/istio/update_httproute_hostname"
+  - name: "clean httproute rules"
+    type: script
+    file: "$SERVICE_PATH/scripts/istio/clean_httproute_rules"
+  - name: "process routes"
+    type: script
+    file: "$SERVICE_PATH/scripts/istio/process_routes"
+    output:
+      - name: HTTPROUTE_FILE
+        type: file
+        file: "$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml"
+  - name: "update dns endpoint"
+    type: script
+    file: "$SERVICE_PATH/scripts/dns/build_dns"
+    output:
+      - name: DNS_FILE
+        type: file
+        file: "$OUTPUT_DIR/dnsendpoint-$SERVICE_ID-public.yaml"
+  - name: apply
+    type: script
+    file: "$SERVICE_PATH/scripts/istio/apply"
+    configuration:
+      ACTION: apply
+      DRY_RUN: false

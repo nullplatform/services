@@ -1,0 +1,29 @@
+#!/bin/bash
+
+set -euo pipefail
+
+echo "=== Updating HTTPRoute hostname and parentRefs ==="
+echo "HTTPROUTE_FILE: $HTTPROUTE_FILE"
+echo "PUBLIC_DOMAIN: $PUBLIC_DOMAIN"
+
+# Read the HTTPRoute
+HTTPROUTE=$(cat "$HTTPROUTE_FILE")
+
+# Update the hostname with the new public domain
+UPDATED_HR=$(echo "$HTTPROUTE" | yq eval ".spec.hostnames[0] = \"$PUBLIC_DOMAIN\"" -)
+
+# Ensure parentRefs exists and points to gateway-public
+UPDATED_HR=$(echo "$UPDATED_HR" | yq eval '.spec.parentRefs = [{"name": "gateway-public", "namespace": "gateways"}]' -)
+
+# Save the updated HTTPRoute
+echo "$UPDATED_HR" > "$HTTPROUTE_FILE"
+
+echo "HTTPRoute hostname updated to: $PUBLIC_DOMAIN"
+echo "HTTPRoute parentRefs set to gateway-public"
+
+# Debug: Verify the file was saved correctly
+echo "DEBUG: Verifying saved file..."
+SAVED_HOSTNAMES=$(cat "$HTTPROUTE_FILE" | yq eval '.spec.hostnames | length' -)
+SAVED_PARENTREFS=$(cat "$HTTPROUTE_FILE" | yq eval '.spec.parentRefs | length' -)
+echo "DEBUG: Saved file has $SAVED_HOSTNAMES hostnames"
+echo "DEBUG: Saved file has $SAVED_PARENTREFS parentRefs"
