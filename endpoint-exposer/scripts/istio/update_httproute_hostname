@@ -2,6 +2,11 @@
 
 set -euo pipefail
 
+# If HTTPROUTE_FILE_VAR is provided, use it to get the file path from that variable
+if [[ -n "${HTTPROUTE_FILE_VAR:-}" ]]; then
+  HTTPROUTE_FILE="${!HTTPROUTE_FILE_VAR}"
+fi
+
 # Use DOMAIN and GATEWAY if provided via configuration, otherwise use PUBLIC_DOMAIN and gateway-public
 DOMAIN="${DOMAIN:-${PUBLIC_DOMAIN}}"
 GATEWAY="${GATEWAY:-gateway-public}"

@@ -39,11 +39,9 @@ steps:
     file: "$SERVICE_PATH/scripts/istio/build_ingress"
     configuration:
       TEMPLATE: "$SERVICE_PATH/templates/istio/empty-internal.yaml.tpl"
-      OUTPUT_FILE: "$OUTPUT_DIR/httproute-$SERVICE_ID-internal.yaml"
     output:
       - name: HTTPROUTE_FILE_INTERNAL
-        type: file
-        file: "$OUTPUT_DIR/httproute-$SERVICE_ID-internal.yaml"
+        type: environment
   - name: "process routes"
     type: script
     file: "$SERVICE_PATH/scripts/istio/process_routes"

@@ -2,22 +2,19 @@
 
 set -euo pipefail
 
-# Determine output file - use OUTPUT_FILE if set, otherwise default to public
-if [[ -n "${OUTPUT_FILE:-}" ]]; then
-  HTTPROUTE_FILE="$OUTPUT_FILE"
-  echo "Using specified output file: $HTTPROUTE_FILE"
-else
-  HTTPROUTE_FILE="$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml"
-  echo "Using default output file: $HTTPROUTE_FILE"
-fi
-
-# Determine which domain to use based on template
+# Determine which domain to use and output file based on template
 if [[ "$TEMPLATE" == *"internal"* ]]; then
+  # Internal HTTPRoute
   SERVICE_DOMAIN=$(echo "$CONTEXT" | jq -r '.parameters.private_domain // .service.attributes.private_domain')
+  HTTPROUTE_FILE="${OUTPUT_FILE:-$OUTPUT_DIR/httproute-$SERVICE_ID-internal.yaml}"
   echo "Creating internal HTTPRoute for service $SERVICE_NAME with domain $SERVICE_DOMAIN"
+  echo "Output file: $HTTPROUTE_FILE"
 else
+  # Public HTTPRoute
   SERVICE_DOMAIN=$(echo "$CONTEXT" | jq -r '.parameters.public_domain // .service.attributes.domain')
+  HTTPROUTE_FILE="${OUTPUT_FILE:-$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml}"
   echo "Creating public HTTPRoute for service $SERVICE_NAME with domain $SERVICE_DOMAIN"
+  echo "Output file: $HTTPROUTE_FILE"
 fi
 
 CONTEXT_PATH="$OUTPUT_DIR/context-$SERVICE_ID.json"
@@ -31,3 +28,7 @@ gomplate -c .="$CONTEXT_PATH" \
   --out "$HTTPROUTE_FILE"
 
 rm "$CONTEXT_PATH"
+
+# Export the file path for the workflow
+export HTTPROUTE_FILE
+echo "HTTPRoute created at: $HTTPROUTE_FILE"

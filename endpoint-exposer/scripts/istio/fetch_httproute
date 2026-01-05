@@ -56,4 +56,6 @@ else
   echo "New HTTPRoute created from template"
 fi
 
+# Export the file path for the workflow
+export HTTPROUTE_FILE
 echo "HTTPRoute file ready at: $HTTPROUTE_FILE"
