@@ -48,13 +48,13 @@ echo "Routes sorted by specificity (Exact > RegularExpression > PathPrefix)"
 echo ""
 echo "=== Separating routes by visibility ==="
 PUBLIC_ROUTES=$(echo "$ROUTES_JSON" | jq '[.[] | select(.visibility == "public")]')
-PRIVATE_ROUTES=$(echo "$ROUTES_JSON" | jq '[.[] | select(.visibility == "private")]')
+INTERNAL_ROUTES=$(echo "$ROUTES_JSON" | jq '[.[] | select(.visibility == "internal")]')
 
 NUM_PUBLIC=$(echo "$PUBLIC_ROUTES" | jq 'length')
-NUM_PRIVATE=$(echo "$PRIVATE_ROUTES" | jq 'length')
+NUM_INTERNAL=$(echo "$INTERNAL_ROUTES" | jq 'length')
 
 echo "Public routes: $NUM_PUBLIC"
-echo "Private routes: $NUM_PRIVATE"
+echo "Internal routes: $NUM_INTERNAL"
 
 # Function to process routes for a specific visibility
 process_routes_for_visibility() {
@@ -75,8 +75,8 @@ process_routes_for_visibility() {
     HTTPROUTE_FILE="$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml"
     HTTPROUTE_NAME="${SERVICE_NAME}-${SERVICE_ID}-route"
   else
-    HTTPROUTE_FILE="$OUTPUT_DIR/httproute-$SERVICE_ID-private.yaml"
-    HTTPROUTE_NAME="${SERVICE_NAME}-${SERVICE_ID}-route-private"
+    HTTPROUTE_FILE="$OUTPUT_DIR/httproute-$SERVICE_ID-internal.yaml"
+    HTTPROUTE_NAME="${SERVICE_NAME}-${SERVICE_ID}-route-internal"
   fi
 
   export HTTPROUTE_FILE
@@ -146,8 +146,8 @@ process_routes_for_visibility() {
 # Process public routes
 process_routes_for_visibility "public" "$PUBLIC_ROUTES" "$NUM_PUBLIC"
 
-# Process private routes
-process_routes_for_visibility "private" "$PRIVATE_ROUTES" "$NUM_PRIVATE"
+# Process internal routes
+process_routes_for_visibility "internal" "$INTERNAL_ROUTES" "$NUM_INTERNAL"
 
 echo ""
 echo "=== All routes processed successfully ==="

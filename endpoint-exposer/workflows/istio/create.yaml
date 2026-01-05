@@ -21,7 +21,7 @@ steps:
         type: environment
       - name: PUBLIC_DOMAIN
         type: environment
-      - name: PRIVATE_DOMAIN
+      - name: INTERNAL_DOMAIN
         type: environment
       - name: ROUTES_JSON
         type: environment
@@ -34,16 +34,16 @@ steps:
       - name: HTTPROUTE_FILE_PUBLIC
         type: file
         file: "$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml"
-  - name: "build private httproute"
+  - name: "build internal httproute"
     type: script
     file: "$SERVICE_PATH/scripts/istio/build_ingress"
     configuration:
-      TEMPLATE: "$SERVICE_PATH/templates/istio/empty-private.yaml.tpl"
-      OUTPUT_FILE: "$OUTPUT_DIR/httproute-$SERVICE_ID-private.yaml"
+      TEMPLATE: "$SERVICE_PATH/templates/istio/empty-internal.yaml.tpl"
+      OUTPUT_FILE: "$OUTPUT_DIR/httproute-$SERVICE_ID-internal.yaml"
     output:
-      - name: HTTPROUTE_FILE_PRIVATE
+      - name: HTTPROUTE_FILE_INTERNAL
         type: file
-        file: "$OUTPUT_DIR/httproute-$SERVICE_ID-private.yaml"
+        file: "$OUTPUT_DIR/httproute-$SERVICE_ID-internal.yaml"
   - name: "process routes"
     type: script
     file: "$SERVICE_PATH/scripts/istio/process_routes"
@@ -51,9 +51,9 @@ steps:
       - name: HTTPROUTE_FILE_PUBLIC
         type: file
         file: "$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml"
-      - name: HTTPROUTE_FILE_PRIVATE
+      - name: HTTPROUTE_FILE_INTERNAL
         type: file
-        file: "$OUTPUT_DIR/httproute-$SERVICE_ID-private.yaml"
+        file: "$OUTPUT_DIR/httproute-$SERVICE_ID-internal.yaml"
   - name: "build public dns endpoint"
     type: script
     file: "$SERVICE_PATH/scripts/dns/build_dns"
@@ -63,15 +63,15 @@ steps:
       - name: DNS_FILE_PUBLIC
         type: file
         file: "$OUTPUT_DIR/dnsendpoint-$SERVICE_ID-public.yaml"
-  - name: "build private dns endpoint"
+  - name: "build internal dns endpoint"
     type: script
     file: "$SERVICE_PATH/scripts/dns/build_dns"
     configuration:
-      VISIBILITY: "private"
+      VISIBILITY: "internal"
     output:
-      - name: DNS_FILE_PRIVATE
+      - name: DNS_FILE_INTERNAL
         type: file
-        file: "$OUTPUT_DIR/dnsendpoint-$SERVICE_ID-private.yaml"
+        file: "$OUTPUT_DIR/dnsendpoint-$SERVICE_ID-internal.yaml"
   - name: apply
     type: script
     file: "$SERVICE_PATH/scripts/istio/apply"

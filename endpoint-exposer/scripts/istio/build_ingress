@@ -12,9 +12,9 @@ else
 fi
 
 # Determine which domain to use based on template
-if [[ "$TEMPLATE" == *"private"* ]]; then
+if [[ "$TEMPLATE" == *"internal"* ]]; then
   SERVICE_DOMAIN=$(echo "$CONTEXT" | jq -r '.parameters.private_domain // .service.attributes.private_domain')
-  echo "Creating private HTTPRoute for service $SERVICE_NAME with domain $SERVICE_DOMAIN"
+  echo "Creating internal HTTPRoute for service $SERVICE_NAME with domain $SERVICE_DOMAIN"
 else
   SERVICE_DOMAIN=$(echo "$CONTEXT" | jq -r '.parameters.public_domain // .service.attributes.domain')
   echo "Creating public HTTPRoute for service $SERVICE_NAME with domain $SERVICE_DOMAIN"

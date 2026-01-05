@@ -9,12 +9,12 @@ VISIBILITY="${VISIBILITY:-public}"
 echo "DEBUG: VISIBILITY=$VISIBILITY"
 
 # Select domain and gateway based on visibility
-if [[ "$VISIBILITY" == "private" ]]; then
+if [[ "$VISIBILITY" == "internal" ]]; then
   SERVICE_DOMAIN=$(echo "$CONTEXT" | jq -r '.parameters.private_domain')
-  GATEWAY_NAME=${PRIVATE_GATEWAY_NAME:-"gateway-private"}
-  DNS_TEMPLATE="$SERVICE_PATH/templates/istio/dns-endpoint-private.yaml.tpl"
-  DNS_FILE="$OUTPUT_DIR/dnsendpoint-$SERVICE_ID-private.yaml"
-  echo "DEBUG: Building PRIVATE DNS endpoint"
+  GATEWAY_NAME=${INTERNAL_GATEWAY_NAME:-"gateway-internal"}
+  DNS_TEMPLATE="$SERVICE_PATH/templates/istio/dns-endpoint-internal.yaml.tpl"
+  DNS_FILE="$OUTPUT_DIR/dnsendpoint-$SERVICE_ID-internal.yaml"
+  echo "DEBUG: Building INTERNAL DNS endpoint"
 else
   SERVICE_DOMAIN=$(echo "$CONTEXT" | jq -r '.parameters.public_domain')
   GATEWAY_NAME=${PUBLIC_GATEWAY_NAME:-"gateway-public"}

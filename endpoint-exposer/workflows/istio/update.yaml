@@ -34,16 +34,16 @@ steps:
       - name: HTTPROUTE_FILE_PUBLIC
         type: file
         file: "$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml"
-  - name: "fetch existing private httproute"
+  - name: "fetch existing internal httproute"
     type: script
     file: "$SERVICE_PATH/scripts/istio/fetch_httproute"
     configuration:
-      VISIBILITY: "private"
-      OUTPUT_FILE: "$OUTPUT_DIR/httproute-$SERVICE_ID-private.yaml"
+      VISIBILITY: "internal"
+      OUTPUT_FILE: "$OUTPUT_DIR/httproute-$SERVICE_ID-internal.yaml"
     output:
-      - name: HTTPROUTE_FILE_PRIVATE
+      - name: HTTPROUTE_FILE_INTERNAL
         type: file
-        file: "$OUTPUT_DIR/httproute-$SERVICE_ID-private.yaml"
+        file: "$OUTPUT_DIR/httproute-$SERVICE_ID-internal.yaml"
   - name: "update public httproute hostname"
     type: script
     file: "$SERVICE_PATH/scripts/istio/update_httproute_hostname"
@@ -51,23 +51,23 @@ steps:
       HTTPROUTE_FILE: "$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml"
       DOMAIN: "$PUBLIC_DOMAIN"
       GATEWAY: "gateway-public"
-  - name: "update private httproute hostname"
+  - name: "update internal httproute hostname"
     type: script
     file: "$SERVICE_PATH/scripts/istio/update_httproute_hostname"
     configuration:
-      HTTPROUTE_FILE: "$OUTPUT_DIR/httproute-$SERVICE_ID-private.yaml"
+      HTTPROUTE_FILE: "$OUTPUT_DIR/httproute-$SERVICE_ID-internal.yaml"
       DOMAIN: "$PRIVATE_DOMAIN"
-      GATEWAY: "gateway-private"
+      GATEWAY: "gateway-internal"
   - name: "clean public httproute rules"
     type: script
     file: "$SERVICE_PATH/scripts/istio/clean_httproute_rules"
     configuration:
       HTTPROUTE_FILE: "$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml"
-  - name: "clean private httproute rules"
+  - name: "clean internal httproute rules"
     type: script
     file: "$SERVICE_PATH/scripts/istio/clean_httproute_rules"
     configuration:
-      HTTPROUTE_FILE: "$OUTPUT_DIR/httproute-$SERVICE_ID-private.yaml"
+      HTTPROUTE_FILE: "$OUTPUT_DIR/httproute-$SERVICE_ID-internal.yaml"
   - name: "process routes"
     type: script
     file: "$SERVICE_PATH/scripts/istio/process_routes"
@@ -75,9 +75,9 @@ steps:
       - name: HTTPROUTE_FILE_PUBLIC
         type: file
         file: "$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml"
-      - name: HTTPROUTE_FILE_PRIVATE
+      - name: HTTPROUTE_FILE_INTERNAL
         type: file
-        file: "$OUTPUT_DIR/httproute-$SERVICE_ID-private.yaml"
+        file: "$OUTPUT_DIR/httproute-$SERVICE_ID-internal.yaml"
   - name: "update public dns endpoint"
     type: script
     file: "$SERVICE_PATH/scripts/dns/build_dns"
@@ -87,15 +87,15 @@ steps:
       - name: DNS_FILE_PUBLIC
         type: file
         file: "$OUTPUT_DIR/dnsendpoint-$SERVICE_ID-public.yaml"
-  - name: "update private dns endpoint"
+  - name: "update internal dns endpoint"
     type: script
     file: "$SERVICE_PATH/scripts/dns/build_dns"
     configuration:
-      VISIBILITY: "private"
+      VISIBILITY: "internal"
     output:
-      - name: DNS_FILE_PRIVATE
+      - name: DNS_FILE_INTERNAL
         type: file
-        file: "$OUTPUT_DIR/dnsendpoint-$SERVICE_ID-private.yaml"
+        file: "$OUTPUT_DIR/dnsendpoint-$SERVICE_ID-internal.yaml"
   - name: apply
     type: script
     file: "$SERVICE_PATH/scripts/istio/apply"

@@ -12,9 +12,9 @@ VISIBILITY="${VISIBILITY:-public}"
 echo "Visibility: $VISIBILITY"
 
 # Build the HTTPRoute name using the same pattern as the template
-if [[ "$VISIBILITY" == "private" ]]; then
-  HTTPROUTE_NAME="${SERVICE_NAME}-${SERVICE_ID}-route-private"
-  TEMPLATE="$SERVICE_PATH/templates/istio/empty-private.yaml.tpl"
+if [[ "$VISIBILITY" == "internal" ]]; then
+  HTTPROUTE_NAME="${SERVICE_NAME}-${SERVICE_ID}-route-internal"
+  TEMPLATE="$SERVICE_PATH/templates/istio/empty-internal.yaml.tpl"
 else
   HTTPROUTE_NAME="${SERVICE_NAME}-${SERVICE_ID}-route"
   TEMPLATE="$SERVICE_PATH/templates/istio/empty.yaml.tpl"
