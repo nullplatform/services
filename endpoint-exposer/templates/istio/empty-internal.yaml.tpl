@@ -10,7 +10,7 @@ metadata:
     visibility: internal
 spec:
   parentRefs:
-    - name: gateway-internal
+    - name: gateway-public
       namespace: gateways
   hostnames:
     - {{ if has . "parameters" }}{{ if has .parameters "private_domain" }}{{ .parameters.private_domain }}{{ else }}{{ .service.attributes.private_domain }}{{ end }}{{ else }}{{ .service.attributes.private_domain }}{{ end }}
