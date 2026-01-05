@@ -52,27 +52,9 @@ steps:
       - name: HTTPROUTE_FILE_INTERNAL
         type: file
         file: "$OUTPUT_DIR/httproute-$SERVICE_ID-internal.yaml"
-  - name: "build public dns endpoint"
-    type: script
-    file: "$SERVICE_PATH/scripts/dns/build_dns"
-    configuration:
-      VISIBILITY: "public"
-    output:
-      - name: DNS_FILE_PUBLIC
-        type: file
-        file: "$OUTPUT_DIR/dnsendpoint-$SERVICE_ID-public.yaml"
-  - name: "build internal dns endpoint"
-    type: script
-    file: "$SERVICE_PATH/scripts/dns/build_dns"
-    configuration:
-      VISIBILITY: "internal"
-    output:
-      - name: DNS_FILE_INTERNAL
-        type: file
-        file: "$OUTPUT_DIR/dnsendpoint-$SERVICE_ID-internal.yaml"
   - name: apply
     type: script
-    file: "$SERVICE_PATH/scripts/istio/apply"
+    file: "$SERVICE_PATH/scripts/common/apply"
     configuration:
       ACTION: apply
       DRY_RUN: false
