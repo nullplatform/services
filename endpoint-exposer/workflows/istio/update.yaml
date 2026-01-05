@@ -55,7 +55,7 @@ steps:
     configuration:
       HTTPROUTE_FILE_VAR: "HTTPROUTE_FILE_INTERNAL"
       DOMAIN: "$PRIVATE_DOMAIN"
-      GATEWAY: "gateway-internal"
+      GATEWAY: "gateway-public"
   - name: "clean public httproute rules"
     type: script
     file: "$SERVICE_PATH/scripts/istio/clean_httproute_rules"

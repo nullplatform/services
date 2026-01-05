@@ -20,6 +20,6 @@ spec:
             type: PathPrefix
             value: /
       backendRefs:
-        - name: response-404
+        - name: response-404F
           port: 80
           weight: 0
