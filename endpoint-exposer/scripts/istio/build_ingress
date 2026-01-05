@@ -2,13 +2,24 @@
 
 set -euo pipefail
 
-SERVICE_DOMAIN=$(echo "$CONTEXT" | jq -r '.parameters.public_domain // .service.attributes.domain')
+# Determine output file - use OUTPUT_FILE if set, otherwise default to public
+if [[ -n "${OUTPUT_FILE:-}" ]]; then
+  HTTPROUTE_FILE="$OUTPUT_FILE"
+  echo "Using specified output file: $HTTPROUTE_FILE"
+else
+  HTTPROUTE_FILE="$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml"
+  echo "Using default output file: $HTTPROUTE_FILE"
+fi
 
-echo "Creating HTTPRoute for service $SERVICE_NAME with domain $SERVICE_DOMAIN"
+# Determine which domain to use based on template
+if [[ "$TEMPLATE" == *"private"* ]]; then
+  SERVICE_DOMAIN=$(echo "$CONTEXT" | jq -r '.parameters.private_domain // .service.attributes.private_domain')
+  echo "Creating private HTTPRoute for service $SERVICE_NAME with domain $SERVICE_DOMAIN"
+else
+  SERVICE_DOMAIN=$(echo "$CONTEXT" | jq -r '.parameters.public_domain // .service.attributes.domain')
+  echo "Creating public HTTPRoute for service $SERVICE_NAME with domain $SERVICE_DOMAIN"
+fi
 
-echo "Creating public HTTPRoute..."
-
-HTTPROUTE_FILE="$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml"
 CONTEXT_PATH="$OUTPUT_DIR/context-$SERVICE_ID.json"
 
 echo "$CONTEXT" > "$CONTEXT_PATH"

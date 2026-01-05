@@ -25,26 +25,59 @@ steps:
         type: environment
       - name: ROUTES_JSON
         type: environment
-  - name: "fetch existing httproute"
+  - name: "fetch existing public httproute"
     type: script
     file: "$SERVICE_PATH/scripts/istio/fetch_httproute"
+    configuration:
+      VISIBILITY: "public"
     output:
-      - name: HTTPROUTE_FILE
+      - name: HTTPROUTE_FILE_PUBLIC
         type: file
         file: "$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml"
-  - name: "update httproute hostname"
+  - name: "fetch existing private httproute"
+    type: script
+    file: "$SERVICE_PATH/scripts/istio/fetch_httproute"
+    configuration:
+      VISIBILITY: "private"
+      OUTPUT_FILE: "$OUTPUT_DIR/httproute-$SERVICE_ID-private.yaml"
+    output:
+      - name: HTTPROUTE_FILE_PRIVATE
+        type: file
+        file: "$OUTPUT_DIR/httproute-$SERVICE_ID-private.yaml"
+  - name: "update public httproute hostname"
     type: script
     file: "$SERVICE_PATH/scripts/istio/update_httproute_hostname"
-  - name: "clean httproute rules"
+    configuration:
+      HTTPROUTE_FILE: "$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml"
+      DOMAIN: "$PUBLIC_DOMAIN"
+      GATEWAY: "gateway-public"
+  - name: "update private httproute hostname"
+    type: script
+    file: "$SERVICE_PATH/scripts/istio/update_httproute_hostname"
+    configuration:
+      HTTPROUTE_FILE: "$OUTPUT_DIR/httproute-$SERVICE_ID-private.yaml"
+      DOMAIN: "$PRIVATE_DOMAIN"
+      GATEWAY: "gateway-private"
+  - name: "clean public httproute rules"
     type: script
     file: "$SERVICE_PATH/scripts/istio/clean_httproute_rules"
+    configuration:
+      HTTPROUTE_FILE: "$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml"
+  - name: "clean private httproute rules"
+    type: script
+    file: "$SERVICE_PATH/scripts/istio/clean_httproute_rules"
+    configuration:
+      HTTPROUTE_FILE: "$OUTPUT_DIR/httproute-$SERVICE_ID-private.yaml"
   - name: "process routes"
     type: script
     file: "$SERVICE_PATH/scripts/istio/process_routes"
     output:
-      - name: HTTPROUTE_FILE
+      - name: HTTPROUTE_FILE_PUBLIC
         type: file
         file: "$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml"
+      - name: HTTPROUTE_FILE_PRIVATE
+        type: file
+        file: "$OUTPUT_DIR/httproute-$SERVICE_ID-private.yaml"
   - name: "update dns endpoint"
     type: script
     file: "$SERVICE_PATH/scripts/dns/build_dns"

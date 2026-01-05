@@ -7,12 +7,26 @@ echo "SERVICE_ID: $SERVICE_ID"
 echo "SERVICE_NAME: $SERVICE_NAME"
 echo "K8S_NAMESPACE: $K8S_NAMESPACE"
 
+# Determine visibility (default to public if not set)
+VISIBILITY="${VISIBILITY:-public}"
+echo "Visibility: $VISIBILITY"
+
 # Build the HTTPRoute name using the same pattern as the template
-HTTPROUTE_NAME="${SERVICE_NAME}-${SERVICE_ID}-route"
+if [[ "$VISIBILITY" == "private" ]]; then
+  HTTPROUTE_NAME="${SERVICE_NAME}-${SERVICE_ID}-route-private"
+  TEMPLATE="$SERVICE_PATH/templates/istio/empty-private.yaml.tpl"
+else
+  HTTPROUTE_NAME="${SERVICE_NAME}-${SERVICE_ID}-route"
+  TEMPLATE="$SERVICE_PATH/templates/istio/empty.yaml.tpl"
+fi
 echo "HTTPRoute name: $HTTPROUTE_NAME"
 
-# Define output file
-HTTPROUTE_FILE="$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml"
+# Define output file - use OUTPUT_FILE if set, otherwise default based on visibility
+if [[ -n "${OUTPUT_FILE:-}" ]]; then
+  HTTPROUTE_FILE="$OUTPUT_FILE"
+else
+  HTTPROUTE_FILE="$OUTPUT_DIR/httproute-$SERVICE_ID-$VISIBILITY.yaml"
+fi
 
 # Create output directory if it doesn't exist
 mkdir -p "$OUTPUT_DIR"

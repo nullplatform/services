@@ -25,22 +25,35 @@ steps:
         type: environment
       - name: ROUTES_JSON
         type: environment
-  - name: "build httproute"
+  - name: "build public httproute"
     type: script
     file: "$SERVICE_PATH/scripts/istio/build_ingress"
     configuration:
       TEMPLATE: "$SERVICE_PATH/templates/istio/empty.yaml.tpl"
     output:
-      - name: HTTPROUTE_FILE
+      - name: HTTPROUTE_FILE_PUBLIC
         type: file
         file: "$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml"
+  - name: "build private httproute"
+    type: script
+    file: "$SERVICE_PATH/scripts/istio/build_ingress"
+    configuration:
+      TEMPLATE: "$SERVICE_PATH/templates/istio/empty-private.yaml.tpl"
+      OUTPUT_FILE: "$OUTPUT_DIR/httproute-$SERVICE_ID-private.yaml"
+    output:
+      - name: HTTPROUTE_FILE_PRIVATE
+        type: file
+        file: "$OUTPUT_DIR/httproute-$SERVICE_ID-private.yaml"
   - name: "process routes"
     type: script
     file: "$SERVICE_PATH/scripts/istio/process_routes"
     output:
-      - name: HTTPROUTE_FILE
+      - name: HTTPROUTE_FILE_PUBLIC
         type: file
         file: "$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml"
+      - name: HTTPROUTE_FILE_PRIVATE
+        type: file
+        file: "$OUTPUT_DIR/httproute-$SERVICE_ID-private.yaml"
   - name: "build dns endpoint"
     type: script
     file: "$SERVICE_PATH/scripts/dns/build_dns"

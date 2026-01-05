@@ -2,24 +2,29 @@
 
 set -euo pipefail
 
+# Use DOMAIN and GATEWAY if provided via configuration, otherwise use PUBLIC_DOMAIN and gateway-public
+DOMAIN="${DOMAIN:-${PUBLIC_DOMAIN}}"
+GATEWAY="${GATEWAY:-gateway-public}"
+
 echo "=== Updating HTTPRoute hostname and parentRefs ==="
 echo "HTTPROUTE_FILE: $HTTPROUTE_FILE"
-echo "PUBLIC_DOMAIN: $PUBLIC_DOMAIN"
+echo "DOMAIN: $DOMAIN"
+echo "GATEWAY: $GATEWAY"
 
 # Read the HTTPRoute
 HTTPROUTE=$(cat "$HTTPROUTE_FILE")
 
-# Update the hostname with the new public domain
-UPDATED_HR=$(echo "$HTTPROUTE" | yq eval ".spec.hostnames[0] = \"$PUBLIC_DOMAIN\"" -)
+# Update the hostname with the new domain
+UPDATED_HR=$(echo "$HTTPROUTE" | yq eval ".spec.hostnames[0] = \"$DOMAIN\"" -)
 
-# Ensure parentRefs exists and points to gateway-public
-UPDATED_HR=$(echo "$UPDATED_HR" | yq eval '.spec.parentRefs = [{"name": "gateway-public", "namespace": "gateways"}]' -)
+# Ensure parentRefs exists and points to the specified gateway
+UPDATED_HR=$(echo "$UPDATED_HR" | yq eval ".spec.parentRefs = [{\"name\": \"$GATEWAY\", \"namespace\": \"gateways\"}]" -)
 
 # Save the updated HTTPRoute
 echo "$UPDATED_HR" > "$HTTPROUTE_FILE"
 
-echo "HTTPRoute hostname updated to: $PUBLIC_DOMAIN"
-echo "HTTPRoute parentRefs set to gateway-public"
+echo "HTTPRoute hostname updated to: $DOMAIN"
+echo "HTTPRoute parentRefs set to: $GATEWAY"
 
 # Debug: Verify the file was saved correctly
 echo "DEBUG: Verifying saved file..."
