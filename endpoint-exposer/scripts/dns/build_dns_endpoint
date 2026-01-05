@@ -4,26 +4,42 @@ set -euo pipefail
 
 echo "=== DEBUG: Starting build_dns_endpoint ==="
 
-SERVICE_DOMAIN=$(echo "$CONTEXT" | jq -r '.parameters.public_domain')
+# Determine visibility (default to public if not set)
+VISIBILITY="${VISIBILITY:-public}"
+echo "DEBUG: VISIBILITY=$VISIBILITY"
+
+# Select domain and gateway based on visibility
+if [[ "$VISIBILITY" == "private" ]]; then
+  SERVICE_DOMAIN=$(echo "$CONTEXT" | jq -r '.parameters.private_domain')
+  GATEWAY_NAME=${PRIVATE_GATEWAY_NAME:-"gateway-private"}
+  DNS_TEMPLATE="$SERVICE_PATH/templates/istio/dns-endpoint-private.yaml.tpl"
+  DNS_FILE="$OUTPUT_DIR/dnsendpoint-$SERVICE_ID-private.yaml"
+  echo "DEBUG: Building PRIVATE DNS endpoint"
+else
+  SERVICE_DOMAIN=$(echo "$CONTEXT" | jq -r '.parameters.public_domain')
+  GATEWAY_NAME=${PUBLIC_GATEWAY_NAME:-"gateway-public"}
+  DNS_TEMPLATE="$SERVICE_PATH/templates/istio/dns-endpoint.yaml.tpl"
+  DNS_FILE="$OUTPUT_DIR/dnsendpoint-$SERVICE_ID-public.yaml"
+  echo "DEBUG: Building PUBLIC DNS endpoint"
+fi
+
 echo "DEBUG: SERVICE_DOMAIN=$SERVICE_DOMAIN"
+echo "DEBUG: GATEWAY_NAME=$GATEWAY_NAME"
 
-
-PUBLIC_GATEWAY_NAME=${PUBLIC_GATEWAY_NAME:-"gateway-public"}
 GATEWAY_NAMESPACE=${GATEWAY_NAMESPACE:-"gateways"}
 
-echo "DEBUG: Fetching gateway IP from $PUBLIC_GATEWAY_NAME..."
-GATEWAY_IP=$(kubectl get gateway -n "$GATEWAY_NAMESPACE" "$PUBLIC_GATEWAY_NAME" -o jsonpath='{.status.addresses[0].value}')
+echo "DEBUG: Fetching gateway IP from $GATEWAY_NAME..."
+GATEWAY_IP=$(kubectl get gateway -n "$GATEWAY_NAMESPACE" "$GATEWAY_NAME" -o jsonpath='{.status.addresses[0].value}')
 echo "DEBUG: GATEWAY_IP=$GATEWAY_IP"
 
 if [[ -z "$GATEWAY_IP" || "$GATEWAY_IP" == "null" ]]; then
-    echo "ERROR: Could not retrieve gateway IP from $PUBLIC_GATEWAY_NAME"
+    echo "ERROR: Could not retrieve gateway IP from $GATEWAY_NAME"
     exit 1
 fi
 
 echo "Creating DNSEndpoint for service $SERVICE_NAME with domain $SERVICE_DOMAIN"
 
-DNS_FILE="$OUTPUT_DIR/dnsendpoint-$SERVICE_ID-public.yaml"
-CONTEXT_PATH="$OUTPUT_DIR/context-dns-$SERVICE_ID.json"
+CONTEXT_PATH="$OUTPUT_DIR/context-dns-$SERVICE_ID-$VISIBILITY.json"
 
 # Add gateway_ip to context
 CONTEXT_WITH_IP=$(echo "$CONTEXT" | jq --arg gateway_ip "$GATEWAY_IP" '. + {gateway_ip: $gateway_ip}')
@@ -33,7 +49,7 @@ echo "$CONTEXT_WITH_IP" > "$CONTEXT_PATH"
 echo "Building DNSEndpoint Template to $DNS_FILE"
 
 gomplate -c .="$CONTEXT_PATH" \
-  --file "$SERVICE_PATH/templates/istio/dns-endpoint.yaml.tpl" \
+  --file "$DNS_TEMPLATE" \
   --out "$DNS_FILE"
 
 rm "$CONTEXT_PATH"

@@ -54,13 +54,24 @@ steps:
       - name: HTTPROUTE_FILE_PRIVATE
         type: file
         file: "$OUTPUT_DIR/httproute-$SERVICE_ID-private.yaml"
-  - name: "build dns endpoint"
+  - name: "build public dns endpoint"
     type: script
     file: "$SERVICE_PATH/scripts/dns/build_dns"
+    configuration:
+      VISIBILITY: "public"
     output:
-      - name: DNS_FILE
+      - name: DNS_FILE_PUBLIC
         type: file
         file: "$OUTPUT_DIR/dnsendpoint-$SERVICE_ID-public.yaml"
+  - name: "build private dns endpoint"
+    type: script
+    file: "$SERVICE_PATH/scripts/dns/build_dns"
+    configuration:
+      VISIBILITY: "private"
+    output:
+      - name: DNS_FILE_PRIVATE
+        type: file
+        file: "$OUTPUT_DIR/dnsendpoint-$SERVICE_ID-private.yaml"
   - name: apply
     type: script
     file: "$SERVICE_PATH/scripts/istio/apply"
