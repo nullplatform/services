@@ -2,6 +2,7 @@
 
 echo "=== DEBUG: Starting sync_exposer script ==="
 
+echo "DEBUG: $CONTEXT"
 SCOPE_NRN=$(echo "$CONTEXT" | jq -r .scope.nrn)
 
 echo "SERVICE SPECIFICATION SLUG: $SERVICE_SPECIFICATION_SLUG, SCOPE_NRN: $SCOPE_NRN"
