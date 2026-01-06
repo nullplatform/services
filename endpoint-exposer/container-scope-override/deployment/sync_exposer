@@ -95,7 +95,7 @@ while true; do
   fi
 
   echo "DEBUG: Reading action status..."
-  ACTION_RESPONSE=$(np service action read --id "$ACTION_ID" --format json)
+  ACTION_RESPONSE=$(np service action read --serviceId "$SERVICE_ID" --id "$ACTION_ID" --format json)
   ACTION_STATUS=$(jq -r .status <<< "$ACTION_RESPONSE")
 
   echo "Checking endpoint exposer update action[id=$ACTION_ID, status=$ACTION_STATUS]"
