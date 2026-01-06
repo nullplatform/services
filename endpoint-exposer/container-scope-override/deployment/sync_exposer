@@ -1,8 +1,6 @@
 #!/bin/bash
 
 echo "=== DEBUG: Starting sync_exposer script ==="
-echo "DEBUG: CONTEXT=$CONTEXT"
-echo "DEBUG: SERVICE_SPECIFICATION_SLUG=$SERVICE_SPECIFICATION_SLUG"
 
 SCOPE_NRN=$(echo "$CONTEXT" | jq -r .scope.nrn)
 
@@ -11,14 +9,12 @@ echo "SERVICE SPECIFICATION SLUG: $SERVICE_SPECIFICATION_SLUG, SCOPE_NRN: $SCOPE
 # Step 1: Get service specification by slug
 echo "DEBUG: Fetching service specifications..."
 SERVICE_SPECS=$(np service specification list --nrn "$SCOPE_NRN" --type dependency --format json)
-echo "DEBUG: Service specifications fetched: $SERVICE_SPECS"
 
 SERVICE_SPEC=$(echo "$SERVICE_SPECS" | jq -c --arg slug "$SERVICE_SPECIFICATION_SLUG" '
   .results
   | map(select(.slug == $slug))
   | .[0]
 ')
-echo "DEBUG: Filtered service spec: $SERVICE_SPEC"
 
 SERVICE_SPEC_ID=$(echo "$SERVICE_SPEC" | jq -r .id)
 
