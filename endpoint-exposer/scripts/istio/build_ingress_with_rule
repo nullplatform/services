@@ -216,18 +216,41 @@ update_httproute_rule() {
 find_rule_index() {
   local hr_yaml="$1"
   local target_path="$2"
+  local target_method="${3:-}"
 
   local num_rules
   local i
   local current_path
+  local current_method
 
   num_rules=$(yq '.spec.rules | length' <<< "$hr_yaml")
 
   for ((i=0; i<num_rules; i++)); do
     current_path=$(yq ".spec.rules[$i].matches[0].path.value" <<< "$hr_yaml")
-    if [[ "$current_path" == "\"$target_path\"" || "$current_path" == "$target_path" ]]; then
-      echo "$i"
-      return
+    current_method=$(yq ".spec.rules[$i].matches[0].method" <<< "$hr_yaml")
+
+    # Remove quotes if present
+    current_path="${current_path//\"/}"
+    current_method="${current_method//\"/}"
+
+    # Handle null method (rule without method filter)
+    if [[ "$current_method" == "null" ]]; then
+      current_method=""
+    fi
+
+    # Match if path matches AND method matches (or both are empty/null)
+    if [[ "$current_path" == "$target_path" ]]; then
+      # If target method is empty/null, match only if current method is also empty/null
+      if [[ -z "$target_method" || "$target_method" == "null" ]]; then
+        if [[ -z "$current_method" || "$current_method" == "null" ]]; then
+          echo "$i"
+          return
+        fi
+      # If target method is specified, match only if current method matches
+      elif [[ "$current_method" == "$target_method" ]]; then
+        echo "$i"
+        return
+      fi
     fi
   done
 
@@ -333,8 +356,12 @@ if [[ "$IS_EMPTY" == "true" ]]; then
   UPDATED_HR=$(replace_existing_rule "$HTTPROUTE" "$RULE_PATH" "$SERVICE" "$BLUE_GREEN_CONFIG" "0" "${METHOD:-}" "${VISIBILITY:-public}")
   echo "$UPDATED_HR" | yq "." > "$HTTPROUTE_FILE"
 else
-  RULE_INDEX=$(find_rule_index "$HTTPROUTE" "$RULE_PATH")
-  echo "Found rule index for path '$RULE_PATH': $RULE_INDEX"
+  # Detect the converted path value to match against existing rules
+  PATH_TYPE_VALUE=$(detect_path_type "$RULE_PATH")
+  CONVERTED_PATH="${PATH_TYPE_VALUE#*:}"
+
+  RULE_INDEX=$(find_rule_index "$HTTPROUTE" "$CONVERTED_PATH" "${METHOD:-}")
+  echo "Found rule index for path '$CONVERTED_PATH' with method '${METHOD:-none}': $RULE_INDEX"
 
   # if there is a rule for the path we replace it
   if [[ "$RULE_INDEX" != "-1" ]]; then
