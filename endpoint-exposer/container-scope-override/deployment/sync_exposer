@@ -3,21 +3,20 @@
 echo "=== DEBUG: Starting sync_exposer script ==="
 
 echo "DEBUG: $CONTEXT"
-SCOPE_NRN=$(echo "$CONTEXT" | jq -r .scope.nrn)
+APPLICATION_NRN=$(jq -r .application.nrn <<< "$CONTEXT")
 
-echo "SERVICE SPECIFICATION SLUG: $SERVICE_SPECIFICATION_SLUG, SCOPE_NRN: $SCOPE_NRN"
+echo "SERVICE SPECIFICATION SLUG: $SERVICE_SPECIFICATION_SLUG, APPLICATION_NRN: $APPLICATION_NRN"
 
 # Step 1: Get service specification by slug
 echo "DEBUG: Fetching service specifications..."
-SERVICE_SPECS=$(np service specification list --nrn "$SCOPE_NRN" --type dependency --format json)
-
-SERVICE_SPEC=$(echo "$SERVICE_SPECS" | jq -c --arg slug "$SERVICE_SPECIFICATION_SLUG" '
+SERVICE_SPECS=$(np service specification list --nrn "$APPLICATION_NRN" --type dependency --format json)
+SERVICE_SPEC=$(jq -c --arg slug "$SERVICE_SPECIFICATION_SLUG" '
   .results
   | map(select(.slug == $slug))
   | .[0]
-')
+' <<< "$SERVICE_SPECS")
 
-SERVICE_SPEC_ID=$(echo "$SERVICE_SPEC" | jq -r .id)
+SERVICE_SPEC_ID=$(jq -r .id <<< "$SERVICE_SPEC")
 
 if [[ -z "$SERVICE_SPEC_ID" || "$SERVICE_SPEC_ID" == "null" ]]; then
   echo "Error: Could not find service specification with slug '$SERVICE_SPECIFICATION_SLUG'"
@@ -26,106 +25,91 @@ fi
 
 echo "DEBUG: SERVICE_SPEC_ID=$SERVICE_SPEC_ID"
 
-# Step 2: Get link specification with slug "publish"
-echo "DEBUG: Fetching link specifications for service spec..."
-LINK_SPECS=$(np service specification link specification list --id "$SERVICE_SPEC_ID" --format json)
-echo "DEBUG: Link specifications fetched: $LINK_SPECS"
+# Step 2: Get service instance that matches the SERVICE_SPEC_ID
+echo "DEBUG: Fetching services for application..."
+SERVICES=$(np service list --nrn "$APPLICATION_NRN" --format json)
 
-PUBLISH_LINK_SPEC=$(echo "$LINK_SPECS" | jq -c '
+SERVICE=$(jq -c --arg spec_id "$SERVICE_SPEC_ID" '
   .results
-  | map(select(.slug == "publish"))
+  | map(select(.specification_id == $spec_id))
   | .[0]
-')
-echo "DEBUG: Filtered publish link spec: $PUBLISH_LINK_SPEC"
+' <<< "$SERVICES")
 
-LINK_SPECIFICATION_ID=$(echo "$PUBLISH_LINK_SPEC" | jq -r .id)
+SERVICE_ID=$(jq -r .id <<< "$SERVICE")
 
-if [[ -z "$LINK_SPECIFICATION_ID" || "$LINK_SPECIFICATION_ID" == "null" ]]; then
-  echo "Error: Could not find link specification with slug 'publish' for service specification '$SERVICE_SPEC_ID'"
+if [[ -z "$SERVICE_ID" || "$SERVICE_ID" == "null" ]]; then
+  echo "Error: Could not find service instance for specification '$SERVICE_SPEC_ID'"
   exit 1
 fi
 
-echo "DEBUG: LINK_SPECIFICATION_ID=$LINK_SPECIFICATION_ID"
+echo "DEBUG: SERVICE_ID=$SERVICE_ID"
 
-echo "DEBUG: Fetching links for scope..."
-LINKS=$(np link list --nrn "$SCOPE_NRN" --format json --status active)
-echo "DEBUG: Links fetched. Response: $LINKS"
+# Step 3: Get service attributes as parameters
+echo "DEBUG: Reading service attributes..."
+SERVICE_DATA=$(np service read --id "$SERVICE_ID" --format json)
+export PARAMETERS=$(jq -c .attributes <<< "$SERVICE_DATA")
 
-EXPOSER_LINKS=$(echo "$LINKS" | jq -c --arg spec "$LINK_SPECIFICATION_ID" '
+echo "DEBUG: PARAMETERS=$PARAMETERS"
+
+# Step 4: Get action specification with slug "update-<service-spec-slug>"
+ACTION_SLUG="update-$SERVICE_SPECIFICATION_SLUG"
+echo "DEBUG: Fetching action specifications (looking for slug: $ACTION_SLUG)..."
+SERVICE_ACTIONS=$(np service specification action specification list --serviceSpecificationId "$SERVICE_SPEC_ID" --format json)
+
+ACTION_SPEC=$(jq -c --arg slug "$ACTION_SLUG" '
   .results
-  | map(select(.specification_id == $spec))
-')
-echo "DEBUG: EXPOSER_LINKS filtered: $EXPOSER_LINKS"
+  | map(select(.slug == $slug))
+  | .[0]
+' <<< "$SERVICE_ACTIONS")
 
-COUNT=$(echo "$EXPOSER_LINKS" | jq 'length')
-echo "DEBUG: COUNT=$COUNT"
+ACTION_SPEC_ID=$(jq -r .id <<< "$ACTION_SPEC")
 
-if [[ "$COUNT" -eq 0 ]]; then
-  echo "This scope is not public, skipping public ingress synchronization"
-  return
+if [[ -z "$ACTION_SPEC_ID" || "$ACTION_SPEC_ID" == "null" ]]; then
+  echo "Error: Could not find action specification with slug '$ACTION_SLUG' for service specification '$SERVICE_SPEC_ID'"
+  exit 1
 fi
 
-echo "This is a public scope, starting public ingress synchronization"
+echo "DEBUG: ACTION_SPEC_ID=$ACTION_SPEC_ID"
 
-ACTIONS=$(np link specification action specification list --linkSpecificationId "$LINK_SPECIFICATION_ID" --format json)
+# Step 5: Create service action with parameters
+echo "DEBUG: Creating service action..."
+ACTION=$(np service action create --serviceId "$SERVICE_ID" --body "$(jq -n --argjson params "$PARAMETERS" --arg spec_id "$ACTION_SPEC_ID" '{name: "update", parameters: $params, specification_id: $spec_id}')" --format json)
 
-REFRESH_ACTION=$(echo "$ACTIONS" | jq -c '
-  .results
-  | map(select(.slug == "refresh"))
-  | .[0]
-')
+ACTION_ID=$(jq -r .id <<< "$ACTION")
+echo "DEBUG: ACTION_ID=$ACTION_ID"
 
-REFRESH_ACTION_ID=$(echo "$REFRESH_ACTION" | jq -r .id)
-echo "DEBUG: REFRESH_ACTION_ID=$REFRESH_ACTION_ID"
+echo "Created endpoint exposer update action[id=$ACTION_ID], waiting for its completion"
 
-# Iterate over matches
-echo "DEBUG: Starting iteration over exposer links..."
-echo "$EXPOSER_LINKS" | jq -c '.[]' | while read -r link; do
-  echo "DEBUG: Processing link: $link"
+# Step 6: Wait for action to complete
+MAX_ITERATIONS=20
+iteration=0
 
-  # Extract useful values
-  LINK_ID=$(echo "$link" | jq -r '.id')
-  echo "DEBUG: LINK_ID=$LINK_ID"
+echo "DEBUG: Starting polling loop for action status..."
+while true; do
+  ((iteration++))
+  echo "DEBUG: Iteration $iteration/$MAX_ITERATIONS"
 
-  echo "DEBUG: Creating link action..."
-  ACTION=$(np link action create --linkId "$LINK_ID" --body "{\"name\": \"refresh\", \"parameters\":{}, \"specification_id\": \"$REFRESH_ACTION_ID\"}" --format json)
-  echo "DEBUG: Action created: $ACTION"
+  if [ "$iteration" -gt $MAX_ITERATIONS ]; then
+    echo "Error: Maximum number of iterations (${MAX_ITERATIONS}) reached. Could not update the endpoint exposer."
+    exit 1
+  fi
 
-  ACTION_ID=$(echo "$ACTION" | jq -r .id)
-  echo "DEBUG: ACTION_ID=$ACTION_ID"
+  echo "DEBUG: Reading action status..."
+  ACTION_RESPONSE=$(np service action read --id "$ACTION_ID" --format json)
+  ACTION_STATUS=$(jq -r .status <<< "$ACTION_RESPONSE")
 
-  echo "Created public ingress synchronization action[id=$ACTION_ID], waiting for its completion"
+  echo "Checking endpoint exposer update action[id=$ACTION_ID, status=$ACTION_STATUS]"
 
-  MAX_ITERATIONS=20
-  iteration=0
+  if [[ "$ACTION_STATUS" == "success" ]]; then
+    echo "✅ Endpoint exposer successfully updated"
+    break
+  elif [[ "$ACTION_STATUS" == "failed" ]]; then
+    echo "❌ Could not update endpoint exposer, deployment will be rollbacked"
+    exit 1
+  fi
 
-  echo "DEBUG: Starting polling loop for action status..."
-  while true; do
-     ((iteration++))
-      echo "DEBUG: Iteration $iteration/$MAX_ITERATIONS"
-
-      if [ "$iteration" -gt $MAX_ITERATIONS ]; then
-          echo "Error: Maximum number of iterations (${MAX_ITERATIONS}) reached. Could not refresh the exposer."
-          exit 1
-      fi
-
-      echo "DEBUG: Reading action status..."
-      ACTION_STATUS=$(np link action read --linkId "$LINK_ID" --id "$ACTION_ID" --format json | jq -r .status)
-
-      echo "Checking public ingress synchronization action[id=$ACTION_ID, status=$ACTION_STATUS]"
-
-      if [[ "$ACTION_STATUS" == "success" ]]; then
-        echo "✅ Public ingress successfully synchronized"
-        break
-      elif [[ "$ACTION_STATUS" == "failed" ]]; then
-        echo "❌ Could not synchronize public ingress, deployment will be rollbacked"
-        exit 1
-      fi
-
-      echo "DEBUG: Sleeping for 5 seconds..."
-      sleep 5
-  done
-  echo "DEBUG: Finished processing link $LINK_ID"
+  echo "DEBUG: Sleeping for 5 seconds..."
+  sleep 5
 done
 
 echo "=== DEBUG: sync_exposer script completed successfully ==="
