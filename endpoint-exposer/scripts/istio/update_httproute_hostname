@@ -4,7 +4,10 @@ set -euo pipefail
 
 # If HTTPROUTE_FILE_VAR is provided, use it to get the file path from that variable
 if [[ -n "${HTTPROUTE_FILE_VAR:-}" ]]; then
-  HTTPROUTE_FILE="${!HTTPROUTE_FILE_VAR}"
+  # Use indirect variable expansion safely
+  if [[ -n "${!HTTPROUTE_FILE_VAR:-}" ]]; then
+    HTTPROUTE_FILE="${!HTTPROUTE_FILE_VAR}"
+  fi
 fi
 
 # Use DOMAIN and GATEWAY if provided via configuration, otherwise use PUBLIC_DOMAIN and gateway-public
