@@ -2,7 +2,6 @@
 
 echo "=== DEBUG: Starting sync_exposer script ==="
 
-echo "DEBUG: $CONTEXT"
 APPLICATION_NRN=$(jq -r .application.nrn <<< "$CONTEXT")
 
 echo "SERVICE SPECIFICATION SLUG: $SERVICE_SPECIFICATION_SLUG, APPLICATION_NRN: $APPLICATION_NRN"
@@ -71,14 +70,72 @@ fi
 
 echo "DEBUG: ACTION_SPEC_ID=$ACTION_SPEC_ID"
 
-# Step 5: Create service action with parameters
+# Step 5: Create service action with parameters (with retry for concurrency)
 echo "DEBUG: Creating service action..."
-ACTION=$(np service action create --serviceId "$SERVICE_ID" --body "$(jq -n --argjson params "$PARAMETERS" --arg spec_id "$ACTION_SPEC_ID" '{name: "update", parameters: $params, specification_id: $spec_id}')" --format json)
 
-ACTION_ID=$(jq -r .id <<< "$ACTION")
-echo "DEBUG: ACTION_ID=$ACTION_ID"
+MAX_CREATE_RETRIES=10
+RETRY_DELAY=5
+create_attempt=0
+ACTION_ID=""
 
-echo "Created endpoint exposer update action[id=$ACTION_ID], waiting for its completion"
+while [[ -z "$ACTION_ID" || "$ACTION_ID" == "null" ]]; do
+  ((create_attempt++))
+  echo "DEBUG: Create attempt $create_attempt/$MAX_CREATE_RETRIES"
+
+  if [ "$create_attempt" -gt $MAX_CREATE_RETRIES ]; then
+    echo "Error: Maximum number of create attempts (${MAX_CREATE_RETRIES}) reached. Could not create action."
+    exit 1
+  fi
+
+  # Add delay before retry (except on first attempt)
+  if [ "$create_attempt" -gt 1 ]; then
+    echo "DEBUG: Waiting ${RETRY_DELAY} seconds before retry..."
+    sleep $RETRY_DELAY
+  fi
+
+  # Try to create the action
+  ACTION_RESPONSE=$(np service action create --serviceId "$SERVICE_ID" --body "$(jq -n --argjson params "$PARAMETERS" --arg spec_id "$ACTION_SPEC_ID" '{name: "update", parameters: $params, specification_id: $spec_id}')" --format json 2>&1 || true)
+
+  # Check if response contains an error about action already in progress
+  if echo "$ACTION_RESPONSE" | grep -q "already an action with status.*in_progress"; then
+    echo "DEBUG: Action already in progress detected"
+
+    # Try to find the existing in_progress action
+    echo "DEBUG: Attempting to find existing in_progress action..."
+    EXISTING_ACTIONS=$(np service action list --serviceId "$SERVICE_ID" --format json)
+    EXISTING_ACTION=$(echo "$EXISTING_ACTIONS" | jq -c --arg spec_id "$ACTION_SPEC_ID" '
+      .results
+      | map(select(.specification_id == $spec_id and .status == "in_progress"))
+      | .[0]
+    ')
+
+    EXISTING_ACTION_ID=$(echo "$EXISTING_ACTION" | jq -r '.id // empty')
+
+    if [[ -n "$EXISTING_ACTION_ID" && "$EXISTING_ACTION_ID" != "null" ]]; then
+      echo "DEBUG: Found existing in_progress action with ID: $EXISTING_ACTION_ID"
+      ACTION_ID="$EXISTING_ACTION_ID"
+      echo "Using existing action instead of creating new one"
+      break
+    fi
+
+    echo "DEBUG: No existing action found, will retry..."
+  elif echo "$ACTION_RESPONSE" | grep -q '"error"'; then
+    echo "ERROR: Failed to create action: $ACTION_RESPONSE"
+    echo "DEBUG: Will retry after delay..."
+  else
+    # Success - extract action ID
+    ACTION_ID=$(echo "$ACTION_RESPONSE" | jq -r '.id // empty')
+
+    if [[ -n "$ACTION_ID" && "$ACTION_ID" != "null" ]]; then
+      echo "DEBUG: ACTION_ID=$ACTION_ID"
+      echo "Created endpoint exposer update action[id=$ACTION_ID], waiting for its completion"
+      break
+    else
+      echo "DEBUG: Could not extract ACTION_ID from response: $ACTION_RESPONSE"
+      echo "DEBUG: Will retry after delay..."
+    fi
+  fi
+done
 
 # Step 6: Wait for action to complete
 MAX_ITERATIONS=20
