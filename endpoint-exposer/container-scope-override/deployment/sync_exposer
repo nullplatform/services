@@ -37,8 +37,8 @@ SERVICE=$(jq -c --arg spec_id "$SERVICE_SPEC_ID" '
 SERVICE_ID=$(jq -r .id <<< "$SERVICE")
 
 if [[ -z "$SERVICE_ID" || "$SERVICE_ID" == "null" ]]; then
-  echo "Error: Could not find service instance for specification '$SERVICE_SPEC_ID'"
-  exit 1
+  echo "Could not find service instance for specification '$SERVICE_SPEC_ID', skipping exposer sync"
+  exit 0
 fi
 
 echo "DEBUG: SERVICE_ID=$SERVICE_ID"
