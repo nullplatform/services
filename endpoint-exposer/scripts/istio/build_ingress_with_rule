@@ -71,7 +71,6 @@ create_http_rule() {
   local service_json="$2"
   local blue_green_config="$3"
   local method="${4:-}"
-  local visibility="${5:-public}"
 
   local service_name
   local service_port
@@ -264,13 +263,12 @@ replace_existing_rule() {
   local blue_green_config="$4"
   local rule_index="$5"
   local method="${6:-}"
-  local visibility="${7:-public}"
 
   local updated_hr
   local new_rule
 
   # Create the new rule
-  new_rule=$(create_http_rule "$rule_path" "$service_json" "$blue_green_config" "$method" "$visibility")
+  new_rule=$(create_http_rule "$rule_path" "$service_json" "$blue_green_config" "$method")
 
   # Replace the existing rule at the found index
   updated_hr=$(echo "$hr_yaml" | yq eval -o=json '.' | \
@@ -286,13 +284,12 @@ add_new_rule() {
   local service_json="$3"
   local blue_green_config="$4"
   local method="${5:-}"
-  local visibility="${6:-public}"
 
   local updated_hr
   local new_rule
 
   # Create the new http rule
-  new_rule=$(create_http_rule "$rule_path" "$service_json" "$blue_green_config" "$method" "$visibility")
+  new_rule=$(create_http_rule "$rule_path" "$service_json" "$blue_green_config" "$method")
 
   # Add the new rule to the existing rules array
   updated_hr=$(echo "$hr_yaml" | yq eval ".spec.rules += [$new_rule]")
@@ -307,7 +304,6 @@ echo "SERVICE_ID: $SERVICE_ID"
 echo "SCOPE_ID: $SCOPE_ID"
 echo "RULE_PATH: $RULE_PATH"
 echo "METHOD: ${METHOD:-not specified}"
-echo "VISIBILITY: ${VISIBILITY:-public}"
 
 # Check if HTTPROUTE_FILE is set (called from process_routes)
 if [[ -n "${HTTPROUTE_FILE:-}" && -f "$HTTPROUTE_FILE" ]]; then
@@ -353,7 +349,7 @@ echo "Is HTTPRoute empty? $IS_EMPTY"
 
 if [[ "$IS_EMPTY" == "true" ]]; then
   echo "Case 1: Empty HTTPRoute - replacing fallback rule (index 0) with new rule"
-  UPDATED_HR=$(replace_existing_rule "$HTTPROUTE" "$RULE_PATH" "$SERVICE" "$BLUE_GREEN_CONFIG" "0" "${METHOD:-}" "${VISIBILITY:-public}")
+  UPDATED_HR=$(replace_existing_rule "$HTTPROUTE" "$RULE_PATH" "$SERVICE" "$BLUE_GREEN_CONFIG" "0" "${METHOD:-}")
   echo "$UPDATED_HR" | yq "." > "$HTTPROUTE_FILE"
 else
   # Detect the converted path value to match against existing rules
@@ -366,12 +362,12 @@ else
   # if there is a rule for the path we replace it
   if [[ "$RULE_INDEX" != "-1" ]]; then
     echo "Case 2: Replacing existing rule at index $RULE_INDEX"
-    UPDATED_HR=$(replace_existing_rule "$HTTPROUTE" "$RULE_PATH" "$SERVICE" "$BLUE_GREEN_CONFIG" "$RULE_INDEX" "${METHOD:-}" "${VISIBILITY:-public}")
+    UPDATED_HR=$(replace_existing_rule "$HTTPROUTE" "$RULE_PATH" "$SERVICE" "$BLUE_GREEN_CONFIG" "$RULE_INDEX" "${METHOD:-}")
     echo "$UPDATED_HR" | yq "." > "$HTTPROUTE_FILE"
   else
     # if there is no rule for the path we add a new one
     echo "Case 3: Adding new rule"
-    UPDATED_HR=$(add_new_rule "$HTTPROUTE" "$RULE_PATH" "$SERVICE" "$BLUE_GREEN_CONFIG" "${METHOD:-}" "${VISIBILITY:-public}")
+    UPDATED_HR=$(add_new_rule "$HTTPROUTE" "$RULE_PATH" "$SERVICE" "$BLUE_GREEN_CONFIG" "${METHOD:-}")
 
     # Debug: Check if hostnames and parentRefs are present before saving
     echo "DEBUG: Checking HTTPRoute before saving..."

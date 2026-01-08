@@ -1,6 +1,0 @@
-steps:
-  - name: "link created"
-    type: script
-    file: "$SERVICE_PATH/scripts/common/echo"
-    configuration:
-      MESSAGE: "link-created"

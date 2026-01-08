@@ -9,15 +9,11 @@
         "elements": [
           {
             "type": "Group",
-            "label": "Domains",
+            "label": "Domain",
             "elements": [
               {
                 "type": "Control",
                 "scope": "#/properties/publicDomain"
-              },
-              {
-                "type": "Control",
-                "scope": "#/properties/privateDomain"
               }
             ]
           },
@@ -45,11 +41,6 @@
                         },
                         {
                           "type": "Control",
-                          "label": "Visibility",
-                          "scope": "#/items/properties/visibility"
-                        },
-                        {
-                          "type": "Control",
                           "label": "Scope",
                           "scope": "#/items/properties/scope"
                         }
@@ -67,10 +58,6 @@
           "type": "string",
           "editableOn": ["create", "update"]
         },
-        "privateDomain": {
-          "type": "string",
-          "editableOn": ["create", "update"]
-        },
         "routes": {
           "items": {
             "properties": {
@@ -82,11 +69,6 @@
               "path": {
                 "type": "string",
                 "title": "Path"
-              },
-              "visibility": {
-                "type": "string",
-                "title": "Visibility",
-                "enum": ["internal", "public"]
               },
               "scope": {
                 "type": "string",
@@ -100,7 +82,6 @@
             "required": [
               "method",
               "path",
-              "visibility",
               "scope"
             ],
             "type": "object"
@@ -109,8 +90,7 @@
         }
       },
       "required": [
-        "publicDomain",
-        "privateDomain"
+        "publicDomain"
       ],
       "type": "object"
     },

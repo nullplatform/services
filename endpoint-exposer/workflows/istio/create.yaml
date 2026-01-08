@@ -21,37 +21,23 @@ steps:
         type: environment
       - name: PUBLIC_DOMAIN
         type: environment
-      - name: INTERNAL_DOMAIN
-        type: environment
       - name: ROUTES_JSON
         type: environment
-  - name: "build public httproute"
+  - name: "build httproute"
     type: script
     file: "$SERVICE_PATH/scripts/istio/build_ingress"
     configuration:
       TEMPLATE: "$SERVICE_PATH/templates/istio/empty.yaml.tpl"
     output:
-      - name: HTTPROUTE_FILE_PUBLIC
-        type: file
-        file: "$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml"
-  - name: "build internal httproute"
-    type: script
-    file: "$SERVICE_PATH/scripts/istio/build_ingress"
-    configuration:
-      TEMPLATE: "$SERVICE_PATH/templates/istio/empty-internal.yaml.tpl"
-    output:
-      - name: HTTPROUTE_FILE_INTERNAL
+      - name: HTTPROUTE_FILE
         type: environment
   - name: "process routes"
     type: script
     file: "$SERVICE_PATH/scripts/istio/process_routes"
     output:
-      - name: HTTPROUTE_FILE_PUBLIC
+      - name: HTTPROUTE_FILE
         type: file
         file: "$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml"
-      - name: HTTPROUTE_FILE_INTERNAL
-        type: file
-        file: "$OUTPUT_DIR/httproute-$SERVICE_ID-internal.yaml"
   - name: apply
     type: script
     file: "$SERVICE_PATH/scripts/common/apply"

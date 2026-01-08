@@ -21,61 +21,30 @@ steps:
         type: environment
       - name: PUBLIC_DOMAIN
         type: environment
-      - name: PRIVATE_DOMAIN
-        type: environment
       - name: ROUTES_JSON
         type: environment
-  - name: "fetch existing public httproute"
+  - name: "fetch existing httproute"
     type: script
     file: "$SERVICE_PATH/scripts/istio/fetch_httproute"
-    configuration:
-      VISIBILITY: "public"
     output:
-      - name: HTTPROUTE_FILE_PUBLIC
-        type: file
-        file: "$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml"
-  - name: "fetch existing internal httproute"
-    type: script
-    file: "$SERVICE_PATH/scripts/istio/fetch_httproute"
-    configuration:
-      VISIBILITY: "internal"
-    output:
-      - name: HTTPROUTE_FILE_INTERNAL
+      - name: HTTPROUTE_FILE
         type: environment
-  - name: "update public httproute hostname"
+  - name: "update httproute hostname"
     type: script
     file: "$SERVICE_PATH/scripts/istio/update_httproute_hostname"
     configuration:
-      HTTPROUTE_FILE_VAR: "HTTPROUTE_FILE_PUBLIC"
       DOMAIN: "$PUBLIC_DOMAIN"
       GATEWAY: "gateway-public"
-  - name: "update internal httproute hostname"
-    type: script
-    file: "$SERVICE_PATH/scripts/istio/update_httproute_hostname"
-    configuration:
-      HTTPROUTE_FILE_VAR: "HTTPROUTE_FILE_INTERNAL"
-      DOMAIN: "$PRIVATE_DOMAIN"
-      GATEWAY: "gateway-private"
-  - name: "clean public httproute rules"
+  - name: "clean httproute rules"
     type: script
     file: "$SERVICE_PATH/scripts/istio/clean_httproute_rules"
-    configuration:
-      HTTPROUTE_FILE_VAR: "HTTPROUTE_FILE_PUBLIC"
-  - name: "clean internal httproute rules"
-    type: script
-    file: "$SERVICE_PATH/scripts/istio/clean_httproute_rules"
-    configuration:
-      HTTPROUTE_FILE_VAR: "HTTPROUTE_FILE_INTERNAL"
   - name: "process routes"
     type: script
     file: "$SERVICE_PATH/scripts/istio/process_routes"
     output:
-      - name: HTTPROUTE_FILE_PUBLIC
+      - name: HTTPROUTE_FILE
         type: file
         file: "$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml"
-      - name: HTTPROUTE_FILE_INTERNAL
-        type: file
-        file: "$OUTPUT_DIR/httproute-$SERVICE_ID-internal.yaml"
   - name: apply
     type: script
     file: "$SERVICE_PATH/scripts/common/apply"

@@ -8,19 +8,11 @@ SERVICE_NAME=$(echo "$CONTEXT" | jq -r .service.slug)
 ACTION_ID=$(echo "$CONTEXT" | jq -r .id)
 ACTION_NAME=$(echo "$CONTEXT" | jq -r .slug)
 
-# Extract domains from parameters
+# Extract domain from parameters
 PUBLIC_DOMAIN=$(echo "$CONTEXT" | jq -r '.parameters.public_domain // ""')
-PRIVATE_DOMAIN=$(echo "$CONTEXT" | jq -r '.parameters.private_domain // ""')
 
 # Extract routes array from parameters
 ROUTES_JSON=$(echo "$CONTEXT" | jq -c '.parameters.routes // []')
-
-# For backward compatibility with link-based workflow
-LINK_ID=$(echo "$CONTEXT" | jq -r '.link.id // ""')
-LINK_NAME=$(echo "$CONTEXT" | jq -r '.link.slug // ""')
-SCOPE_ID=$(echo "$CONTEXT" | jq -r '.tags.scope_id // ""')
-SCOPE_SLUG=$(echo "$CONTEXT" | jq -r '.tags.scope // ""')
-RULE_PATH=$(echo "$CONTEXT" | jq -r '.link.attributes.path // .parameters.path // ""')
 
 CONTEXT=$(echo "$CONTEXT" | jq \
           --arg k8s_namespace "$K8S_NAMESPACE" \
@@ -36,10 +28,4 @@ export SERVICE_NAME
 export ACTION_ID
 export ACTION_NAME
 export PUBLIC_DOMAIN
-export PRIVATE_DOMAIN
 export ROUTES_JSON
-export LINK_ID
-export LINK_NAME
-export SCOPE_ID
-export SCOPE_SLUG
-export RULE_PATH

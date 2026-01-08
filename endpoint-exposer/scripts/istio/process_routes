@@ -44,110 +44,67 @@ SORTED_ROUTES=$(echo "$ROUTES_JSON" | jq 'sort_by(
 ROUTES_JSON="$SORTED_ROUTES"
 echo "Routes sorted by specificity (Exact > RegularExpression > PathPrefix)"
 
-# Separate routes by visibility
-echo ""
-echo "=== Separating routes by visibility ==="
-PUBLIC_ROUTES=$(echo "$ROUTES_JSON" | jq '[.[] | select(.visibility == "public")]')
-INTERNAL_ROUTES=$(echo "$ROUTES_JSON" | jq '[.[] | select(.visibility == "internal")]')
+# Define HTTPRoute file
+HTTPROUTE_FILE="$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml"
+HTTPROUTE_NAME="${SERVICE_NAME}-${SERVICE_ID}-route"
 
-NUM_PUBLIC=$(echo "$PUBLIC_ROUTES" | jq 'length')
-NUM_INTERNAL=$(echo "$INTERNAL_ROUTES" | jq 'length')
+export HTTPROUTE_FILE
+echo "HTTPRoute file: $HTTPROUTE_FILE"
+echo "HTTPRoute name: $HTTPROUTE_NAME"
 
-echo "Public routes: $NUM_PUBLIC"
-echo "Internal routes: $NUM_INTERNAL"
+# Read the HTTPRoute from the file created in the previous step
+if [[ ! -f "$HTTPROUTE_FILE" ]]; then
+  echo "ERROR: HTTPRoute file not found at $HTTPROUTE_FILE"
+  exit 1
+fi
 
-# Function to process routes for a specific visibility
-process_routes_for_visibility() {
-  local visibility="$1"
-  local routes_json="$2"
-  local num_routes="$3"
-
-  if [[ "$num_routes" -eq 0 ]]; then
-    echo "No $visibility routes to process"
-    return 0
-  fi
-
+# Process each route
+for ((i=0; i<NUM_ROUTES; i++)); do
   echo ""
-  echo "=== Processing $visibility routes ==="
+  echo "=== Processing route $((i+1))/$NUM_ROUTES ==="
 
-  # Define HTTPRoute file based on visibility
-  if [[ "$visibility" == "public" ]]; then
-    HTTPROUTE_FILE="$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml"
-    HTTPROUTE_NAME="${SERVICE_NAME}-${SERVICE_ID}-route"
-  else
-    HTTPROUTE_FILE="$OUTPUT_DIR/httproute-$SERVICE_ID-internal.yaml"
-    HTTPROUTE_NAME="${SERVICE_NAME}-${SERVICE_ID}-route-internal"
+  # Extract route details
+  ROUTE=$(echo "$ROUTES_JSON" | jq ".[$i]")
+  METHOD=$(echo "$ROUTE" | jq -r '.method')
+  ROUTE_PATH=$(echo "$ROUTE" | jq -r '.path')
+  SCOPE_SLUG=$(echo "$ROUTE" | jq -r '.scope')
+
+  echo "Method: $METHOD"
+  echo "Path: $ROUTE_PATH"
+  echo "Scope: $SCOPE_SLUG"
+
+  # If method is empty, null, or "*", don't set it (allow all methods)
+  if [[ -z "$METHOD" || "$METHOD" == "null" || "$METHOD" == "*" ]]; then
+    echo "INFO: Method is empty/null/*, will match all HTTP methods"
+    unset METHOD
   fi
 
-  export HTTPROUTE_FILE
-  echo "HTTPRoute file: $HTTPROUTE_FILE"
-  echo "HTTPRoute name: $HTTPROUTE_NAME"
+  # Get scope ID from scope slug using the cached scopes
+  SCOPE_ID=$(echo "$SCOPES_JSON" | jq -r ".[] | select(.slug == \"$SCOPE_SLUG\") | .id")
 
-  # Read the HTTPRoute from the file created in the previous step
-  if [[ ! -f "$HTTPROUTE_FILE" ]]; then
-    echo "ERROR: HTTPRoute file not found at $HTTPROUTE_FILE"
+  if [[ -z "$SCOPE_ID" || "$SCOPE_ID" == "null" ]]; then
+    echo "ERROR: Could not find scope with slug: $SCOPE_SLUG"
     exit 1
   fi
 
-  # Process each route
-  for ((i=0; i<num_routes; i++)); do
-    echo ""
-    echo "=== Processing $visibility route $((i+1))/$num_routes ==="
+  echo "Scope ID: $SCOPE_ID"
 
-    # Extract route details
-    ROUTE=$(echo "$routes_json" | jq ".[$i]")
-    METHOD=$(echo "$ROUTE" | jq -r '.method')
-    ROUTE_PATH=$(echo "$ROUTE" | jq -r '.path')
-    ROUTE_VISIBILITY=$(echo "$ROUTE" | jq -r '.visibility')
-    SCOPE_SLUG=$(echo "$ROUTE" | jq -r '.scope')
+  # Export variables needed by build_rule
+  export SCOPE_ID
+  export RULE_PATH="$ROUTE_PATH"
+  export METHOD
 
-    echo "Method: $METHOD"
-    echo "Path: $ROUTE_PATH"
-    echo "Visibility: $ROUTE_VISIBILITY"
-    echo "Scope: $SCOPE_SLUG"
+  # Build rule for this scope
+  echo "Building rule for scope $SCOPE_ID..."
+  source "$SERVICE_PATH/scripts/istio/build_rule"
 
-    # If method is empty, null, or "*", don't set it (allow all methods)
-    if [[ -z "$METHOD" || "$METHOD" == "null" || "$METHOD" == "*" ]]; then
-      echo "INFO: Method is empty/null/*, will match all HTTP methods"
-      unset METHOD
-    fi
+  # Update HTTPRoute with new rule using build_ingress_with_rule
+  echo "Updating HTTPRoute with rule..."
+  source "$SERVICE_PATH/scripts/istio/build_ingress_with_rule"
 
-    # Get scope ID from scope slug using the cached scopes
-    SCOPE_ID=$(echo "$SCOPES_JSON" | jq -r ".[] | select(.slug == \"$SCOPE_SLUG\") | .id")
-
-    if [[ -z "$SCOPE_ID" || "$SCOPE_ID" == "null" ]]; then
-      echo "ERROR: Could not find scope with slug: $SCOPE_SLUG"
-      exit 1
-    fi
-
-    echo "Scope ID: $SCOPE_ID"
-
-    # Export variables needed by build_rule
-    export SCOPE_ID
-    export RULE_PATH="$ROUTE_PATH"
-    export METHOD
-    export VISIBILITY="$ROUTE_VISIBILITY"
-
-    # Build rule for this scope
-    echo "Building rule for scope $SCOPE_ID..."
-    source "$SERVICE_PATH/scripts/istio/build_rule"
-
-    # Update HTTPRoute with new rule using build_ingress_with_rule
-    echo "Updating HTTPRoute with rule..."
-    source "$SERVICE_PATH/scripts/istio/build_ingress_with_rule"
-
-    echo "Route $((i+1)) processed successfully"
-  done
-
-  echo "$visibility routes processed successfully"
-  echo "$visibility HTTPRoute configuration saved to: $HTTPROUTE_FILE"
-}
-
-# Process public routes
-process_routes_for_visibility "public" "$PUBLIC_ROUTES" "$NUM_PUBLIC"
-
-# Process internal routes
-process_routes_for_visibility "internal" "$INTERNAL_ROUTES" "$NUM_INTERNAL"
+  echo "Route $((i+1)) processed successfully"
+done
 
 echo ""
 echo "=== All routes processed successfully ==="
+echo "HTTPRoute configuration saved to: $HTTPROUTE_FILE"
