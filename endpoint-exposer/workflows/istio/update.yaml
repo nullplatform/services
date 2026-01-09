@@ -21,30 +21,28 @@ steps:
         type: environment
       - name: PUBLIC_DOMAIN
         type: environment
+      - name: PRIVATE_DOMAIN
+        type: environment
       - name: ROUTES_JSON
         type: environment
-  - name: "fetch existing httproute"
-    type: script
-    file: "$SERVICE_PATH/scripts/istio/fetch_httproute"
-    output:
-      - name: HTTPROUTE_FILE
+      - name: PUBLIC_ROUTES_JSON
         type: environment
-  - name: "update httproute hostname"
+      - name: PRIVATE_ROUTES_JSON
+        type: environment
+  - name: "build public httproute"
     type: script
-    file: "$SERVICE_PATH/scripts/istio/update_httproute_hostname"
-    configuration:
-      DOMAIN: "$PUBLIC_DOMAIN"
-      GATEWAY: "gateway-public"
-  - name: "clean httproute rules"
-    type: script
-    file: "$SERVICE_PATH/scripts/istio/clean_httproute_rules"
-  - name: "process routes"
-    type: script
-    file: "$SERVICE_PATH/scripts/istio/process_routes"
+    file: "$SERVICE_PATH/scripts/istio/build_public_httproute"
     output:
-      - name: HTTPROUTE_FILE
+      - name: HTTPROUTE_PUBLIC_FILE
         type: file
         file: "$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml"
+  - name: "build private httproute"
+    type: script
+    file: "$SERVICE_PATH/scripts/istio/build_private_httproute"
+    output:
+      - name: HTTPROUTE_PRIVATE_FILE
+        type: file
+        file: "$OUTPUT_DIR/httproute-$SERVICE_ID-private.yaml"
   - name: apply
     type: script
     file: "$SERVICE_PATH/scripts/common/apply"

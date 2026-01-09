@@ -66,13 +66,21 @@
         "publicDomain": {
           "type": "string",
           "title": "Public Domain",
-          "description": "Domain for public routes (e.g., api.example.com)",
+          "description": "Domain for public routes",
+          "enum": [
+            "birds.edenred.nullimplementation.com",
+            "api.edenred.nullimplementation.com"
+          ],
           "editableOn": ["create", "update"]
         },
         "privateDomain": {
           "type": "string",
           "title": "Private Domain",
-          "description": "Domain for private routes (e.g., internal-api.example.com)",
+          "description": "Domain for private routes",
+          "enum": [
+            "birds-private.edenred.nullimplementation.com",
+            "api-private.edenred.nullimplementation.com"
+          ],
           "editableOn": ["create", "update"]
         },
         "routes": {
