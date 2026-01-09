@@ -23,12 +23,12 @@ HTTPROUTE_FILE="$OUTPUT_DIR/httproute-$SERVICE_ID-private.yaml"
 
 # Build context for template
 HTTPROUTE_CONTEXT=$(jq -n \
-  --arg service_name "$SERVICE_NAME" \
+  --arg service_slug "$SERVICE_SLUG" \
   --arg service_id "$SERVICE_ID" \
   --arg k8s_namespace "$K8S_NAMESPACE" \
   --arg private_domain "$PRIVATE_DOMAIN" \
   '{
-    service_name: $service_name,
+    service_slug: $service_slug,
     service_id: $service_id,
     k8s_namespace: $k8s_namespace,
     private_domain: $private_domain

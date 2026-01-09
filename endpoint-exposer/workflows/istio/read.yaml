@@ -13,7 +13,7 @@ steps:
     output:
       - name: SERVICE_ID
         type: environment
-      - name: SERVICE_NAME
+      - name: SERVICE_SLUG
         type: environment
       - name: ACTION_ID
         type: environment

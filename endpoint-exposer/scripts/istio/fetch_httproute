@@ -4,11 +4,11 @@ set -euo pipefail
 
 echo "=== Fetching existing HTTPRoute from Kubernetes ==="
 echo "SERVICE_ID: $SERVICE_ID"
-echo "SERVICE_NAME: $SERVICE_NAME"
+echo "SERVICE_SLUG: $SERVICE_SLUG"
 echo "K8S_NAMESPACE: $K8S_NAMESPACE"
 
 # Build the HTTPRoute name using the same pattern as the template
-HTTPROUTE_NAME="${SERVICE_NAME}-${SERVICE_ID}-route"
+HTTPROUTE_NAME="${SERVICE_SLUG}-${SERVICE_ID}-route"
 TEMPLATE="$SERVICE_PATH/templates/istio/empty.yaml.tpl"
 echo "HTTPRoute name: $HTTPROUTE_NAME"
 
