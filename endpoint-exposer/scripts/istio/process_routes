@@ -44,8 +44,11 @@ SORTED_ROUTES=$(echo "$ROUTES_JSON" | jq 'sort_by(
 ROUTES_JSON="$SORTED_ROUTES"
 echo "Routes sorted by specificity (Exact > RegularExpression > PathPrefix)"
 
-# Define HTTPRoute file
-HTTPROUTE_FILE="$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml"
+# Use existing HTTPROUTE_FILE if set, otherwise default to public
+if [[ -z "${HTTPROUTE_FILE:-}" ]]; then
+  HTTPROUTE_FILE="$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml"
+fi
+
 HTTPROUTE_NAME="${SERVICE_NAME}-${SERVICE_ID}-route"
 
 export HTTPROUTE_FILE

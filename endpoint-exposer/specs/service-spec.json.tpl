@@ -9,11 +9,15 @@
         "elements": [
           {
             "type": "Group",
-            "label": "Domain",
+            "label": "Domains",
             "elements": [
               {
                 "type": "Control",
                 "scope": "#/properties/publicDomain"
+              },
+              {
+                "type": "Control",
+                "scope": "#/properties/privateDomain"
               }
             ]
           },
@@ -43,6 +47,11 @@
                           "type": "Control",
                           "label": "Scope",
                           "scope": "#/items/properties/scope"
+                        },
+                        {
+                          "type": "Control",
+                          "label": "Visibility",
+                          "scope": "#/items/properties/visibility"
                         }
                       ]
                   },
@@ -56,6 +65,14 @@
       "properties": {
         "publicDomain": {
           "type": "string",
+          "title": "Public Domain",
+          "description": "Domain for public routes (e.g., api.example.com)",
+          "editableOn": ["create", "update"]
+        },
+        "privateDomain": {
+          "type": "string",
+          "title": "Private Domain",
+          "description": "Domain for private routes (e.g., internal-api.example.com)",
           "editableOn": ["create", "update"]
         },
         "routes": {
@@ -77,12 +94,20 @@
                 "additionalKeywords": {
                   "enum": "[.scopes[]?.slug]"
                 }
+              },
+              "visibility": {
+                "type": "string",
+                "title": "Visibility",
+                "description": "Route visibility level",
+                "enum": ["public", "private"],
+                "default": "public"
               }
             },
             "required": [
               "method",
               "path",
-              "scope"
+              "scope",
+              "visibility"
             ],
             "type": "object"
           },
