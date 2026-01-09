@@ -1,0 +1,145 @@
+#!/bin/bash
+
+set -euo pipefail
+
+echo "=== Generating Authorization Policy ==="
+
+# Check if plugin is enabled
+AUTHZ_ENABLED=$(echo "$CONTEXT" | jq -r '.parameters.authorization.enabled // false')
+
+if [[ "$AUTHZ_ENABLED" != "true" ]]; then
+  echo "Authorization Policy plugin is disabled, skipping..."
+  exit 0
+fi
+
+echo "Authorization enabled - JWT validation via OPA will be applied to all routes"
+
+# Extract application ID from context
+APPLICATION_ID=$(echo "$CONTEXT" | jq -r '.service.dimensions.application_id // ""')
+
+if [[ -z "$APPLICATION_ID" || "$APPLICATION_ID" == "null" ]]; then
+  echo "ERROR: application_id not found in service dimensions"
+  exit 1
+fi
+
+# Helper function to detect path type (same logic as build_ingress_with_rule)
+detect_path_type() {
+  local path="$1"
+
+  if [[ "$path" == *":"* ]]; then
+    # Contains parameter like :id -> RegularExpression
+    # Convert /api/users/:id to /api/users/[^/]+
+    local converted_path="${path//:[^\/]*/[^/]+}"
+    # Extract prefix for fallback
+    local prefix="${path%%:*}"
+    echo "RegularExpression:$converted_path:$prefix"
+  elif [[ "$path" == *"*" ]]; then
+    # Contains wildcard -> PathPrefix
+    # Remove trailing /* or *
+    local clean_path="${path%/\*}"
+    clean_path="${clean_path%\*}"
+    echo "PathPrefix:$clean_path"
+  else
+    # No special characters -> Exact
+    echo "Exact:$path"
+  fi
+}
+
+# Build authorization rules array
+AUTHZ_RULES="[]"
+
+# Process each route and create authorization rule
+NUM_ROUTES=$(echo "$ROUTES_JSON" | jq 'length')
+echo "Processing $NUM_ROUTES routes for authorization..."
+
+for ((i=0; i<NUM_ROUTES; i++)); do
+  ROUTE=$(echo "$ROUTES_JSON" | jq ".[$i]")
+  METHOD=$(echo "$ROUTE" | jq -r '.method')
+  ROUTE_PATH=$(echo "$ROUTE" | jq -r '.path')
+  SCOPE_SLUG=$(echo "$ROUTE" | jq -r '.scope')
+
+  echo "  Route $((i+1)): $METHOD $ROUTE_PATH (scope: $SCOPE_SLUG)"
+
+  # Detect path type
+  PATH_TYPE_INFO=$(detect_path_type "$ROUTE_PATH")
+  PATH_TYPE=$(echo "$PATH_TYPE_INFO" | cut -d: -f1)
+
+  # Extract path values based on type
+  if [[ "$PATH_TYPE" == "RegularExpression" ]]; then
+    PATH_REGEX=$(echo "$PATH_TYPE_INFO" | cut -d: -f2)
+    PATH_PREFIX=$(echo "$PATH_TYPE_INFO" | cut -d: -f3)
+    FINAL_PATH="$PATH_REGEX"
+  elif [[ "$PATH_TYPE" == "PathPrefix" ]]; then
+    FINAL_PATH=$(echo "$PATH_TYPE_INFO" | cut -d: -f2)
+  else
+    # Exact
+    FINAL_PATH=$(echo "$PATH_TYPE_INFO" | cut -d: -f2)
+  fi
+
+  # Build when conditions for header validation
+  WHEN_CONDITIONS=$(jq -n \
+    --arg header_name "request.headers[$AUTHZ_HEADER_NAME]" \
+    --argjson allowed_values "$AUTHZ_HEADER_VALUES" \
+    '[{
+      "key": $header_name,
+      "values": $allowed_values
+    }]')
+
+  # Create rule object
+  RULE=$(jq -n \
+    --arg method "$METHOD" \
+    --arg path "$FINAL_PATH" \
+    --arg path_type "$PATH_TYPE" \
+    --arg path_regex "${PATH_REGEX:-}" \
+    --arg path_prefix "${PATH_PREFIX:-}" \
+    --arg scope_slug "$SCOPE_SLUG" \
+    --argjson when_conditions "$WHEN_CONDITIONS" \
+    '{
+      method: $method,
+      path: $path,
+      path_type: $path_type,
+      path_regex: $path_regex,
+      path_prefix: $path_prefix,
+      scope_slug: $scope_slug,
+      when_conditions: $when_conditions
+    }')
+
+  # Add rule to array
+  AUTHZ_RULES=$(echo "$AUTHZ_RULES" | jq --argjson rule "$RULE" '. += [$rule]')
+done
+
+echo "Generated $(echo "$AUTHZ_RULES" | jq 'length') authorization rules"
+
+# Build context for gomplate template
+PLUGIN_CONTEXT=$(jq -n \
+  --arg service_name "$SERVICE_NAME" \
+  --arg service_id "$SERVICE_ID" \
+  --arg k8s_namespace "$K8S_NAMESPACE" \
+  --arg public_domain "$PUBLIC_DOMAIN" \
+  --arg application_id "$APPLICATION_ID" \
+  --argjson rules "$AUTHZ_RULES" \
+  '{
+    service_name: $service_name,
+    service_id: $service_id,
+    k8s_namespace: $k8s_namespace,
+    public_domain: $public_domain,
+    application_id: $application_id,
+    rules: $rules
+  }')
+
+CONTEXT_PATH="$OUTPUT_DIR/authz-context-$SERVICE_ID.json"
+echo "$PLUGIN_CONTEXT" > "$CONTEXT_PATH"
+
+# Generate YAML from template
+TEMPLATE="${TEMPLATE:-$SERVICE_PATH/plugins/authorization-policy/template.yaml.tpl}"
+AUTHZ_POLICY_FILE="$OUTPUT_DIR/authorization-policy-$SERVICE_ID.yaml"
+
+echo "Generating AuthorizationPolicy YAML..."
+gomplate -c .="$CONTEXT_PATH" \
+  -f "$TEMPLATE" \
+  -o "$AUTHZ_POLICY_FILE"
+
+rm "$CONTEXT_PATH"
+
+echo "✅ Authorization Policy generated: $AUTHZ_POLICY_FILE"
+export AUTHZ_POLICY_FILE

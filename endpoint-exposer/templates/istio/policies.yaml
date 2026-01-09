@@ -1,0 +1,50 @@
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: birds-35f2062a-8cbf-447c-bc4e-d2d0b8577e75-authz
+  namespace: nullplatform
+  labels:
+    app.kubernetes.io/name: birds
+    nullplatform.com/service-id: "35f2062a-8cbf-447c-bc4e-d2d0b8577e75"
+    nullplatform.com/managed-by: endpoint-exposer
+spec:
+  selector:
+    matchLabels:
+      nullplatform: "true"
+  action: CUSTOM
+  provider:
+    name: opa-ext-authz
+  rules:
+  # Aplicar OPA solo a /api/config
+  - to:
+    - operation:
+        hosts:
+          - birds.edenred.nullimplementation.com
+        methods:
+          - GET
+        paths:
+          - /api/config
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: birds-leaderboard-allow
+  namespace: nullplatform
+  labels:
+    app.kubernetes.io/name: birds
+    nullplatform.com/managed-by: endpoint-exposer
+spec:
+  selector:
+    matchLabels:
+      nullplatform: "true"
+  action: ALLOW
+  rules:
+  # Permitir /api/leaderboard sin validación
+  - to:
+    - operation:
+        hosts:
+          - birds.edenred.nullimplementation.com
+        methods:
+          - GET
+        paths:
+          - /api/leaderboard
