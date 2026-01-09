@@ -31,9 +31,7 @@ HTTPROUTE_CONTEXT=$(jq -n \
     service_name: $service_name,
     service_id: $service_id,
     k8s_namespace: $k8s_namespace,
-    private_domain: $private_domain,
-    gateway_name: "gateway-private",
-    gateway_namespace: "gateways"
+    private_domain: $private_domain
   }')
 
 CONTEXT_PATH="$OUTPUT_DIR/httproute-private-context-$SERVICE_ID.json"
