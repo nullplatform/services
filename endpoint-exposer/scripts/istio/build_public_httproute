@@ -18,7 +18,7 @@ fi
 echo "Public Domain: $PUBLIC_DOMAIN"
 
 # Create empty HTTPRoute from template
-TEMPLATE="${TEMPLATE:-$SERVICE_PATH/templates/istio/httproute-public.yaml.tpl}"
+TEMPLATE="$SERVICE_PATH/templates/istio/httproute-public.yaml.tpl"
 HTTPROUTE_FILE="$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml"
 
 # Build context for template

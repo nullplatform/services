@@ -7,18 +7,25 @@ echo "=== Building Private HTTPRoute ==="
 # Check if we have private routes and private domain
 NUM_ROUTES=$(echo "$PRIVATE_ROUTES_JSON" | jq 'length')
 echo "Number of private routes: $NUM_ROUTES"
+echo "Private Domain: '$PRIVATE_DOMAIN'"
 
-if [[ "$NUM_ROUTES" -eq 0 ]] || [[ -z "$PRIVATE_DOMAIN" ]] || [[ "$PRIVATE_DOMAIN" == "null" ]]; then
-  echo "No private routes or no private domain configured, skipping..."
-  # Create empty file to satisfy workflow
+# Skip if no routes
+if [[ "$NUM_ROUTES" -eq 0 ]]; then
+  echo "No private routes configured, skipping..."
   touch "$OUTPUT_DIR/httproute-$SERVICE_ID-private.yaml"
   exit 0
 fi
 
-echo "Private Domain: $PRIVATE_DOMAIN"
+# Skip if domain is empty/null
+if [[ -z "$PRIVATE_DOMAIN" ]] || [[ "$PRIVATE_DOMAIN" == "null" ]] || [[ "$PRIVATE_DOMAIN" == "\"null\"" ]]; then
+  echo "WARNING: Private routes exist but no private domain configured!"
+  echo "Skipping private HTTPRoute generation..."
+  touch "$OUTPUT_DIR/httproute-$SERVICE_ID-private.yaml"
+  exit 0
+fi
 
 # Create empty HTTPRoute from template
-TEMPLATE="${TEMPLATE:-$SERVICE_PATH/templates/istio/httproute-private.yaml.tpl}"
+TEMPLATE="$SERVICE_PATH/templates/istio/httproute-private.yaml.tpl"
 HTTPROUTE_FILE="$OUTPUT_DIR/httproute-$SERVICE_ID-private.yaml"
 
 # Build context for template
