@@ -1,0 +1,7 @@
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: api-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-authz-test
+  namespace: gateways
+spec:
+  action: CUSTOM

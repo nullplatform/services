@@ -8,7 +8,7 @@ source "$SERVICE_PATH/scripts/istio/config"
 # Parameters (must be set by caller)
 VISIBILITY="${VISIBILITY:-public}"  # "public" or "private"
 
-echo "=== Building ${VISIBILITY^} HTTPRoute ==="
+echo "=== Building ${VISIBILITY} HTTPRoute ==="
 
 # Set variables based on visibility
 if [[ "$VISIBILITY" == "public" ]]; then

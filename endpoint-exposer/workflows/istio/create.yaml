@@ -5,8 +5,6 @@ steps:
     output:
       - name: K8S_NAMESPACE
         type: environment
-      - name: ALB_NAME
-        type: environment
   - name: "build context"
     type: script
     file: "$SERVICE_PATH/scripts/istio/build_context"
