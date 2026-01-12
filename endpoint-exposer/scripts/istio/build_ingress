@@ -5,7 +5,7 @@ set -euo pipefail
 # Determine domain and output file
 SERVICE_DOMAIN=$(echo "$CONTEXT" | jq -r '.parameters.public_domain // .service.attributes.domain')
 HTTPROUTE_FILE="${OUTPUT_FILE:-$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml}"
-echo "Creating HTTPRoute for service $SERVICE_NAME with domain $SERVICE_DOMAIN"
+echo "Creating HTTPRoute for service $SERVICE_SLUG with domain $SERVICE_DOMAIN"
 echo "Output file: $HTTPROUTE_FILE"
 
 CONTEXT_PATH="$OUTPUT_DIR/context-$SERVICE_ID.json"

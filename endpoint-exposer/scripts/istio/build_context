@@ -3,29 +3,37 @@
 set -euo pipefail
 
 SERVICE_ID=$(echo "$CONTEXT" | jq -r .service.id)
-SERVICE_NAME=$(echo "$CONTEXT" | jq -r .service.slug)
+SERVICE_SLUG=$(echo "$CONTEXT" | jq -r .service.slug)
 
 ACTION_ID=$(echo "$CONTEXT" | jq -r .id)
 ACTION_NAME=$(echo "$CONTEXT" | jq -r .slug)
 
-# Extract domain from parameters
-PUBLIC_DOMAIN=$(echo "$CONTEXT" | jq -r '.parameters.public_domain // ""')
+# Extract domains from parameters
+PUBLIC_DOMAIN=$(echo "$CONTEXT" | jq -r '.parameters.publicDomain // .parameters.public_domain // ""')
+PRIVATE_DOMAIN=$(echo "$CONTEXT" | jq -r '.parameters.privateDomain // .parameters.private_domain // ""')
 
 # Extract routes array from parameters
 ROUTES_JSON=$(echo "$CONTEXT" | jq -c '.parameters.routes // []')
+
+# Split routes by visibility
+PUBLIC_ROUTES_JSON=$(echo "$ROUTES_JSON" | jq -c '[.[] | select(.visibility == "public" or .visibility == null)]')
+PRIVATE_ROUTES_JSON=$(echo "$ROUTES_JSON" | jq -c '[.[] | select(.visibility == "private")]')
 
 CONTEXT=$(echo "$CONTEXT" | jq \
           --arg k8s_namespace "$K8S_NAMESPACE" \
           --arg alb_name "$ALB_NAME" \
           '. + {k8s_namespace: $k8s_namespace, alb_name: $alb_name}')
 
-export OUTPUT_DIR="$SERVICE_PATH/output/$SERVICE_NAME-$SERVICE_ID/$ACTION_NAME-$ACTION_ID"
+export OUTPUT_DIR="$SERVICE_PATH/output/$SERVICE_SLUG-$SERVICE_ID/$ACTION_NAME-$ACTION_ID"
 
 mkdir -p "$OUTPUT_DIR"
 
 export SERVICE_ID
-export SERVICE_NAME
+export SERVICE_SLUG
 export ACTION_ID
 export ACTION_NAME
 export PUBLIC_DOMAIN
+export PRIVATE_DOMAIN
 export ROUTES_JSON
+export PUBLIC_ROUTES_JSON
+export PRIVATE_ROUTES_JSON

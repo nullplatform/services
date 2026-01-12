@@ -9,11 +9,15 @@
         "elements": [
           {
             "type": "Group",
-            "label": "Domain",
+            "label": "Domains",
             "elements": [
               {
                 "type": "Control",
                 "scope": "#/properties/publicDomain"
+              },
+              {
+                "type": "Control",
+                "scope": "#/properties/privateDomain"
               }
             ]
           },
@@ -75,6 +79,11 @@
                           "type": "Control",
                           "label": "Scope",
                           "scope": "#/items/properties/scope"
+                        },
+                        {
+                          "type": "Control",
+                          "label": "Visibility",
+                          "scope": "#/items/properties/visibility"
                         }
                       ]
                   },
@@ -88,6 +97,22 @@
       "properties": {
         "publicDomain": {
           "type": "string",
+          "title": "Public Domain",
+          "description": "Domain for public routes",
+          "enum": [
+            "birds.edenred.nullimplementation.com",
+            "api.edenred.nullimplementation.com"
+          ],
+          "editableOn": ["create", "update"]
+        },
+        "privateDomain": {
+          "type": "string",
+          "title": "Private Domain",
+          "description": "Domain for private routes",
+          "enum": [
+            "birds-private.edenred.nullimplementation.com",
+            "api-private.edenred.nullimplementation.com"
+          ],
           "editableOn": ["create", "update"]
         },
         "authorization": {
@@ -122,12 +147,20 @@
                 "additionalKeywords": {
                   "enum": "[.scopes[]?.slug]"
                 }
+              },
+              "visibility": {
+                "type": "string",
+                "title": "Visibility",
+                "description": "Route visibility level",
+                "enum": ["public", "private"],
+                "default": "public"
               }
             },
             "required": [
               "method",
               "path",
-              "scope"
+              "scope",
+              "visibility"
             ],
             "type": "object"
           },
