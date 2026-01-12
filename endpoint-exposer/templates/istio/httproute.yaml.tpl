@@ -4,9 +4,9 @@ metadata:
   name: {{ .service_slug }}-{{ .service_id }}-{{ .suffix }}
   namespace: {{ .k8s_namespace }}
   labels:
-    nullplatform: "true"
-    service_slug: {{ .service_slug }}
-    service_id: {{ .service_id }}
+    nullplatform.com/managed-by: endpoint-exposer
+    nullplatform.com/service-id: "{{ .service_id }}"
+    app.kubernetes.io/name: {{ .service_slug }}
 spec:
   parentRefs:
     - name: {{ .gateway_name }}

@@ -10,16 +10,15 @@ echo "=== Generating Authorization Policy ==="
 # Check if plugin is enabled
 AUTHZ_ENABLED=$(echo "$CONTEXT" | jq -r '.parameters.authorization.enabled // false')
 
-if [[ "$AUTHZ_ENABLED" != "true" ]]; then
-  echo "Authorization Policy plugin is disabled, skipping..."
-  exit 0
+if [[ "$AUTHZ_ENABLED" == "true" ]]; then
+  echo "Authorization enabled"
+  echo "Using OPA provider: $OPA_PROVIDER_NAME"
+  echo "Public gateway: $PUBLIC_GATEWAY_NAME"
+  echo "Private gateway: $PRIVATE_GATEWAY_NAME"
+  echo "Gateway namespace: $GATEWAY_NAMESPACE"
+else
+  echo "Authorization disabled - will create empty resources for cleanup"
 fi
-
-echo "Authorization enabled"
-echo "Using OPA provider: $OPA_PROVIDER_NAME"
-echo "Public gateway: $PUBLIC_GATEWAY_NAME"
-echo "Private gateway: $PRIVATE_GATEWAY_NAME"
-echo "Gateway namespace: $GATEWAY_NAMESPACE"
 
 # Helper function to detect path type (same logic as build_ingress_with_rule)
 detect_path_type() {
@@ -120,50 +119,59 @@ generate_authz_policy() {
   local num_routes=$(echo "$routes_json" | jq 'length')
   echo "Number of $visibility routes: $num_routes"
 
-  if [[ "$num_routes" -eq 0 ]] || [[ -z "$domain" ]] || [[ "$domain" == "null" ]]; then
-    echo "No $visibility routes or domain, skipping $visibility AuthorizationPolicy..."
-    return 0
-  fi
-
-  echo "Generating $visibility AuthorizationPolicy..."
-  local authz_rules=$(build_authz_rules "$routes_json")
-
-  # Build context for template
-  local context=$(jq -n \
-    --arg service_slug "$SERVICE_SLUG" \
-    --arg service_id "$SERVICE_ID" \
-    --arg k8s_namespace "$K8S_NAMESPACE" \
-    --arg domain "$domain" \
-    --arg opa_provider "$OPA_PROVIDER_NAME" \
-    --arg gateway_name "$gateway_name" \
-    --arg gateway_namespace "$GATEWAY_NAMESPACE" \
-    --arg suffix "$suffix" \
-    --argjson rules "$authz_rules" \
-    '{
-      service_slug: $service_slug,
-      service_id: $service_id,
-      k8s_namespace: $k8s_namespace,
-      domain: $domain,
-      opa_provider: $opa_provider,
-      gateway_name: $gateway_name,
-      gateway_namespace: $gateway_namespace,
-      suffix: $suffix,
-      rules: $rules
-    }')
-
-  local context_path="$OUTPUT_DIR/authz-$suffix-context-$SERVICE_ID.json"
-  echo "$context" > "$context_path"
-
-  # Generate AuthorizationPolicy YAML
-  local template="$SERVICE_PATH/plugins/authorization-policy/template.yaml.tpl"
   local authz_file="$OUTPUT_DIR/authorization-policy-$SERVICE_ID-$suffix.yaml"
 
-  gomplate -c .="$context_path" \
-    -f "$template" \
-    -o "$authz_file"
+  # Determine if we should create empty resource
+  local create_empty=false
+  if [[ "$AUTHZ_ENABLED" != "true" ]] || [[ "$num_routes" -eq 0 ]] || [[ -z "$domain" ]] || [[ "$domain" == "null" ]]; then
+    create_empty=true
+  fi
 
-  rm "$context_path"
-  echo "✅ $visibility AuthorizationPolicy generated: $authz_file"
+  if [[ "$create_empty" == "true" ]]; then
+    # Don't create the file - kubectl apply with --prune will delete it
+    echo "Skipping $visibility AuthorizationPolicy generation - resource will be pruned if it exists"
+    # Create a marker file for tracking
+    touch "$OUTPUT_DIR/.authz-$suffix-deleted"
+  else
+    echo "Generating $visibility AuthorizationPolicy..."
+    local authz_rules=$(build_authz_rules "$routes_json")
+
+    # Build context for template
+    local context=$(jq -n \
+      --arg service_slug "$SERVICE_SLUG" \
+      --arg service_id "$SERVICE_ID" \
+      --arg k8s_namespace "$K8S_NAMESPACE" \
+      --arg domain "$domain" \
+      --arg opa_provider "$OPA_PROVIDER_NAME" \
+      --arg gateway_name "$gateway_name" \
+      --arg gateway_namespace "$GATEWAY_NAMESPACE" \
+      --arg suffix "$suffix" \
+      --argjson rules "$authz_rules" \
+      '{
+        service_slug: $service_slug,
+        service_id: $service_id,
+        k8s_namespace: $k8s_namespace,
+        domain: $domain,
+        opa_provider: $opa_provider,
+        gateway_name: $gateway_name,
+        gateway_namespace: $gateway_namespace,
+        suffix: $suffix,
+        rules: $rules
+      }')
+
+    local context_path="$OUTPUT_DIR/authz-$suffix-context-$SERVICE_ID.json"
+    echo "$context" > "$context_path"
+
+    # Generate AuthorizationPolicy YAML
+    local template="$SERVICE_PATH/plugins/authorization-policy/template.yaml.tpl"
+
+    gomplate -c .="$context_path" \
+      -f "$template" \
+      -o "$authz_file"
+
+    rm "$context_path"
+    echo "✅ $visibility AuthorizationPolicy generated: $authz_file"
+  fi
 }
 
 # Generate AuthorizationPolicies for both visibilities
