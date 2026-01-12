@@ -12,7 +12,6 @@ echo "Private Domain: '$PRIVATE_DOMAIN'"
 # Skip if no routes
 if [[ "$NUM_ROUTES" -eq 0 ]]; then
   echo "No private routes configured, skipping..."
-  touch "$OUTPUT_DIR/httproute-$SERVICE_ID-private.yaml"
   exit 0
 fi
 
@@ -20,7 +19,6 @@ fi
 if [[ -z "$PRIVATE_DOMAIN" ]] || [[ "$PRIVATE_DOMAIN" == "null" ]] || [[ "$PRIVATE_DOMAIN" == "\"null\"" ]]; then
   echo "WARNING: Private routes exist but no private domain configured!"
   echo "Skipping private HTTPRoute generation..."
-  touch "$OUTPUT_DIR/httproute-$SERVICE_ID-private.yaml"
   exit 0
 fi
 

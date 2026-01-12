@@ -10,8 +10,6 @@ echo "Number of public routes: $NUM_ROUTES"
 
 if [[ "$NUM_ROUTES" -eq 0 ]] || [[ -z "$PUBLIC_DOMAIN" ]] || [[ "$PUBLIC_DOMAIN" == "null" ]]; then
   echo "No public routes or no public domain configured, skipping..."
-  # Create empty file to satisfy workflow
-  touch "$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml"
   exit 0
 fi
 

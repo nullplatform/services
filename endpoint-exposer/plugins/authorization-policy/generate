@@ -9,9 +9,6 @@ AUTHZ_ENABLED=$(echo "$CONTEXT" | jq -r '.parameters.authorization.enabled // fa
 
 if [[ "$AUTHZ_ENABLED" != "true" ]]; then
   echo "Authorization Policy plugin is disabled, skipping..."
-  # Create empty files to satisfy workflow
-  touch "$OUTPUT_DIR/authorization-policy-$SERVICE_ID-public.yaml"
-  touch "$OUTPUT_DIR/authorization-policy-$SERVICE_ID-private.yaml"
   exit 0
 fi
 
@@ -132,7 +129,6 @@ if [[ "$NUM_PUBLIC_ROUTES" -gt 0 ]] && [[ -n "$PUBLIC_DOMAIN" ]] && [[ "$PUBLIC_
   echo "✅ Public AuthorizationPolicy generated: $PUBLIC_AUTHZ_FILE"
 else
   echo "No public routes or domain, skipping public AuthorizationPolicy..."
-  touch "$OUTPUT_DIR/authorization-policy-$SERVICE_ID-public.yaml"
 fi
 
 # Process PRIVATE routes
@@ -174,7 +170,6 @@ if [[ "$NUM_PRIVATE_ROUTES" -gt 0 ]] && [[ -n "$PRIVATE_DOMAIN" ]] && [[ "$PRIVA
   echo "✅ Private AuthorizationPolicy generated: $PRIVATE_AUTHZ_FILE"
 else
   echo "No private routes or domain, skipping private AuthorizationPolicy..."
-  touch "$OUTPUT_DIR/authorization-policy-$SERVICE_ID-private.yaml"
 fi
 
 echo "=== Authorization Policy generation complete ==="
