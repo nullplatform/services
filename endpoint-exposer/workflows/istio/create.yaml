@@ -46,12 +46,13 @@ steps:
   - name: "generate authorization policy"
     type: script
     file: "$SERVICE_PATH/plugins/authorization-policy/generate"
-    configuration:
-      TEMPLATE: "$SERVICE_PATH/plugins/authorization-policy/template.yaml.tpl"
     output:
-      - name: AUTHZ_POLICY_FILE
+      - name: AUTHZ_POLICY_PUBLIC_FILE
         type: file
-        file: "$OUTPUT_DIR/authorization-policy-$SERVICE_ID.yaml"
+        file: "$OUTPUT_DIR/authorization-policy-$SERVICE_ID-public.yaml"
+      - name: AUTHZ_POLICY_PRIVATE_FILE
+        type: file
+        file: "$OUTPUT_DIR/authorization-policy-$SERVICE_ID-private.yaml"
   - name: apply
     type: script
     file: "$SERVICE_PATH/scripts/common/apply"
