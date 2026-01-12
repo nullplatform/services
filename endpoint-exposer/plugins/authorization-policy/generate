@@ -2,6 +2,9 @@
 
 set -euo pipefail
 
+# Load configuration
+source "$SERVICE_PATH/scripts/istio/config"
+
 echo "=== Generating Authorization Policy ==="
 
 # Check if plugin is enabled
@@ -13,6 +16,10 @@ if [[ "$AUTHZ_ENABLED" != "true" ]]; then
 fi
 
 echo "Authorization enabled"
+echo "Using OPA provider: $OPA_PROVIDER_NAME"
+echo "Public gateway: $PUBLIC_GATEWAY_NAME"
+echo "Private gateway: $PRIVATE_GATEWAY_NAME"
+echo "Gateway namespace: $GATEWAY_NAMESPACE"
 
 # Helper function to detect path type (same logic as build_ingress_with_rule)
 detect_path_type() {
@@ -90,86 +97,77 @@ build_authz_rules() {
   echo "$rules"
 }
 
-# Process PUBLIC routes
-echo "Processing public routes for authorization..."
-NUM_PUBLIC_ROUTES=$(echo "$PUBLIC_ROUTES_JSON" | jq 'length')
-echo "Number of public routes: $NUM_PUBLIC_ROUTES"
+# Function to generate AuthorizationPolicy for a specific visibility
+generate_authz_policy() {
+  local visibility="$1"  # "public" or "private"
 
-if [[ "$NUM_PUBLIC_ROUTES" -gt 0 ]] && [[ -n "$PUBLIC_DOMAIN" ]] && [[ "$PUBLIC_DOMAIN" != "null" ]]; then
-  echo "Generating public AuthorizationPolicy..."
-  PUBLIC_AUTHZ_RULES=$(build_authz_rules "$PUBLIC_ROUTES_JSON")
+  if [[ "$visibility" == "public" ]]; then
+    local routes_json="$PUBLIC_ROUTES_JSON"
+    local domain="$PUBLIC_DOMAIN"
+    local gateway_name="$PUBLIC_GATEWAY_NAME"
+    local suffix="public"
+  elif [[ "$visibility" == "private" ]]; then
+    local routes_json="$PRIVATE_ROUTES_JSON"
+    local domain="$PRIVATE_DOMAIN"
+    local gateway_name="$PRIVATE_GATEWAY_NAME"
+    local suffix="private"
+  else
+    echo "ERROR: Invalid visibility: $visibility"
+    return 1
+  fi
 
-  # Build context for public template
-  PUBLIC_CONTEXT=$(jq -n \
+  echo "Processing $visibility routes for authorization..."
+  local num_routes=$(echo "$routes_json" | jq 'length')
+  echo "Number of $visibility routes: $num_routes"
+
+  if [[ "$num_routes" -eq 0 ]] || [[ -z "$domain" ]] || [[ "$domain" == "null" ]]; then
+    echo "No $visibility routes or domain, skipping $visibility AuthorizationPolicy..."
+    return 0
+  fi
+
+  echo "Generating $visibility AuthorizationPolicy..."
+  local authz_rules=$(build_authz_rules "$routes_json")
+
+  # Build context for template
+  local context=$(jq -n \
     --arg service_slug "$SERVICE_SLUG" \
     --arg service_id "$SERVICE_ID" \
     --arg k8s_namespace "$K8S_NAMESPACE" \
-    --arg public_domain "$PUBLIC_DOMAIN" \
-    --argjson rules "$PUBLIC_AUTHZ_RULES" \
+    --arg domain "$domain" \
+    --arg opa_provider "$OPA_PROVIDER_NAME" \
+    --arg gateway_name "$gateway_name" \
+    --arg gateway_namespace "$GATEWAY_NAMESPACE" \
+    --arg suffix "$suffix" \
+    --argjson rules "$authz_rules" \
     '{
       service_slug: $service_slug,
       service_id: $service_id,
       k8s_namespace: $k8s_namespace,
-      public_domain: $public_domain,
+      domain: $domain,
+      opa_provider: $opa_provider,
+      gateway_name: $gateway_name,
+      gateway_namespace: $gateway_namespace,
+      suffix: $suffix,
       rules: $rules
     }')
 
-  PUBLIC_CONTEXT_PATH="$OUTPUT_DIR/authz-public-context-$SERVICE_ID.json"
-  echo "$PUBLIC_CONTEXT" > "$PUBLIC_CONTEXT_PATH"
+  local context_path="$OUTPUT_DIR/authz-$suffix-context-$SERVICE_ID.json"
+  echo "$context" > "$context_path"
 
-  # Generate public AuthorizationPolicy YAML
-  PUBLIC_TEMPLATE="$SERVICE_PATH/plugins/authorization-policy/template-public.yaml.tpl"
-  PUBLIC_AUTHZ_FILE="$OUTPUT_DIR/authorization-policy-$SERVICE_ID-public.yaml"
+  # Generate AuthorizationPolicy YAML
+  local template="$SERVICE_PATH/plugins/authorization-policy/template.yaml.tpl"
+  local authz_file="$OUTPUT_DIR/authorization-policy-$SERVICE_ID-$suffix.yaml"
 
-  gomplate -c .="$PUBLIC_CONTEXT_PATH" \
-    -f "$PUBLIC_TEMPLATE" \
-    -o "$PUBLIC_AUTHZ_FILE"
+  gomplate -c .="$context_path" \
+    -f "$template" \
+    -o "$authz_file"
 
-  rm "$PUBLIC_CONTEXT_PATH"
-  echo "✅ Public AuthorizationPolicy generated: $PUBLIC_AUTHZ_FILE"
-else
-  echo "No public routes or domain, skipping public AuthorizationPolicy..."
-fi
+  rm "$context_path"
+  echo "✅ $visibility AuthorizationPolicy generated: $authz_file"
+}
 
-# Process PRIVATE routes
-echo "Processing private routes for authorization..."
-NUM_PRIVATE_ROUTES=$(echo "$PRIVATE_ROUTES_JSON" | jq 'length')
-echo "Number of private routes: $NUM_PRIVATE_ROUTES"
-
-if [[ "$NUM_PRIVATE_ROUTES" -gt 0 ]] && [[ -n "$PRIVATE_DOMAIN" ]] && [[ "$PRIVATE_DOMAIN" != "null" ]]; then
-  echo "Generating private AuthorizationPolicy..."
-  PRIVATE_AUTHZ_RULES=$(build_authz_rules "$PRIVATE_ROUTES_JSON")
-
-  # Build context for private template
-  PRIVATE_CONTEXT=$(jq -n \
-    --arg service_slug "$SERVICE_SLUG" \
-    --arg service_id "$SERVICE_ID" \
-    --arg k8s_namespace "$K8S_NAMESPACE" \
-    --arg private_domain "$PRIVATE_DOMAIN" \
-    --argjson rules "$PRIVATE_AUTHZ_RULES" \
-    '{
-      service_slug: $service_slug,
-      service_id: $service_id,
-      k8s_namespace: $k8s_namespace,
-      private_domain: $private_domain,
-      rules: $rules
-    }')
-
-  PRIVATE_CONTEXT_PATH="$OUTPUT_DIR/authz-private-context-$SERVICE_ID.json"
-  echo "$PRIVATE_CONTEXT" > "$PRIVATE_CONTEXT_PATH"
-
-  # Generate private AuthorizationPolicy YAML
-  PRIVATE_TEMPLATE="$SERVICE_PATH/plugins/authorization-policy/template-private.yaml.tpl"
-  PRIVATE_AUTHZ_FILE="$OUTPUT_DIR/authorization-policy-$SERVICE_ID-private.yaml"
-
-  gomplate -c .="$PRIVATE_CONTEXT_PATH" \
-    -f "$PRIVATE_TEMPLATE" \
-    -o "$PRIVATE_AUTHZ_FILE"
-
-  rm "$PRIVATE_CONTEXT_PATH"
-  echo "✅ Private AuthorizationPolicy generated: $PRIVATE_AUTHZ_FILE"
-else
-  echo "No private routes or domain, skipping private AuthorizationPolicy..."
-fi
+# Generate AuthorizationPolicies for both visibilities
+generate_authz_policy "public"
+generate_authz_policy "private"
 
 echo "=== Authorization Policy generation complete ==="

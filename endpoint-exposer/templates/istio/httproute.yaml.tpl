@@ -1,7 +1,7 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: {{ .service_slug }}-{{ .service_id }}-private
+  name: {{ .service_slug }}-{{ .service_id }}-{{ .suffix }}
   namespace: {{ .k8s_namespace }}
   labels:
     nullplatform: "true"
@@ -9,12 +9,12 @@ metadata:
     service_id: {{ .service_id }}
 spec:
   parentRefs:
-    - name: gateway-private
-      namespace: gateways
+    - name: {{ .gateway_name }}
+      namespace: {{ .gateway_namespace }}
       group: gateway.networking.k8s.io
       kind: Gateway
   hostnames:
-    - {{ .private_domain }}
+    - {{ .domain }}
   rules:
     - matches:
         - path:

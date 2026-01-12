@@ -1,26 +1,26 @@
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: {{ .service_name }}-{{ .service_id }}-authz
-  namespace: gateways
+  name: {{ .service_slug }}-{{ .service_id }}-authz-{{ .suffix }}
+  namespace: {{ .gateway_namespace }}
   labels:
-    app.kubernetes.io/name: {{ .service_name }}
+    app.kubernetes.io/name: {{ .service_slug }}
     nullplatform.com/service-id: "{{ .service_id }}"
     nullplatform.com/managed-by: endpoint-exposer
 spec:
-  # Apply to the Gateway workload (not service pods)
+  # Apply to the Gateway workload
   selector:
     matchLabels:
-      gateway.networking.k8s.io/gateway-name: gateway-public
+      gateway.networking.k8s.io/gateway-name: {{ .gateway_name }}
   action: CUSTOM
   provider:
-    name: opa-ext-authz
+    name: {{ .opa_provider }}
   rules:
   {{- range .rules }}
   # Rule for: {{ .method }} {{ .path }} (scope: {{ .scope_slug }})
   - to:
     - operation:
-        hosts: ["{{ $.public_domain }}"]
+        hosts: ["{{ $.domain }}"]
         {{- if ne .method "" }}
         methods: ["{{ .method }}"]
         {{- end }}

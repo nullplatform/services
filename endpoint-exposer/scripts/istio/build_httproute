@@ -1,0 +1,101 @@
+#!/bin/bash
+
+set -euo pipefail
+
+# Load configuration
+source "$SERVICE_PATH/scripts/istio/config"
+
+# Parameters (must be set by caller)
+VISIBILITY="${VISIBILITY:-public}"  # "public" or "private"
+
+echo "=== Building ${VISIBILITY^} HTTPRoute ==="
+
+# Set variables based on visibility
+if [[ "$VISIBILITY" == "public" ]]; then
+  ROUTES_JSON="$PUBLIC_ROUTES_JSON"
+  DOMAIN="$PUBLIC_DOMAIN"
+  GATEWAY_NAME="$PUBLIC_GATEWAY_NAME"
+  SUFFIX="public"
+elif [[ "$VISIBILITY" == "private" ]]; then
+  ROUTES_JSON="$PRIVATE_ROUTES_JSON"
+  DOMAIN="$PRIVATE_DOMAIN"
+  GATEWAY_NAME="$PRIVATE_GATEWAY_NAME"
+  SUFFIX="private"
+else
+  echo "ERROR: Invalid VISIBILITY value: $VISIBILITY"
+  exit 1
+fi
+
+# Check if we have routes and domain
+NUM_ROUTES=$(echo "$ROUTES_JSON" | jq 'length')
+echo "Number of $VISIBILITY routes: $NUM_ROUTES"
+echo "$VISIBILITY Domain: '$DOMAIN'"
+
+# Skip if no routes
+if [[ "$NUM_ROUTES" -eq 0 ]]; then
+  echo "No $VISIBILITY routes configured, skipping..."
+  exit 0
+fi
+
+# Skip if domain is empty/null
+if [[ -z "$DOMAIN" ]] || [[ "$DOMAIN" == "null" ]] || [[ "$DOMAIN" == "\"null\"" ]]; then
+  echo "WARNING: $VISIBILITY routes exist but no $VISIBILITY domain configured!"
+  echo "Skipping $VISIBILITY HTTPRoute generation..."
+  exit 0
+fi
+
+# Create HTTPRoute from template
+TEMPLATE="$SERVICE_PATH/templates/istio/httproute.yaml.tpl"
+HTTPROUTE_FILE="$OUTPUT_DIR/httproute-$SERVICE_ID-$SUFFIX.yaml"
+
+# Build context for template
+HTTPROUTE_CONTEXT=$(jq -n \
+  --arg service_slug "$SERVICE_SLUG" \
+  --arg service_id "$SERVICE_ID" \
+  --arg k8s_namespace "$K8S_NAMESPACE" \
+  --arg domain "$DOMAIN" \
+  --arg gateway_name "$GATEWAY_NAME" \
+  --arg gateway_namespace "$GATEWAY_NAMESPACE" \
+  --arg suffix "$SUFFIX" \
+  '{
+    service_slug: $service_slug,
+    service_id: $service_id,
+    k8s_namespace: $k8s_namespace,
+    domain: $domain,
+    gateway_name: $gateway_name,
+    gateway_namespace: $gateway_namespace,
+    suffix: $suffix
+  }')
+
+CONTEXT_PATH="$OUTPUT_DIR/httproute-$SUFFIX-context-$SERVICE_ID.json"
+echo "$HTTPROUTE_CONTEXT" > "$CONTEXT_PATH"
+
+echo "Generating HTTPRoute from template: $TEMPLATE"
+gomplate -c .="$CONTEXT_PATH" \
+  -f "$TEMPLATE" \
+  -o "$HTTPROUTE_FILE"
+
+rm "$CONTEXT_PATH"
+
+# Now process routes using the existing logic
+# Temporarily override ROUTES_JSON with visibility-specific routes
+ORIGINAL_ROUTES_JSON="${ROUTES_JSON:-[]}"
+export ROUTES_JSON="$ROUTES_JSON"
+export HTTPROUTE_FILE="$HTTPROUTE_FILE"
+
+# Process routes (skip if no routes)
+if [[ "$NUM_ROUTES" -gt 0 ]]; then
+  source "$SERVICE_PATH/scripts/istio/process_routes"
+fi
+
+# Restore original ROUTES_JSON
+export ROUTES_JSON="$ORIGINAL_ROUTES_JSON"
+
+echo "✅ $VISIBILITY HTTPRoute created: $HTTPROUTE_FILE"
+
+# Export file path based on visibility
+if [[ "$VISIBILITY" == "public" ]]; then
+  export HTTPROUTE_PUBLIC_FILE="$HTTPROUTE_FILE"
+elif [[ "$VISIBILITY" == "private" ]]; then
+  export HTTPROUTE_PRIVATE_FILE="$HTTPROUTE_FILE"
+fi
