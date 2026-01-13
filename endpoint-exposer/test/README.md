@@ -28,6 +28,20 @@ Run a specific test file:
 bats test_istio_workflows.bats
 ```
 
+## Git Hooks
+
+The repository includes a pre-commit hook that automatically runs tests before each commit.
+
+Setup the git hooks:
+```bash
+./scripts/setup-hooks.sh
+```
+
+This configures git to use the `.githooks` directory. The pre-commit hook will:
+- Run all BATS tests before allowing a commit
+- Skip tests if BATS is not installed (with a warning)
+- Prevent commits if tests fail
+
 ## Test Structure
 
 - `fixtures/` - Test data and context files
@@ -86,3 +100,4 @@ The test fixtures use the full nullplatform action context structure:
   assert_file_contains "$OUTPUT_DIR/httproute-service-id-public.yaml" "expected content"
 }
 ```
+# Test
