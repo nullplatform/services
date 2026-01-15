@@ -1,0 +1,60 @@
+---
+# RequestAuthentication: Validates JWT tokens from nullplatform scope
+# This validates the JWT signature and extracts claims, but doesn't enforce authentication
+apiVersion: security.istio.io/v1
+kind: RequestAuthentication
+metadata:
+  name: nullplatform-scope-jwt-auth
+  namespace: gateways
+  labels:
+    nullplatform.com/managed-by: endpoint-exposer
+spec:
+  selector:
+    matchLabels:
+      gateway.networking.k8s.io/gateway-name: gateway-public
+  jwtRules:
+  - issuer: "https://api.nullplatform.com/scope"
+    jwksUri: "https://api.nullplatform.com/scope/.well-known/jwks.json"
+    fromHeaders:
+    - name: Authorization
+      prefix: "Bearer "
+    fromCookies:
+    - "np_scope_token"
+    outputClaimToHeaders:
+    - header: "X-User-ID"
+      claim: "sub"
+    - header: "X-User-Email"
+      claim: "email"
+    - header: "X-User-Scopes"
+      claim: "scope"
+
+---
+# AuthorizationPolicy: Denies access to specific host without valid JWT
+# Uses DENY action with notValues to block requests without valid issuer claim
+# Other hosts without specific policies remain accessible (Istio default: allow-by-default with only DENY policies)
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: require-jwt-production
+  namespace: gateways
+  labels:
+    nullplatform.com/managed-by: endpoint-exposer
+spec:
+  action: DENY
+  selector:
+    matchLabels:
+      gateway.networking.k8s.io/gateway-name: gateway-public
+  rules:
+  # Deny requests to production host without valid JWT
+  - to:
+    - operation:
+        hosts:
+        - "playground-floppy-bird-api-production-kjstb.edenred.nullimplementation.com"
+        ports: ["443"]
+        notPaths:
+        - /health
+        - /ready
+        - /metrics
+    when:
+    - key: request.auth.claims[aud]
+      notValues: ["layground-floppy-bird-api-production-kjstb.edenred.nullimplementation.com"]
