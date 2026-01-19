@@ -128,15 +128,10 @@ teardown() {
   export VISIBILITY="private"
   bash "$SERVICE_PATH/scripts/istio/build_httproute"
 
-  # Step 4: Generate authorization policies (should create markers when disabled)
-  bash "$SERVICE_PATH/plugins/authorization-policy/generate"
-
   # Verify outputs
   assert_file_exists "$OUTPUT_DIR/httproute-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-public.yaml"
   assert_file_not_exists "$OUTPUT_DIR/httproute-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-private.yaml"
   assert_file_exists "$OUTPUT_DIR/.httproute-private-deleted"
-  assert_file_exists "$OUTPUT_DIR/.authz-public-deleted"
-  assert_file_exists "$OUTPUT_DIR/.authz-private-deleted"
 
   # Verify public HTTPRoute content
   assert_file_contains "$OUTPUT_DIR/httproute-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-public.yaml" "HTTPRoute"
@@ -156,26 +151,17 @@ teardown() {
   export VISIBILITY="private"
   bash "$SERVICE_PATH/scripts/istio/build_httproute"
 
-  # Generate authorization policies
-  bash "$SERVICE_PATH/plugins/authorization-policy/generate"
-
   # Verify all resources created
   assert_file_exists "$OUTPUT_DIR/httproute-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-public.yaml"
   assert_file_exists "$OUTPUT_DIR/httproute-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-private.yaml"
-  assert_file_exists "$OUTPUT_DIR/authorization-policy-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-public.yaml"
-  assert_file_exists "$OUTPUT_DIR/authorization-policy-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-private.yaml"
 
   # Verify no marker files (all resources should be created)
   assert_file_not_exists "$OUTPUT_DIR/.httproute-public-deleted"
   assert_file_not_exists "$OUTPUT_DIR/.httproute-private-deleted"
-  assert_file_not_exists "$OUTPUT_DIR/.authz-public-deleted"
-  assert_file_not_exists "$OUTPUT_DIR/.authz-private-deleted"
 
   # Verify content
   assert_file_contains "$OUTPUT_DIR/httproute-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-public.yaml" "api.edenred.nullimplementation.com"
   assert_file_contains "$OUTPUT_DIR/httproute-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-private.yaml" "api-private.edenred.nullimplementation.com"
-  assert_file_contains "$OUTPUT_DIR/authorization-policy-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-public.yaml" "AuthorizationPolicy"
-  assert_file_contains "$OUTPUT_DIR/authorization-policy-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-private.yaml" "AuthorizationPolicy"
 }
 
 @test "integration: workflow with authorization disabled creates cleanup markers" {
@@ -191,18 +177,9 @@ teardown() {
   export VISIBILITY="private"
   bash "$SERVICE_PATH/scripts/istio/build_httproute"
 
-  # Generate authorization policies (should create markers)
-  bash "$SERVICE_PATH/plugins/authorization-policy/generate"
-
   # Verify httproutes created
   assert_file_exists "$OUTPUT_DIR/httproute-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-public.yaml"
   assert_file_exists "$OUTPUT_DIR/httproute-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-private.yaml"
-
-  # Verify authz markers created (authorization disabled)
-  assert_file_exists "$OUTPUT_DIR/.authz-public-deleted"
-  assert_file_exists "$OUTPUT_DIR/.authz-private-deleted"
-  assert_file_not_exists "$OUTPUT_DIR/authorization-policy-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-public.yaml"
-  assert_file_not_exists "$OUTPUT_DIR/authorization-policy-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-private.yaml"
 }
 
 @test "integration: apply step handles markers and resources correctly" {
@@ -218,9 +195,6 @@ teardown() {
   export VISIBILITY="private"
   bash "$SERVICE_PATH/scripts/istio/build_httproute"
 
-  # Generate authorization policies
-  bash "$SERVICE_PATH/plugins/authorization-policy/generate"
-
   # Run apply
   run bash "$SERVICE_PATH/scripts/common/apply"
 
@@ -228,8 +202,6 @@ teardown() {
 
   # Should detect and process markers
   assert_output --partial "Private HTTPRoute marked for deletion"
-  assert_output --partial "Public AuthorizationPolicy marked for deletion"
-  assert_output --partial "Private AuthorizationPolicy marked for deletion"
 
   # Should apply the public httproute
   assert_output --partial "Applying 1 resources"
@@ -248,14 +220,9 @@ teardown() {
   export VISIBILITY="private"
   bash "$SERVICE_PATH/scripts/istio/build_httproute"
 
-  # Generate authorization policies
-  bash "$SERVICE_PATH/plugins/authorization-policy/generate"
-
   # Verify all resources have required labels
   assert_file_contains "$OUTPUT_DIR/httproute-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-public.yaml" "nullplatform.com/managed-by: endpoint-exposer"
   assert_file_contains "$OUTPUT_DIR/httproute-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-private.yaml" "nullplatform.com/managed-by: endpoint-exposer"
-  assert_file_contains "$OUTPUT_DIR/authorization-policy-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-public.yaml" "nullplatform.com/managed-by: endpoint-exposer"
-  assert_file_contains "$OUTPUT_DIR/authorization-policy-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-private.yaml" "nullplatform.com/managed-by: endpoint-exposer"
 
   assert_file_contains "$OUTPUT_DIR/httproute-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-public.yaml" "nullplatform.com/service-id:"
   assert_file_contains "$OUTPUT_DIR/httproute-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-private.yaml" "nullplatform.com/service-id:"

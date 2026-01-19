@@ -45,9 +45,6 @@ steps:
       - name: HTTPROUTE_PRIVATE_FILE
         type: file
         file: "$OUTPUT_DIR/httproute-$SERVICE_ID-private.yaml"
-  - name: "execute plugins"
-    type: script
-    file: "$SERVICE_PATH/plugins/entrypoint"
   - name: apply
     type: script
     file: "$SERVICE_PATH/scripts/common/apply"

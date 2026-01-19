@@ -124,8 +124,8 @@ Each test should verify one specific behavior:
 Use the format: `<component>: <what it does> <under what conditions>`
 
 ```bash
-@test "authorization_policy: generates policy when enabled and routes exist"
-@test "authorization_policy: creates marker when disabled"
+@test "build_httproute: creates HTTPRoute when routes exist"
+@test "build_httproute: creates marker when no routes exist"
 @test "build_httproute: fails with invalid visibility parameter"
 ```
 
@@ -187,10 +187,7 @@ For end-to-end workflow tests:
   export VISIBILITY="private"
   bash "$SERVICE_PATH/scripts/istio/build_httproute"
 
-  # Step 3: Generate authorization
-  bash "$SERVICE_PATH/plugins/authorization-policy/generate"
-
-  # Step 4: Apply
+  # Step 3: Apply
   run bash "$SERVICE_PATH/scripts/common/apply"
 
   # Assert complete workflow
