@@ -26,7 +26,7 @@ CONTEXT=$(echo "$CONTEXT" | jq \
           '. + {k8s_namespace: $k8s_namespace}')
 
 # Only set OUTPUT_DIR if not already set (allows tests to override)
-if [[ -z "$OUTPUT_DIR" ]]; then
+if [[ -z "${OUTPUT_DIR:-}" ]]; then
   export OUTPUT_DIR="$SERVICE_PATH/output/$SERVICE_SLUG-$SERVICE_ID/$ACTION_NAME-$ACTION_ID"
 fi
 
