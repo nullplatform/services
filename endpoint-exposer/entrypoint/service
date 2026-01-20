@@ -26,4 +26,12 @@ if [[ -f "$OVERRIDES_WORKFLOW_PATH" ]]; then
 fi
 
 echo "Executing command: $CMD"
+
+# Note: The 'np service workflow exec' CLI internally modifies OVERRIDES_PATH
+# It sets it to dirname(dirname(--overrides file path))
+# Example: --overrides /path/to/plugin/workflows/create.yaml
+#   Results in: OVERRIDES_PATH=/path/to (loses the 'plugin' directory)
+# This is why plugin workflows must use: $OVERRIDES_PATH/plugin-name/scripts/...
+export OVERRIDES_PATH
+
 eval "$CMD"
