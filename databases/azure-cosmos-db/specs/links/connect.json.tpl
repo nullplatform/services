@@ -80,13 +80,9 @@
           "description": "Select containers to apply this link",
           "items": {
             "type": "string",
-            "enum": [
-              "Users",
-              "Orders",
-              "Products",
-              "Inventory",
-              "Sessions"
-            ]
+            "additionalKeywords": {
+              "enum": ".service.attributes.containers"
+            }
           },
           "uniqueItems": true,
           "editableOn": [
