@@ -12,8 +12,8 @@ steps:
       - name: TOFU_VARIABLES
         type: environment
 
-  - name: tofu
-    type: script
-    file: $SERVICE_PATH/scripts/azure/do_tofu
-    configuration:
-      TOFU_ACTION: apply
+  # - name: tofu
+  #   type: script
+  #   file: $SERVICE_PATH/scripts/azure/do_tofu
+  #   configuration:
+  #     TOFU_ACTION: apply
