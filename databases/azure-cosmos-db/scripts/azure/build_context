@@ -68,12 +68,29 @@ mkdir -p "$OUTPUT_DIR"
 
 TOFU_MODULE_DIR="$SERVICE_PATH/deployment"
 
-# Backend config for tfstate (values from environment)
-AZURE_TFSTATE_RESOURCE_GROUP="$RESOURCE_GROUP"
-AZURE_TFSTATE_KEY="cosmos-db/${SERVICE_ID}/infrastructure.tfstate"
-AZURE_TFSTATE_CONTAINER=""
-AZURE_TFSTATE_STORAGE_ACCOUNT=""
-TOFU_INIT_VARIABLES="-backend-config=resource_group_name=${AZURE_TFSTATE_RESOURCE_GROUP} -backend-config=storage_account_name=${AZURE_TFSTATE_STORAGE_ACCOUNT} -backend-config=container_name=${AZURE_TFSTATE_CONTAINER} -backend-config=key=${AZURE_TFSTATE_KEY}"
+# Backend config for tfstate (values from environment, if configured)
+if [ -n "${AZURE_TFSTATE_STORAGE_ACCOUNT:-}" ] && [ -n "${AZURE_TFSTATE_CONTAINER:-}" ]; then
+  echo "Using Azure backend for tfstate"
+
+  TFSTATE_RESOURCE_GROUP="${AZURE_TFSTATE_RESOURCE_GROUP:-$RESOURCE_GROUP}"
+  TFSTATE_KEY="cosmos-db/${SERVICE_ID}/infrastructure.tfstate"
+
+  # Generate backend.tf dynamically
+  cat > "$TOFU_MODULE_DIR/backend.tf" <<EOF
+terraform {
+  backend "azurerm" {}
+}
+EOF
+
+  TOFU_INIT_VARIABLES="-backend-config=resource_group_name=${TFSTATE_RESOURCE_GROUP} -backend-config=storage_account_name=${AZURE_TFSTATE_STORAGE_ACCOUNT} -backend-config=container_name=${AZURE_TFSTATE_CONTAINER} -backend-config=key=${TFSTATE_KEY}"
+else
+  echo "Using local backend for tfstate"
+
+  # Remove backend.tf if exists to use local backend
+  rm -f "$TOFU_MODULE_DIR/backend.tf"
+
+  TOFU_INIT_VARIABLES=""
+fi
 
 TOFU_VARIABLES=$(jq -n \
   --arg cosmos_account_name "$ACCOUNT_NAME" \

@@ -14,15 +14,6 @@
     "read"
   ],
   "available_links": [],
-  "agent_command": {
-    "type": "exec",
-    "data": {
-      "cmdline": "nullplatform/services/databases/azure-cosmos-db/entrypoint/entrypoint",
-      "environment": {
-        "NP_ACTION_CONTEXT": "${NOTIFICATION_CONTEXT}"
-      }
-    }
-  },
   "selectors": {
     "category": "Database",
     "imported": false,
