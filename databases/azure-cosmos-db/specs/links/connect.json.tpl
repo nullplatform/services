@@ -1,7 +1,7 @@
 {
   "id": "41a7659d-7b3b-480c-a7d3-a30c8ccaa1cc",
-  "name": "Link",
-  "slug": "create-my-link",
+  "name": "Connect",
+  "slug": "connect",
   "visible_to": [],
   "unique": false,
   "dimensions": {},

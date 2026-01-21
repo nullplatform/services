@@ -11,7 +11,7 @@
   "assignable_to": "any",
   "use_default_actions": true,
   "available_actions": [],
-  "available_links": [],
+  "available_links": ["connect"],
   "selectors": {
     "category": "Database",
     "imported": false,
