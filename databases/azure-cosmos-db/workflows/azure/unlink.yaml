@@ -1,0 +1,50 @@
+steps:
+  - name: build context
+    type: script
+    file: $SERVICE_PATH/scripts/azure/build_context
+    output:
+      - name: OUTPUT_DIR
+        type: environment
+      - name: LINK_ID
+        type: environment
+      - name: LINK_NAME
+        type: environment
+      - name: SCOPE_ID
+        type: environment
+      - name: SCOPE_NRN
+        type: environment
+      - name: LINK_ACCESS_LEVEL
+        type: environment
+      - name: LINK_ALL_CONTAINERS
+        type: environment
+      - name: LINK_TARGET
+        type: environment
+      - name: SUBSCRIPTION_ID
+        type: environment
+      - name: RESOURCE_GROUP
+        type: environment
+      - name: ACCOUNT_NAME
+        type: environment
+      - name: DATABASE_NAME
+        type: environment
+      - name: CONTAINERS_JSON
+        type: environment
+
+  - name: build permissions context
+    type: script
+    file: $SERVICE_PATH/scripts/azure/build_permissions_context
+    output:
+      - name: OUTPUT_DIR
+        type: environment
+      - name: TOFU_MODULE_DIR
+        type: environment
+      - name: TOFU_INIT_VARIABLES
+        type: environment
+      - name: TOFU_VARIABLES
+        type: environment
+
+  - name: tofu
+    type: script
+    file: $SERVICE_PATH/scripts/azure/do_tofu
+    configuration:
+      TOFU_ACTION: destroy

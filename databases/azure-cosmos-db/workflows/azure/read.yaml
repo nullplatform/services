@@ -1,0 +1,29 @@
+steps:
+  - name: build context
+    type: script
+    file: $SERVICE_PATH/scripts/azure/build_context
+    output:
+      - name: ENDPOINT
+        type: environment
+      - name: DATABASE_NAME
+        type: environment
+      - name: CONTAINERS_JSON
+        type: environment
+
+  - name: read current state
+    type: script
+    script: |
+      #!/bin/bash
+      set -euo pipefail
+
+      RESULTS=$(jq -n \
+        --arg endpoint "$ENDPOINT" \
+        --arg database_name "$DATABASE_NAME" \
+        --argjson containers "$CONTAINERS_JSON" \
+        '{
+          endpoint: $endpoint,
+          database_name: $database_name,
+          containers: $containers
+        }')
+
+      np service action update --results "$RESULTS"

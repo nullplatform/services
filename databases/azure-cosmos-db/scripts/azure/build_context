@@ -1,0 +1,129 @@
+#!/bin/bash
+
+set -euo pipefail
+
+SERVICE_ID=$(echo "$CONTEXT" | jq -r .service.id)
+SERVICE_SLUG=$(echo "$CONTEXT" | jq -r .service.slug)
+
+ACTION_ID=$(echo "$CONTEXT" | jq -r .id)
+ACTION_NAME=$(echo "$CONTEXT" | jq -r .slug)
+
+# Link context (when action comes from a link)
+LINK_ID=$(echo "$CONTEXT" | jq -r '.link.id // ""')
+LINK_NAME=$(echo "$CONTEXT" | jq -r '.link.slug // ""')
+SCOPE_ID=$(echo "$CONTEXT" | jq -r '.tags.scope_id // ""')
+SCOPE_NRN=$(echo "$CONTEXT" | jq -r '.tags.nrn // ""')
+
+# Link attributes (from link-spec schema)
+LINK_ACCESS_LEVEL=$(echo "$CONTEXT" | jq -r '.link.attributes.accessLevel // "read"')
+LINK_ALL_CONTAINERS=$(echo "$CONTEXT" | jq -r '.link.attributes.allContainers // false')
+LINK_TARGET=$(echo "$CONTEXT" | jq -c '.link.attributes.target // []')
+
+# Extract cosmos account info from parameters (supports both snake_case and camelCase)
+RESOURCE_GROUP=$(echo "$CONTEXT" | jq -r '.parameters.resource_group_name // .parameters.resourceGroupName // ""')
+ACCOUNT_NAME=$(echo "$CONTEXT" | jq -r '.parameters.account_name // .parameters.accountName // ""')
+ENDPOINT=$(echo "$CONTEXT" | jq -r '.parameters.endpoint // ""')
+
+# Hardcoded for now - TODO: get from environment or tags
+SUBSCRIPTION_ID="$AZURE_SUBSCRIPTION_ID"
+
+# Extract database config from parameters (supports both snake_case and camelCase)
+DATABASE_NAME=$(echo "$CONTEXT" | jq -r '.parameters.database_name // .parameters.databaseName // ""')
+CAPACITY_MODE=$(echo "$CONTEXT" | jq -r '.parameters.capacity_mode // .parameters.capacityMode // "provisioned"')
+CONSISTENCY_LEVEL=$(echo "$CONTEXT" | jq -r '.parameters.consistency_level // .parameters.consistencyLevel // "Session"')
+
+# Extract containers array from parameters and transform snake_case to camelCase
+# The form sends: container_name, partition_key, throughput_type, default_ttl
+# Terraform expects: containerName, partitionKey, throughputType, defaultTtl
+CONTAINERS_RAW=$(echo "$CONTEXT" | jq -c '.parameters.containers // []')
+CONTAINERS_JSON=$(echo "$CONTAINERS_RAW" | jq -c '[.[] | {
+  containerName: (.container_name // .containerName // "default"),
+  partitionKey: (.partition_key // .partitionKey // "/id"),
+  throughput: (.throughput // 400),
+  throughputType: (.throughput_type // .throughputType // "autoscale"),
+  defaultTtl: (.default_ttl // .defaultTtl // -1)
+}]')
+
+# Get first container config for default values (legacy support)
+FIRST_CONTAINER=$(echo "$CONTAINERS_JSON" | jq -c '.[0] // {}')
+CONTAINER_NAME=$(echo "$FIRST_CONTAINER" | jq -r '.containerName // "default"')
+PARTITION_KEY=$(echo "$FIRST_CONTAINER" | jq -r '.partitionKey // "/id"')
+THROUGHPUT=$(echo "$FIRST_CONTAINER" | jq -r '.throughput // 400')
+THROUGHPUT_TYPE=$(echo "$FIRST_CONTAINER" | jq -r '.throughputType // "autoscale"')
+DEFAULT_TTL=$(echo "$FIRST_CONTAINER" | jq -r '.defaultTtl // -1')
+
+# Ensure partition key has leading slash
+if [[ "$PARTITION_KEY" != /* ]]; then
+  PARTITION_KEY="/$PARTITION_KEY"
+fi
+
+# Default database name from service slug if not provided
+if [ -z "$DATABASE_NAME" ] || [ "$DATABASE_NAME" = "null" ]; then
+  DATABASE_NAME=$(echo "$SERVICE_SLUG" | tr '-' '_')
+fi
+
+OUTPUT_DIR="$SERVICE_PATH/output/$SERVICE_SLUG-$SERVICE_ID/$ACTION_NAME-$ACTION_ID"
+
+mkdir -p "$OUTPUT_DIR"
+
+TOFU_MODULE_DIR="$SERVICE_PATH/deployment"
+
+# Backend config for tfstate (values from environment)
+AZURE_TFSTATE_RESOURCE_GROUP="$RESOURCE_GROUP"
+AZURE_TFSTATE_KEY="cosmos-db/${SERVICE_ID}/infrastructure.tfstate"
+AZURE_TFSTATE_CONTAINER=""
+AZURE_TFSTATE_STORAGE_ACCOUNT=""
+TOFU_INIT_VARIABLES="-backend-config=resource_group_name=${AZURE_TFSTATE_RESOURCE_GROUP} -backend-config=storage_account_name=${AZURE_TFSTATE_STORAGE_ACCOUNT} -backend-config=container_name=${AZURE_TFSTATE_CONTAINER} -backend-config=key=${AZURE_TFSTATE_KEY}"
+
+TOFU_VARIABLES=$(jq -n \
+  --arg cosmos_account_name "$ACCOUNT_NAME" \
+  --arg resource_group_name "$RESOURCE_GROUP" \
+  --arg subscription_id "$SUBSCRIPTION_ID" \
+  --arg database_name "$DATABASE_NAME" \
+  --arg container_name "$CONTAINER_NAME" \
+  --arg partition_key_path "$PARTITION_KEY" \
+  --argjson throughput "$THROUGHPUT" \
+  --arg throughput_type "$THROUGHPUT_TYPE" \
+  --argjson default_ttl "$DEFAULT_TTL" \
+  --argjson containers "$CONTAINERS_JSON" \
+  '{
+    cosmos_account_name: $cosmos_account_name,
+    resource_group_name: $resource_group_name,
+    subscription_id: $subscription_id,
+    database_name: $database_name,
+    container_name: $container_name,
+    partition_key_path: $partition_key_path,
+    throughput: $throughput,
+    throughput_type: $throughput_type,
+    default_ttl: $default_ttl,
+    containers: $containers
+  }')
+
+export SERVICE_ID
+export SERVICE_SLUG
+export ACTION_ID
+export ACTION_NAME
+export LINK_ID
+export LINK_NAME
+export SCOPE_ID
+export SCOPE_NRN
+export LINK_ACCESS_LEVEL
+export LINK_ALL_CONTAINERS
+export LINK_TARGET
+export ACCOUNT_NAME
+export ENDPOINT
+export RESOURCE_GROUP
+export SUBSCRIPTION_ID
+export DATABASE_NAME
+export CONTAINER_NAME
+export PARTITION_KEY
+export THROUGHPUT
+export THROUGHPUT_TYPE
+export CAPACITY_MODE
+export CONSISTENCY_LEVEL
+export DEFAULT_TTL
+export CONTAINERS_JSON
+export OUTPUT_DIR
+export TOFU_MODULE_DIR
+export TOFU_INIT_VARIABLES
+export TOFU_VARIABLES
