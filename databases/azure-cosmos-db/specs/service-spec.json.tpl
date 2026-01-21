@@ -10,9 +10,7 @@
   "scopes": {},
   "assignable_to": "any",
   "use_default_actions": true,
-  "available_actions": [
-    "read"
-  ],
+  "available_actions": [],
   "available_links": [],
   "selectors": {
     "category": "Database",
