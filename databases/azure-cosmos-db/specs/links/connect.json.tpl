@@ -81,7 +81,7 @@
           "items": {
             "type": "string",
             "additionalKeywords": {
-              "enum": ".service.attributes.containers"
+              "enum": "if (.service.attributes.containers | type == \"array\" and length > 0) then [.service.attributes.containers[].container_name] else [\"No containers available\"] end"
             }
           },
           "uniqueItems": true,
