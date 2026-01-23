@@ -5,7 +5,7 @@ set -euo pipefail
 echo "=== Build Permissions Context ==="
 echo "Access Level: $LINK_ACCESS_LEVEL"
 echo "All Containers: $LINK_ALL_CONTAINERS"
-echo "Target Containers: $LINK_TARGET"
+echo "Selected Containers: $LINK_SELECTED_CONTAINERS"
 echo "Database: $DATABASE_NAME"
 echo "Account: $ACCOUNT_NAME"
 echo "Resource Group: $RESOURCE_GROUP"
@@ -24,17 +24,17 @@ echo "Principal ID: $PRINCIPAL_ID"
 if [ "$LINK_ALL_CONTAINERS" = "true" ]; then
   echo "Using all containers from service definition"
 
-  # Extract container names from CONTAINERS_JSON (service parameters)
-  TARGET_CONTAINERS=$(echo "$CONTAINERS_JSON" | jq -c '[.[].containerName]')
+  # Extract container names from ALL_CONTAINERS (service parameters)
+  CONTAINERS_TO_APPLY_PERMISSIONS=$(echo "$ALL_CONTAINERS" | jq -c '[.[].containerName]')
 
-  echo "Found containers: $TARGET_CONTAINERS"
+  echo "Found containers: $CONTAINERS_TO_APPLY_PERMISSIONS"
 else
-  TARGET_CONTAINERS="$LINK_TARGET"
-  echo "Using selected containers: $TARGET_CONTAINERS"
+  CONTAINERS_TO_APPLY_PERMISSIONS="$LINK_SELECTED_CONTAINERS"
+  echo "Using selected containers: $CONTAINERS_TO_APPLY_PERMISSIONS"
 fi
 
 # Validate we have containers
-CONTAINER_COUNT=$(echo "$TARGET_CONTAINERS" | jq 'length')
+CONTAINER_COUNT=$(echo "$CONTAINERS_TO_APPLY_PERMISSIONS" | jq 'length')
 if [ "$CONTAINER_COUNT" -eq 0 ]; then
   echo "ERROR: No containers specified"
   exit 1
@@ -49,7 +49,7 @@ TOFU_VARIABLES=$(jq -n \
   --arg principal_id "$PRINCIPAL_ID" \
   --arg access_level "$LINK_ACCESS_LEVEL" \
   --argjson all_containers "$LINK_ALL_CONTAINERS" \
-  --argjson target_containers "$TARGET_CONTAINERS" \
+  --argjson containers_to_apply_permissions "$CONTAINERS_TO_APPLY_PERMISSIONS" \
   '{
     subscription_id: $subscription_id,
     resource_group_name: $resource_group_name,
@@ -58,7 +58,7 @@ TOFU_VARIABLES=$(jq -n \
     principal_id: $principal_id,
     access_level: $access_level,
     all_containers: $all_containers,
-    target_containers: $target_containers
+    containers_to_apply_permissions: $containers_to_apply_permissions
   }')
 
 echo "Generated tfvars:"

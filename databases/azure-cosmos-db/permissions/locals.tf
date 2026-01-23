@@ -7,7 +7,5 @@ locals {
 
   role_id = local.role_ids[var.access_level]
 
-  # The script will populate target_containers with all container names
-  # when all_containers is true, so we just use target_containers directly
-  containers_to_assign = var.target_containers
+  containers_to_assign = var.containers_to_apply_permissions
 }

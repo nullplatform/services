@@ -27,7 +27,6 @@ resource "azurerm_cosmosdb_sql_container" "containers" {
   database_name         = azurerm_cosmosdb_sql_database.database.name
   partition_key_paths   = [startswith(each.value.partitionKey, "/") ? each.value.partitionKey : "/${each.value.partitionKey}"]
   partition_key_version = 2
-  default_ttl           = lookup(each.value, "defaultTtl", -1) != -1 ? each.value.defaultTtl : null
 
   indexing_policy {
     indexing_mode = "consistent"

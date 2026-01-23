@@ -18,44 +18,22 @@ variable "database_name" {
   type        = string
 }
 
-variable "container_name" {
-  description = "Name of the default container (deprecated, use containers array)"
-  type        = string
-  default     = ""
-}
-
-variable "partition_key_path" {
-  description = "Partition key path (deprecated, use containers array)"
-  type        = string
-  default     = "/id"
-}
-
 variable "throughput" {
-  description = "Throughput in RU/s (deprecated, use containers array)"
+  description = "Database throughput in RU/s"
   type        = number
-  default     = 400
+  default     = 1000
 }
 
 variable "throughput_type" {
-  description = "Throughput type: manual or autoscale (deprecated, use containers array)"
+  description = "Throughput type: manual or autoscale"
   type        = string
   default     = "autoscale"
-}
-
-variable "default_ttl" {
-  description = "Default TTL in seconds (deprecated, use containers array)"
-  type        = number
-  default     = -1
 }
 
 variable "containers" {
   description = "List of containers to create"
   type = list(object({
-    containerName  = string
-    partitionKey   = string
-    throughput     = optional(number, 400)
-    throughputType = optional(string, "autoscale")
-    defaultTtl     = optional(number, -1)
+    containerName = string
+    partitionKey  = string
   }))
-  default = []
 }

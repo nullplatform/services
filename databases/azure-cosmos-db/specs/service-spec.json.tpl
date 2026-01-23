@@ -1,17 +1,16 @@
 {
-  "id": "b9f5f4d2-b489-4473-8d9a-d6122d0b3878",
+  "id": "d2f57fb3-8664-43c6-bdd4-3f8f06309084",
   "name": "Azure Cosmos DB",
   "slug": "azure-cosmos-db",
   "type": "dependency",
   "visible_to": [
-    "organization=1698562351"
+    "organization=1698562351:account=2097086864"
   ],
+  "unique": false,
   "dimensions": {},
   "scopes": {},
   "assignable_to": "any",
   "use_default_actions": true,
-  "available_actions": [],
-  "available_links": ["connect"],
   "selectors": {
     "category": "Database",
     "imported": false,
@@ -19,219 +18,52 @@
     "sub_category": "NoSQL Database"
   },
   "attributes": {
-    "schema": {
-      "type": "object",
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "required": [
-        "accountName",
-        "databaseName",
-        "containers"
-      ],
-      "uiSchema": {
-        "type": "VerticalLayout",
-        "elements": [
-          {
-            "type": "Group",
-            "label": "Connection Info",
-            "elements": [
-              {
-                "type": "HorizontalLayout",
-                "elements": [
-                  {
-                    "type": "Control",
-                    "scope": "#/properties/accountName"
-                  },
-                  {
-                    "type": "Control",
-                    "scope": "#/properties/endpoint",
-                    "options": {
-                      "readonly": true
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "type": "Group",
-            "label": "Database Configuration",
-            "elements": [
-              {
-                "type": "Control",
-                "scope": "#/properties/databaseName"
-              },
-              {
-                "type": "Control",
-                "scope": "#/properties/containers",
-                "options": {
-                  "detail": {
-                    "type": "VerticalLayout",
-                    "elements": [
-                      {
-                        "type": "Control",
-                        "scope": "#/properties/containerName"
-                      },
-                      {
-                        "type": "Control",
-                        "scope": "#/properties/partitionKey"
-                      }
-                    ]
-                  },
-                  "showSortButtons": false,
-                  "elementLabelProp": "containerName"
-                }
-              }
-            ]
-          },
-          {
-            "type": "Categorization",
-            "options": {
-              "collapsable": {
-                "label": "ADVANCED",
-                "collapsed": true
-              }
-            },
-            "elements": [
-              {
-                "type": "Category",
-                "label": "Capacity & Consistency",
-                "elements": [
-                  {
-                    "type": "Control",
-                    "scope": "#/properties/capacityMode"
-                  },
-                  {
-                    "type": "Control",
-                    "scope": "#/properties/consistencyLevel"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "properties": {
-        "accountName": {
-          "type": "string",
-          "title": "Account Name",
-          "description": "Cosmos DB account name",
-          "editableOn": [
-            "create"
-          ]
-        },
-        "endpoint": {
-          "type": "string",
-          "title": "Endpoint",
-          "description": "Cosmos DB account endpoint URL",
-          "editableOn": []
-        },
-        "databaseName": {
-          "type": "string",
-          "title": "Database Name",
-          "description": "Name of the Cosmos DB database",
-          "editableOn": [
-            "create"
-          ]
-        },
-        "containers": {
-          "type": "array",
-          "title": "Containers",
-          "description": "List of containers in this database",
-          "minItems": 1,
-          "editableOn": [
-            "create",
-            "update"
+    "values": {}
+  },
+  "specification_schema": {
+    "type": "object",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "required": [
+      "containers"
+    ],
+    "properties": {
+      "containers": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "containerName",
+            "partitionKey"
           ],
-          "items": {
-            "type": "object",
-            "required": [
-              "containerName",
-              "partitionKey"
-            ],
-            "properties": {
-              "containerName": {
-                "type": "string",
-                "title": "Container Name",
-                "description": "Name of the container to store documents",
-                "editableOn": [
-                  "create"
-                ]
-              },
-              "partitionKey": {
-                "type": "string",
-                "title": "Partition Key",
-                "description": "Partition key path (e.g., /customerId, /tenantId)",
-                "editableOn": [
-                  "create"
-                ]
-              },
-              "throughput": {
-                "type": "number",
-                "title": "Throughput (RU/s)",
-                "description": "Request Units per second (400 - 1000000)",
-                "default": 400,
-                "editableOn": [
-                  "create",
-                  "update"
-                ]
-              },
-              "throughputType": {
-                "type": "string",
-                "title": "Throughput Type",
-                "description": "Manual: fixed RU/s, Autoscale: scales automatically",
-                "enum": [
-                  "manual",
-                  "autoscale"
-                ],
-                "default": "autoscale",
-                "editableOn": [
-                  "create"
-                ]
-              },
-              "defaultTtl": {
-                "type": "number",
-                "title": "Default TTL (seconds)",
-                "description": "Time to live for documents (-1 = disabled)",
-                "default": -1,
-                "editableOn": [
-                  "create",
-                  "update"
-                ]
-              }
+          "properties": {
+            "partitionKey": {
+              "type": "string",
+              "order": 2,
+              "title": "Partition Key",
+              "editableOn": [
+                "create"
+              ],
+              "description": "Partition key path (e.g., /customerId, /tenantId)"
+            },
+            "containerName": {
+              "type": "string",
+              "order": 1,
+              "title": "Container Name",
+              "editableOn": [
+                "create"
+              ],
+              "description": "Name of the container to store documents"
             }
           }
         },
-        "capacityMode": {
-          "type": "string",
-          "title": "Capacity Mode",
-          "description": "Provisioned: fixed RU/s, Serverless: pay per request",
-          "enum": [
-            "provisioned",
-            "serverless"
-          ],
-          "default": "provisioned",
-          "editableOn": [
-            "create"
-          ]
-        },
-        "consistencyLevel": {
-          "type": "string",
-          "title": "Consistency Level",
-          "description": "Data consistency guarantee across replicas",
-          "enum": [
-            "Strong",
-            "BoundedStaleness",
-            "Session",
-            "ConsistentPrefix",
-            "Eventual"
-          ],
-          "default": "Session",
-          "editableOn": [
-            "create"
-          ]
-        }
+        "title": "Containers",
+        "minItems": 1,
+        "editableOn": [
+          "create",
+          "update"
+        ],
+        "description": "List of containers in this database"
       }
-    },
-    "values": {}
+    }
   }
 }

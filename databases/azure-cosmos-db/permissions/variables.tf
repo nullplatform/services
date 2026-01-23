@@ -38,8 +38,8 @@ variable "all_containers" {
   default     = false
 }
 
-variable "target_containers" {
-  description = "List of container names to assign role to (ignored if all_containers is true)"
+variable "containers_to_apply_permissions" {
+  description = "List of container names to assign permissions"
   type        = list(string)
   default     = []
 }

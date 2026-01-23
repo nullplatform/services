@@ -1,5 +1,5 @@
 {
-  "id": "41a7659d-7b3b-480c-a7d3-a30c8ccaa1cc",
+  "id": "8383cb49-d027-4030-84d1-5f5c387ace8e",
   "name": "Connect",
   "slug": "connect",
   "visible_to": [],
@@ -9,99 +9,67 @@
   "assignable_to": "any",
   "use_default_actions": true,
   "selectors": {
-    "category": "any",
+    "category": "Database",
     "imported": false,
-    "provider": "any",
-    "sub_category": "any"
+    "provider": "Azure",
+    "sub_category": "NoSQL Database"
   },
   "attributes": {
-    "schema": {
-      "type": "object",
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "required": [
-        "linkName",
-        "accessLevel"
-      ],
-      "uiSchema": {
-        "type": "VerticalLayout",
-        "elements": [
-          {
-            "type": "Control",
-            "scope": "#/properties/linkName"
-          },
-          {
-            "type": "Control",
-            "scope": "#/properties/accessLevel"
-          },
-          {
-            "rule": {
-              "effect": "HIDE",
-              "condition": {
-                "scope": "#/properties/allContainers",
-                "schema": {
-                  "const": true
-                }
+    "values": {}
+  },
+  "specification_schema": {
+    "type": "object",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "required": [
+      "linkName",
+      "accessLevel"
+    ],
+    "properties": {
+      "target": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "container": {
+              "type": "string",
+              "additionalKeywords": {
+                "enum": "if (.service.attributes.containers | type == \"array\" and length > 0) then [.service.attributes.containers[].container_name] else [\"No containers available\"] end"
               }
             },
-            "type": "Control",
-            "scope": "#/properties/target"
-          },
-          {
-            "type": "Control",
-            "scope": "#/properties/allContainers"
-          }
-        ]
-      },
-      "properties": {
-        "linkName": {
-          "type": "string",
-          "title": "Link Name",
-          "description": "Name for this link",
-          "editableOn": [
-            "create"
-          ]
-        },
-        "accessLevel": {
-          "type": "string",
-          "title": "Access Level",
-          "description": "Permission level for this link",
-          "enum": [
-            "read",
-            "write"
-          ],
-          "default": "read",
-          "editableOn": [
-            "create"
-          ]
-        },
-        "target": {
-          "type": "array",
-          "title": "Target",
-          "description": "Select containers to apply this link",
-          "items": {
-            "type": "string",
-            "additionalKeywords": {
-              "enum": "if (.service.attributes.containers | type == \"array\" and length > 0) then [.service.attributes.containers[].container_name] else [\"No containers available\"] end"
+            "accessLevel": {
+              "enum": [
+                "read/write",
+                "read",
+                "write"
+              ],
+              "type": "string",
+              "title": "Access Level",
+              "default": "read/write",
+              "editableOn": [
+                "create"
+              ],
+              "description": "Permission level for this link"
             }
-          },
-          "uniqueItems": true,
-          "editableOn": [
-            "create",
-            "update"
-          ]
+          }
         },
-        "allContainers": {
-          "type": "boolean",
-          "title": "All Containers",
-          "description": "Apply this link to all containers",
-          "default": false,
-          "editableOn": [
-            "create",
-            "update"
-          ]
-        }
+        "title": "Containers",
+        "editableOn": [
+          "create",
+          "update"
+        ],
+        "description": "Select containers to apply this link",
+        "uniqueItems": true
+      },
+      "allContainers": {
+        "type": "boolean",
+        "title": "All Containers",
+        "default": false,
+        "editableOn": [
+          "create",
+          "update"
+        ],
+        "description": "Apply this link to all containers"
       }
-    },
-    "values": {}
+    }
   }
 }
