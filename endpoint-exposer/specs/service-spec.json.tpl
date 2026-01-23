@@ -23,6 +23,38 @@
           },
           {
             "type": "Group",
+            "label": "Authorization",
+            "elements": [
+              {
+                "type": "Control",
+                "scope": "#/properties/authorization/properties/enabled"
+              },
+              {
+                "type": "Control",
+                "scope": "#/properties/authorization/properties/headerName",
+                "rule": {
+                  "effect": "SHOW",
+                  "condition": {
+                    "scope": "#/properties/authorization/properties/enabled",
+                    "schema": { "const": true }
+                  }
+                }
+              },
+              {
+                "type": "Control",
+                "scope": "#/properties/authorization/properties/allowedValues",
+                "rule": {
+                  "effect": "SHOW",
+                  "condition": {
+                    "scope": "#/properties/authorization/properties/enabled",
+                    "schema": { "const": true }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "Group",
             "label": "Routes",
             "elements": [
               {
@@ -82,6 +114,19 @@
             "api-private.edenred.nullimplementation.com"
           ],
           "editableOn": ["create", "update"]
+        },
+        "authorization": {
+          "type": "object",
+          "title": "Authorization",
+          "description": "JWT authorization policy configuration using OPA",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "title": "Enable Authorization Policy",
+              "description": "Enable JWT validation via OPA for all routes in this service",
+              "default": false
+            }
+          }
         },
         "routes": {
           "items": {

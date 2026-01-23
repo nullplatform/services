@@ -5,8 +5,6 @@ steps:
     output:
       - name: K8S_NAMESPACE
         type: environment
-      - name: ALB_NAME
-        type: environment
   - name: "build context"
     type: script
     file: "$SERVICE_PATH/scripts/istio/build_context"
@@ -31,14 +29,18 @@ steps:
         type: environment
   - name: "build public httproute"
     type: script
-    file: "$SERVICE_PATH/scripts/istio/build_public_httproute"
+    file: "$SERVICE_PATH/scripts/istio/build_httproute"
+    configuration:
+      VISIBILITY: "public"
     output:
       - name: HTTPROUTE_PUBLIC_FILE
         type: file
         file: "$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml"
   - name: "build private httproute"
     type: script
-    file: "$SERVICE_PATH/scripts/istio/build_private_httproute"
+    file: "$SERVICE_PATH/scripts/istio/build_httproute"
+    configuration:
+      VISIBILITY: "private"
     output:
       - name: HTTPROUTE_PRIVATE_FILE
         type: file

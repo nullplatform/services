@@ -14,9 +14,4 @@ fi
 
 # K8S_NAMESPACE=$(echo "$PROVIDER_DATA" | jq -r .attributes.cluster.namespace)
 
-ALB_NAME=$(echo "$PROVIDER_DATA" | jq -r --arg default "k8s-nullplatform-internet-facing" '
-  .attributes.balancer.public_name // $default
-')
-
 export K8S_NAMESPACE
-export ALB_NAME

@@ -1,0 +1,25 @@
+#!/bin/bash
+
+set -e
+
+echo "Running tests before commit..."
+
+# Change to the repository root
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+# Check if endpoint-exposer tests need to be run (if any endpoint-exposer files changed)
+if git diff --cached --name-only | grep -q "^endpoint-exposer/"; then
+  echo "Endpoint-exposer files changed, running tests..."
+
+  if command -v bats &> /dev/null; then
+    cd endpoint-exposer
+    bats test/
+  else
+    echo "⚠️  BATS not installed, skipping tests"
+    echo "Install BATS: brew install bats-core (macOS) or see https://bats-core.readthedocs.io"
+    exit 0
+  fi
+
+  echo "✅ All endpoint-exposer tests passed!"
+fi
