@@ -20,10 +20,7 @@
   "specification_schema": {
     "type": "object",
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "required": [
-      "linkName",
-      "accessLevel"
-    ],
+    "required": [],
     "properties": {
       "target": {
         "type": "array",
@@ -33,7 +30,7 @@
             "container": {
               "type": "string",
               "additionalKeywords": {
-                "enum": "if (.service.attributes.containers | type == \"array\" and length > 0) then [.service.attributes.containers[].container_name] else [\"No containers available\"] end"
+                "enum": "if (.service.attributes.containers | type == \"array\" and length > 0) then [.service.attributes.containers[].container_name] else [\"No contaiers available\"] end"
               }
             },
             "accessLevel": {
@@ -46,7 +43,8 @@
               "title": "Access Level",
               "default": "read/write",
               "editableOn": [
-                "create"
+                "create",
+                "update"
               ],
               "description": "Permission level for this link"
             }
@@ -54,8 +52,7 @@
         },
         "title": "Containers",
         "editableOn": [
-          "create",
-          "update"
+          "create"
         ],
         "description": "Select containers to apply this link",
         "uniqueItems": true
