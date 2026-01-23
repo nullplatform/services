@@ -28,8 +28,9 @@ fi
 echo "Executing command: $CMD"
 
 # Note: The 'np service workflow exec' CLI automatically extracts OVERRIDES_PATH
-# It uses regex /[^/]+/workflows/.*\.yaml$ to strip the workflows part
-# Example: --overrides /root/.np/plugin/workflows/create.yaml
+# It uses regex /[^/]+/workflows/[^/]+\.yaml$ to strip the /folder/workflows/file.yaml part
+# Example: --overrides /root/.np/plugin/service/workflows/create.yaml
+#   Regex matches: /service/workflows/create.yaml
 #   Results in: OVERRIDES_PATH=/root/.np/plugin (correct)
 # Workflow files should use: $OVERRIDES_PATH/scripts/... (no double nesting needed)
 # See: cli/cmd/service/workflow/exec/service_workflow_exec.go getOverridesBasePath()
