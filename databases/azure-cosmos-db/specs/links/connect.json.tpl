@@ -3,7 +3,6 @@
   "name": "Connect",
   "slug": "connect",
   "visible_to": [],
-  "unique": false,
   "dimensions": {},
   "scopes": {},
   "assignable_to": "any",
@@ -15,58 +14,58 @@
     "sub_category": "NoSQL Database"
   },
   "attributes": {
-    "values": {}
-  },
-  "specification_schema": {
-    "type": "object",
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "required": [],
-    "properties": {
-      "target": {
-        "type": "array",
-        "items": {
-          "type": "object",
-          "properties": {
-            "container": {
-              "type": "string",
-              "additionalKeywords": {
-                "enum": "if (.service.attributes.containers | type == \"array\" and length > 0) then [.service.attributes.containers[].container_name] else [\"No contaiers available\"] end"
+    "schema": {
+      "type": "object",
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "required": [],
+      "properties": {
+        "target": {
+          "type": "array",
+          "title": "Containers",
+          "description": "Select containers to apply this link",
+          "uniqueItems": true,
+          "editableOn": [
+            "create"
+          ],
+          "items": {
+            "type": "object",
+            "properties": {
+              "container": {
+                "type": "string",
+                "additionalKeywords": {
+                  "enum": "if (.service.attributes.containers | type == \"array\" and length > 0) then [.service.attributes.containers[].container_name] else [\"No containers available\"] end"
+                }
+              },
+              "accessLevel": {
+                "type": "string",
+                "title": "Access Level",
+                "description": "Permission level for this link",
+                "enum": [
+                  "read/write",
+                  "read",
+                  "write"
+                ],
+                "default": "read/write",
+                "editableOn": [
+                  "create",
+                  "update"
+                ]
               }
-            },
-            "accessLevel": {
-              "enum": [
-                "read/write",
-                "read",
-                "write"
-              ],
-              "type": "string",
-              "title": "Access Level",
-              "default": "read/write",
-              "editableOn": [
-                "create",
-                "update"
-              ],
-              "description": "Permission level for this link"
             }
           }
         },
-        "title": "Containers",
-        "editableOn": [
-          "create"
-        ],
-        "description": "Select containers to apply this link",
-        "uniqueItems": true
-      },
-      "allContainers": {
-        "type": "boolean",
-        "title": "All Containers",
-        "default": false,
-        "editableOn": [
-          "create",
-          "update"
-        ],
-        "description": "Apply this link to all containers"
+        "allContainers": {
+          "type": "boolean",
+          "title": "All Containers",
+          "description": "Apply this link to all containers",
+          "default": false,
+          "editableOn": [
+            "create",
+            "update"
+          ]
+        }
       }
-    }
+    },
+    "values": {}
   }
 }

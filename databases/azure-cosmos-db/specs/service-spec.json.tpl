@@ -6,11 +6,12 @@
   "visible_to": [
     "organization=1698562351:account=2097086864"
   ],
-  "unique": false,
   "dimensions": {},
   "scopes": {},
   "assignable_to": "any",
   "use_default_actions": true,
+  "available_actions": [],
+  "available_links": ["connect"],
   "selectors": {
     "category": "Database",
     "imported": false,
@@ -18,52 +19,52 @@
     "sub_category": "NoSQL Database"
   },
   "attributes": {
-    "values": {}
-  },
-  "specification_schema": {
-    "type": "object",
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "required": [
-      "containers"
-    ],
-    "properties": {
-      "containers": {
-        "type": "array",
-        "items": {
-          "type": "object",
-          "required": [
-            "containerName",
-            "partitionKey"
+    "schema": {
+      "type": "object",
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "required": [
+        "containers"
+      ],
+      "properties": {
+        "containers": {
+          "type": "array",
+          "title": "Containers",
+          "description": "List of containers in this database",
+          "minItems": 1,
+          "editableOn": [
+            "create",
+            "update"
           ],
-          "properties": {
-            "partitionKey": {
-              "type": "string",
-              "order": 2,
-              "title": "Partition Key",
-              "editableOn": [
-                "create"
-              ],
-              "description": "Partition key path (e.g., /customerId, /tenantId)"
-            },
-            "containerName": {
-              "type": "string",
-              "order": 1,
-              "title": "Container Name",
-              "editableOn": [
-                "create"
-              ],
-              "description": "Name of the container to store documents"
+          "items": {
+            "type": "object",
+            "required": [
+              "containerName",
+              "partitionKey"
+            ],
+            "properties": {
+              "containerName": {
+                "type": "string",
+                "order": 1,
+                "title": "Container Name",
+                "description": "Name of the container to store documents",
+                "editableOn": [
+                  "create"
+                ]
+              },
+              "partitionKey": {
+                "type": "string",
+                "order": 2,
+                "title": "Partition Key",
+                "description": "Partition key path (e.g., /customerId, /tenantId)",
+                "editableOn": [
+                  "create"
+                ]
+              }
             }
           }
-        },
-        "title": "Containers",
-        "minItems": 1,
-        "editableOn": [
-          "create",
-          "update"
-        ],
-        "description": "List of containers in this database"
+        }
       }
-    }
+    },
+    "values": {}
   }
 }
