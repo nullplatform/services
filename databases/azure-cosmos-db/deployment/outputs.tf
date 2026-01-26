@@ -15,11 +15,11 @@ output "database_name" {
 
 output "containers" {
   description = "Created containers"
-  value = {
-    for name, container in azurerm_cosmosdb_sql_container.containers :
-    name => {
+  value = [
+    for name, container in azurerm_cosmosdb_sql_container.containers : {
+      containerName = name
       id            = container.id
       partition_key = container.partition_key_paths[0]
     }
-  }
+  ]
 }
