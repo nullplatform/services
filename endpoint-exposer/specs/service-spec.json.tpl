@@ -229,8 +229,7 @@
             "update"
           ],
           "enum": [
-            "api.pae-infra.nullapps.io",
-            "services.pae-infra.nullapps.io"
+            "idp.poc.nullapps.io"
           ]
         },
         "privateDomain": {
@@ -241,8 +240,7 @@
             "update"
           ],
           "enum": [
-            "api-internal.pae-infra.nullapps.io",
-            "services-internal.pae-infra.nullapps.io"
+            "idp.poc.nullapps.io"
           ]
         }
       }
