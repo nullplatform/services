@@ -19,7 +19,7 @@ output "containers" {
     for name, container in azurerm_cosmosdb_sql_container.containers : {
       containerName = name
       id            = container.id
-      partition_key = container.partition_key_paths[0]
+      partitionKey  = container.partition_key_paths[0]
     }
   ]
 }
