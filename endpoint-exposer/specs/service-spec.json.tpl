@@ -76,6 +76,38 @@
           },
           {
             "type": "Group",
+            "label": "Authorization",
+            "elements": [
+              {
+                "type": "Control",
+                "scope": "#/properties/authorization/properties/enabled"
+              },
+              {
+                "type": "Control",
+                "scope": "#/properties/authorization/properties/headerName",
+                "rule": {
+                  "effect": "SHOW",
+                  "condition": {
+                    "scope": "#/properties/authorization/properties/enabled",
+                    "schema": { "const": true }
+                  }
+                }
+              },
+              {
+                "type": "Control",
+                "scope": "#/properties/authorization/properties/allowedValues",
+                "rule": {
+                  "effect": "SHOW",
+                  "condition": {
+                    "scope": "#/properties/authorization/properties/enabled",
+                    "schema": { "const": true }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "Group",
             "label": "Routes",
             "elements": [
               {
