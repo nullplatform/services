@@ -15,5 +15,7 @@ tofu -chdir="$TOFU_MODULE_DIR" "$TOFU_ACTION" -auto-approve -var-file="$TOFU_VAR
 if [ "$TOFU_ACTION" = "apply" ]; then
   RESULTS=$(tofu -chdir="$TOFU_MODULE_DIR" output -json | jq 'map_values(.value)')
 
-  np service action update --results "$RESULTS"
+  # Update action results and mark as success (service-id and service-action-id are inferred from NP_ACTION_CONTEXT)
+  np service action update --results "$RESULTS" --status "success"
 fi
+
