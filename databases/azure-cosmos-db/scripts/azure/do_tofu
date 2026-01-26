@@ -1,6 +1,8 @@
 #!/bin/bash
 
-set -eou pipefail
+set -eoux pipefail
+
+env | grep -E '^(AZURE|ARM)' || true
 
 TOFU_VAR_FILE="$OUTPUT_DIR/terraform.tfvars.json"
 
