@@ -1,6 +1,5 @@
 {
-    "name": "Endpoint Exposer",
-    "slug": "endpoint-exposer",
+    "name":  "{{ env.Getenv \"SERVICE_NAME\" | default \"Endpoint Exposer\" }}",
     "type": "dependency",
     "visible_to": [
         "{{ env.Getenv \"NRN\" }}"
