@@ -29,7 +29,9 @@ steps:
         type: environment
       - name: CONTAINERS_JSON
         type: environment
-
+  - name: build app name
+    type: script
+    file: $SERVICE_PATH/scripts/azure/resolve_azure_context
   - name: build permissions context
     type: script
     file: $SERVICE_PATH/scripts/azure/build_permissions_context
@@ -42,7 +44,6 @@ steps:
         type: environment
       - name: TOFU_VARIABLES
         type: environment
-
   - name: tofu
     type: script
     file: $SERVICE_PATH/scripts/azure/do_tofu

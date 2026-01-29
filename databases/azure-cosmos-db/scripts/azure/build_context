@@ -17,7 +17,7 @@ SCOPE_NRN=$(echo "$CONTEXT" | jq -r '.tags.nrn // ""')
 # Link attributes (from link-spec schema)
 LINK_ACCESS_LEVEL=$(echo "$CONTEXT" | jq -r '.link.attributes.accessLevel // "read"')
 LINK_ALL_CONTAINERS=$(echo "$CONTEXT" | jq -r '.link.attributes.allContainers // false')
-LINK_SELECTED_CONTAINERS=$(echo "$CONTEXT" | jq -c '.link.attributes.containers // []')
+LINK_SELECTED_CONTAINERS=$(echo "$CONTEXT" | jq -c '((.link.attributes.containers // []) + (.parameters.target // [])) | group_by(.container) | map(.[-1])')
 
 # Read configuration from values.yaml
 VALUES_FILE="$SERVICE_PATH/values.yaml"

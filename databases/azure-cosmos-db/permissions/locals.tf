@@ -1,11 +1,14 @@
 locals {
-  # Role Definition IDs (built-in)
-  role_ids = {
-    read  = "00000000-0000-0000-0000-000000000001" # Cosmos DB Built-in Data Reader
-    write = "00000000-0000-0000-0000-000000000002" # Cosmos DB Built-in Data Contributor
+  permissions = jsondecode(var.permissions)
+
+  # Map access levels to built-in role definition GUIDs
+  role_definitions = {
+    read      = "00000000-0000-0000-0000-000000000001"  # Built-in Data Reader
+    readwrite = "00000000-0000-0000-0000-000000000002"  # Built-in Data Contributor
   }
 
-  role_id = local.role_ids[var.access_level]
-
-  containers_to_assign = var.containers_to_apply_permissions
+  # Create a map for for_each
+  permissions_map = {
+    for p in local.permissions : p.container => p.access_level
+  }
 }

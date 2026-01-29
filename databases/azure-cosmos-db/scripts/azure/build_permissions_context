@@ -9,36 +9,7 @@ echo "Selected Containers: $LINK_SELECTED_CONTAINERS"
 echo "Database: $DATABASE_NAME"
 echo "Account: $ACCOUNT_NAME"
 echo "Resource Group: $RESOURCE_GROUP"
-
-# Get the principal ID from the scope context
-PRINCIPAL_ID="${SCOPE_PRINCIPAL_ID:-}"
-
-if [ -z "$PRINCIPAL_ID" ]; then
-  echo "ERROR: SCOPE_PRINCIPAL_ID is not set. Cannot assign role without a principal."
-  exit 1
-fi
-
-echo "Principal ID: $PRINCIPAL_ID"
-
-# Determine target containers
-if [ "$LINK_ALL_CONTAINERS" = "true" ]; then
-  echo "Using all containers from service definition"
-
-  # Extract container names from ALL_CONTAINERS (service parameters)
-  CONTAINERS_TO_APPLY_PERMISSIONS=$(echo "$ALL_CONTAINERS" | jq -c '[.[].containerName]')
-
-  echo "Found containers: $CONTAINERS_TO_APPLY_PERMISSIONS"
-else
-  CONTAINERS_TO_APPLY_PERMISSIONS="$LINK_SELECTED_CONTAINERS"
-  echo "Using selected containers: $CONTAINERS_TO_APPLY_PERMISSIONS"
-fi
-
-# Validate we have containers
-CONTAINER_COUNT=$(echo "$CONTAINERS_TO_APPLY_PERMISSIONS" | jq 'length')
-if [ "$CONTAINER_COUNT" -eq 0 ]; then
-  echo "ERROR: No containers specified"
-  exit 1
-fi
+echo "App name: $APP_NAME"
 
 # Build tfvars for permissions module
 TOFU_VARIABLES=$(jq -n \
