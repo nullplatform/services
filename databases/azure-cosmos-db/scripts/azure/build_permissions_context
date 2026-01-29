@@ -3,7 +3,6 @@
 set -euo pipefail
 
 echo "=== Build Permissions Context ==="
-echo "Access Level: $LINK_ACCESS_LEVEL"
 echo "All Containers: $LINK_ALL_CONTAINERS"
 echo "Selected Containers: $LINK_SELECTED_CONTAINERS"
 echo "Database: $DATABASE_NAME"
@@ -17,19 +16,17 @@ TOFU_VARIABLES=$(jq -n \
   --arg resource_group_name "$RESOURCE_GROUP" \
   --arg cosmos_account_name "$ACCOUNT_NAME" \
   --arg database_name "$DATABASE_NAME" \
-  --arg principal_id "$PRINCIPAL_ID" \
-  --arg access_level "$LINK_ACCESS_LEVEL" \
+  --arg app_name "$APP_NAME" \
   --argjson all_containers "$LINK_ALL_CONTAINERS" \
-  --argjson containers_to_apply_permissions "$CONTAINERS_TO_APPLY_PERMISSIONS" \
+  --argjson permissions "$LINK_SELECTED_CONTAINERS" \
   '{
     subscription_id: $subscription_id,
     resource_group_name: $resource_group_name,
     cosmos_account_name: $cosmos_account_name,
     database_name: $database_name,
-    principal_id: $principal_id,
-    access_level: $access_level,
     all_containers: $all_containers,
-    containers_to_apply_permissions: $containers_to_apply_permissions
+    permissions: $permissions,
+    app_name: $app_name
   }')
 
 echo "Generated tfvars:"

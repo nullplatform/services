@@ -13,8 +13,6 @@ steps:
         type: environment
       - name: SCOPE_NRN
         type: environment
-      - name: LINK_ACCESS_LEVEL
-        type: environment
       - name: LINK_ALL_CONTAINERS
         type: environment
       - name: LINK_TARGET

@@ -7,7 +7,7 @@ variable "resource_group_name" {
   type = string
 }
 
-variable "account_name" {
+variable "cosmos_account_name" {
   type = string
 }
 
@@ -20,6 +20,13 @@ variable "app_name" {
 }
 
 variable "permissions" {
-  type = string
-  # JSON array: [{"container_name": "container1", "access_level": "read"}, ...]
+  type = list(object({
+    container    = string
+    access_level = string
+  }))
+  default = []
+}
+
+variable "all_containers" {
+  type = bool
 }

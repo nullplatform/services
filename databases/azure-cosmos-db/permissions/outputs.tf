@@ -19,9 +19,15 @@ output "app_principal_id" {
 }
 
 output "role_assignments" {
-  description = "Map of container names to their role assignment details"
-  value = {
-    for k, v in azurerm_cosmosdb_sql_role_assignment.app_access : k => {
+  description = "Map of container names to their role assignment details (or database-level when all_containers is true)"
+  value = var.all_containers ? {
+    database = {
+      id           = azurerm_cosmosdb_sql_role_assignment.database_access[0].id
+      access_level = local.database_access_level
+      scope        = azurerm_cosmosdb_sql_role_assignment.database_access[0].scope
+    }
+  } : {
+    for k, v in azurerm_cosmosdb_sql_role_assignment.container_access : k => {
       id           = v.id
       access_level = local.permissions_map[k]
       scope        = v.scope
@@ -30,8 +36,16 @@ output "role_assignments" {
 }
 
 output "assigned_containers" {
-  description = "List of container names with assigned permissions"
-  value       = keys(local.permissions_map)
+  description = "List of container names with assigned permissions (empty when all_containers is true)"
+  value       = var.all_containers ? [] : keys(local.permissions_map)
+}
+
+output "database_endpoint" {
+  value = data.azurerm_cosmosdb_account.cosmos_account.endpoint
+}
+
+output "database_name" {
+  value = data.azurerm_cosmosdb_sql_database.cosmos_database.name
 }
 
 output "connection_info" {
@@ -39,6 +53,15 @@ output "connection_info" {
   value = {
     account_endpoint = data.azurerm_cosmosdb_account.cosmos_account.endpoint
     database_name    = data.azurerm_cosmosdb_sql_database.cosmos_database.name
-    containers       = keys(local.permissions_map)
+    all_containers   = var.all_containers
+    containers       = var.all_containers ? [] : keys(local.permissions_map)
   }
+}
+
+output "all_containers" {
+  value = var.all_containers
+}
+
+output "target" {
+  value = var.permissions
 }

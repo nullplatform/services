@@ -16,6 +16,6 @@ if [ "$TOFU_ACTION" = "apply" ]; then
   RESULTS=$(tofu -chdir="$TOFU_MODULE_DIR" output -json | jq 'map_values(.value)')
 
   # Update action results and mark as success (service-id and service-action-id are inferred from NP_ACTION_CONTEXT)
-  np service action update --results "$RESULTS" --status "success"
+  np "$ACTION_SOURCE" action update --results "$RESULTS" --status "success"
 fi
 

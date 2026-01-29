@@ -1,5 +1,4 @@
 locals {
-  permissions = jsondecode(var.permissions)
 
   # Map access levels to built-in role definition GUIDs
   role_definitions = {
@@ -9,6 +8,9 @@ locals {
 
   # Create a map for for_each
   permissions_map = {
-    for p in local.permissions : p.container => p.access_level
+    for p in var.permissions : p.container => p.access_level
   }
+
+  # Determine access level for database-wide permissions (highest wins)
+  database_access_level = "readwrite"
 }

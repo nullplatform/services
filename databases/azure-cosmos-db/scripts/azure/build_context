@@ -15,9 +15,8 @@ SCOPE_ID=$(echo "$CONTEXT" | jq -r '.tags.scope_id // ""')
 SCOPE_NRN=$(echo "$CONTEXT" | jq -r '.tags.nrn // ""')
 
 # Link attributes (from link-spec schema)
-LINK_ACCESS_LEVEL=$(echo "$CONTEXT" | jq -r '.link.attributes.accessLevel // "read"')
-LINK_ALL_CONTAINERS=$(echo "$CONTEXT" | jq -r '.link.attributes.allContainers // false')
-LINK_SELECTED_CONTAINERS=$(echo "$CONTEXT" | jq -c '((.link.attributes.containers // []) + (.parameters.target // [])) | group_by(.container) | map(.[-1])')
+LINK_ALL_CONTAINERS=$(echo "$CONTEXT" | jq -r '.parameters.all_containers // .link.attributes.all_containers // false')
+LINK_SELECTED_CONTAINERS=$(echo "$CONTEXT" | jq -c '.parameters.target // []')
 
 # Read configuration from values.yaml
 VALUES_FILE="$SERVICE_PATH/values.yaml"
@@ -98,7 +97,6 @@ export LINK_ID
 export LINK_NAME
 export SCOPE_ID
 export SCOPE_NRN
-export LINK_ACCESS_LEVEL
 export LINK_ALL_CONTAINERS
 export LINK_SELECTED_CONTAINERS
 export ACCOUNT_NAME
