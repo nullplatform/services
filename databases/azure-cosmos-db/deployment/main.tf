@@ -19,13 +19,13 @@ resource "azurerm_cosmosdb_sql_database" "database" {
 }
 
 resource "azurerm_cosmosdb_sql_container" "containers" {
-  for_each = { for c in var.containers : c.containerName => c }
+  for_each = { for c in var.containers : c.container_name => c }
 
-  name                  = each.value.containerName
+  name                  = each.value.container_name
   resource_group_name   = var.resource_group_name
   account_name          = data.azurerm_cosmosdb_account.existing.name
   database_name         = azurerm_cosmosdb_sql_database.database.name
-  partition_key_paths   = [startswith(each.value.partitionKey, "/") ? each.value.partitionKey : "/${each.value.partitionKey}"]
+  partition_key_paths   = [startswith(each.value.partition_key, "/") ? each.value.partition_key : "/${each.value.partition_key}"]
   partition_key_version = 2
 
   indexing_policy {

@@ -41,8 +41,8 @@ DATABASE_NAME=$(echo "$SERVICE_SLUG" | tr '-' '_')
 # Extract containers array from parameters
 CONTAINERS_RAW=$(echo "$CONTEXT" | jq -c '.parameters.containers // []')
 ALL_CONTAINERS=$(echo "$CONTAINERS_RAW" | jq -c '[.[] | {
-  containerName: (.container_name // .containerName),
-  partitionKey: (.partition_key // .partitionKey)
+  container_name: (.container_name),
+  partition_key: (.partition_key)
 }]')
 
 OUTPUT_DIR="$SERVICE_PATH/output/$SERVICE_SLUG-$SERVICE_ID/$ACTION_NAME-$ACTION_ID"

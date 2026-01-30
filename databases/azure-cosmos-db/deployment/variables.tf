@@ -33,7 +33,7 @@ variable "throughput_type" {
 variable "containers" {
   description = "List of containers to create"
   type = list(object({
-    containerName = string
-    partitionKey  = string
+    container_name = string
+    partition_key  = string
   }))
 }

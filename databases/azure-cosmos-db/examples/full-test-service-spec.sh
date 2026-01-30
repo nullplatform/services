@@ -26,7 +26,7 @@ source "$SERVICE_PATH/scripts/azure/build_context"
 echo "Database:     $DATABASE_NAME"
 echo "Account:      $ACCOUNT_NAME"
 echo "RG:           $RESOURCE_GROUP"
-echo "Containers:   $(echo "$CONTAINERS_JSON" | jq -r '[.[].containerName] | join(", ")')"
+echo "Containers:   $(echo "$CONTAINERS_JSON" | jq -r '[.[].container_name] | join(", ")')"
 echo ""
 
 echo "=== 2. Running tofu apply ==="
