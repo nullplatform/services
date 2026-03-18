@@ -1,0 +1,13 @@
+# OpenTofu / Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars.json
+.terraform.lock.hcl
+
+# Output directory
+output/
+
+# Local environment
+.env
+*.log

@@ -1,0 +1,50 @@
+#!/bin/bash
+set -euo pipefail
+
+SCOPE_ID=$(echo "$CONTEXT" | jq -r .tags.scope_id)
+SCOPE_SLUG=$(echo "$CONTEXT" | jq -r .tags.scope)
+NS_SLUG=$(echo "$CONTEXT" | jq -r .tags.namespace)
+APP_SLUG=$(echo "$CONTEXT" | jq -r .tags.application)
+
+# Validate required inputs
+if [ -z "${SCOPE_ID:-}" ]; then
+  echo "Error: Missing required parameter: scope_id" >&2
+  exit 1
+fi
+
+if [ -z "${SCOPE_SLUG:-}" ] || [ -z "${NS_SLUG:-}" ] || [ -z "${APP_SLUG:-}" ]; then
+  echo "Error: Could not extract slugs from context" >&2
+  exit 1
+fi
+
+# Generate Azure App Service name
+RESOURCE_NAME_MAX_LENGTH=60
+APP_NAME=$("$SERVICE_PATH/scripts/azure/generate_resource_name" "$RESOURCE_NAME_MAX_LENGTH" "$NS_SLUG" "$APP_SLUG" "$SCOPE_SLUG" "$SCOPE_ID")
+export APP_NAME
+
+## Fetch Azure credentials from cloud provider with single jq call
+#PROVIDERS=$(np provider list --categories cloud-providers --nrn "$SCOPE_NRN" --format json)
+#
+#eval "$(echo "$PROVIDERS" | jq -r '.results[0] |
+#  "export ARM_SUBSCRIPTION_ID=" + (.attributes.authentication.subscription_id // "" | @sh) + "\n" +
+#  "export ARM_CLIENT_ID=" + (.attributes.authentication.client_id // "" | @sh) + "\n" +
+#  "export ARM_TENANT_ID=" + (.attributes.authentication.tenant_id // "" | @sh) + "\n" +
+#  "export AZURE_RESOURCE_GROUP=" + (.attributes.networking.public_dns_zone_resource_group_name // "" | @sh)
+#')"
+#
+#if [ -z "$ARM_SUBSCRIPTION_ID" ] || [ -z "$ARM_CLIENT_ID" ] || [ -z "$ARM_TENANT_ID" ]; then
+#  echo "Error: Could not resolve Azure credentials from cloud-providers provider" >&2
+#  exit 1
+#fi
+#
+## Get Azure access token via REST API (faster than az CLI)
+#TOKEN_RESPONSE=$(curl -s -X POST \
+#  "https://login.microsoftonline.com/${ARM_TENANT_ID}/oauth2/v2.0/token" \
+#  -H "Content-Type: application/x-www-form-urlencoded" \
+#  -d "client_id=${ARM_CLIENT_ID}&client_secret=${ARM_CLIENT_SECRET}&scope=https://management.azure.com/.default&grant_type=client_credentials")
+#export AZURE_ACCESS_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.access_token // empty')
+#
+#if [ -z "$AZURE_ACCESS_TOKEN" ]; then
+#  echo "Error: Failed to get Azure access token" >&2
+#  exit 1
+#fi
