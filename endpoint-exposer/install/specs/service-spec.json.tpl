@@ -1,6 +1,5 @@
 {
-    "name": "Endpoint Exposer",
-    "slug": "endpoint-exposer",
+    "name":  "{{ env.Getenv \"SERVICE_NAME\" | default \"Endpoint Exposer\" }}",
     "type": "dependency",
     "visible_to": [
         "{{ env.Getenv \"NRN\" }}"
@@ -125,7 +124,7 @@
                                             },
                                             {
                                                 "type": "Control",
-                                                "label": "Groups",
+                                                "label": "Required Endpoint Permissions",
                                                 "scope": "#/properties/groups"
                                             }
                                         ]
@@ -164,13 +163,13 @@
                             "groups": {
                                 "type": "array",
                                 "items": {
-                                    "enum": [
-                                        "AWS_PlataformaUpstream_Gestor_Desa",
-                                        "AWS_PlataformaUpstream_Programador_Desa",
-                                        "AWS_PlataformaUpstream_Pulling_Desa",
-                                        "AWS_PlataformaUpstream_Workover_Desa",
-                                        "AWS_PlataformaUpstream_Visita_Desa",
-                                        "AWS_PlataformaUpstream_Administrador_Desa"
+                                    "oneOf": [
+                                        { "const": "AWS_PlataformaUpstream_Gestor_Desa", "title": "Gestor Desarrollo" },
+                                        { "const": "AWS_PlataformaUpstream_Programador_Desa", "title": "Programador Desarrollo" },
+                                        { "const": "AWS_PlataformaUpstream_Pulling_Desa", "title": "Pulling Desarrollo" },
+                                        { "const": "AWS_PlataformaUpstream_Workover_Desa", "title": "Workover Desarrollo" },
+                                        { "const": "AWS_PlataformaUpstream_Visita_Desa", "title": "Visita Desarrollo" },
+                                        { "const": "AWS_PlataformaUpstream_Administrador_Desa", "title": "Administrador Desarrollo" }
                                     ],
                                     "type": "string"
                                 },
