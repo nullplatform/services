@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Build Rule: Generates routing rules from Kubernetes services for a specific scope.
+# Supports single services and blue/green deployments with weighted traffic distribution.
+
 set -euo pipefail
 
 echo "=== DEBUG: Starting build_rule script ==="

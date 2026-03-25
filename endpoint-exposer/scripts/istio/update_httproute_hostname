@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Update HTTPRoute Hostname: Updates HTTPRoute hostname and parentRefs (gateway references).
+# Modifies existing HTTPRoute to point to the correct domain and gateway configuration.
+
 set -euo pipefail
 
 # Use DOMAIN and GATEWAY from configuration

@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Process Routes: Iterates through all configured routes and updates HTTPRoute with rules.
+# Sorts routes by specificity (Exact > RegularExpression > PathPrefix) and builds rules for each scope.
+
 set -euo pipefail
 
 echo "=== Starting process_routes script ==="

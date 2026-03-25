@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Build Context: Extracts service metadata, domains, and routes from service action parameters.
+# Splits routes by visibility (public/private) and prepares environment variables for workflow execution.
+
 set -euo pipefail
 
 SERVICE_ID=$(echo "$CONTEXT" | jq -r .service.id)

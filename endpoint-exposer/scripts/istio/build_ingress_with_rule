@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Build Ingress with Rule: Updates HTTPRoute by adding or replacing rules for specific paths.
+# Supports path types (Exact, PathPrefix, RegularExpression), HTTP methods, and blue/green backends.
+
 set -euo pipefail
 
 # Detect path type and convert path value accordingly

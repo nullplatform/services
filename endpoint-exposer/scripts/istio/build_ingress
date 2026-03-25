@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Build Ingress: Generates HTTPRoute resource from gomplate template.
+# Legacy script for creating basic HTTPRoute configuration with service domain.
+
 set -euo pipefail
 
 # Determine domain and output file

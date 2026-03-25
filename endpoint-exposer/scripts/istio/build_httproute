@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Build HTTPRoute: Creates Istio HTTPRoute resources for public or private traffic.
+# Generates HTTPRoute from template, processes all routes, and handles empty resource cleanup.
+
 set -euo pipefail
 
 # Load configuration
