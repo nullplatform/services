@@ -9,3 +9,9 @@ gen
 
 # VSCode project files
 .vscode/
+
+# Terraform files
+*.tfstate
+*.tfstate.backup
+.terraform/
+*.tfvars

@@ -1,0 +1,43 @@
+# Copy this file to terraform.tfvars and fill in the values.
+# terraform.tfvars is gitignored — never commit secrets.
+
+################################################################################
+# Required
+################################################################################
+
+nrn        = "organization=2"
+np_api_key = "your-nullplatform-api-key"
+
+tags_selectors = {
+  environment = "production"
+}
+
+github_token = "your-github-personal-access-token"
+
+################################################################################
+# Repository (override if using a fork or different branch)
+################################################################################
+
+# git_repo         = "nullplatform/services"
+# git_branch       = "main"
+# git_service_path = "endpoint-exposer/install"
+
+################################################################################
+# Agent
+################################################################################
+
+# repo_path = "/root/.np/nullplatform/services/endpoint-exposer"
+
+################################################################################
+# Service Definition (override to customize the display name)
+################################################################################
+
+# service_name        = "Endpoint Exposer"
+# service_description = "HTTP routing management via Kubernetes Gateway API"
+
+################################################################################
+# Overrides (optional — appends --overrides-path to the agent cmdline)
+################################################################################
+
+# overrides_enabled      = true
+# overrides_repo_path    = "/root/.np/nullplatform/scopes-networking/endpoint-exposer"
