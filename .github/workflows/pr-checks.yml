@@ -1,0 +1,31 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  shellcheck:
+    uses: nullplatform/actions-nullplatform/.github/workflows/shellcheck.yml@main
+    with:
+      script_dirs: >-
+        databases/rds-postgres-db/scripts/aws
+        databases/rds-postgres-db/entrypoint
+        databases/rds-postgres-server/scripts/aws
+        databases/rds-postgres-server/entrypoint
+        databases/azure-cosmos-db/scripts/azure
+        databases/azure-cosmos-db/entrypoint
+
+  terraform-fmt:
+    name: Terraform Format
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: v1.10.5
+      - name: Check formatting
+        run: tofu fmt -check -recursive
