@@ -26,7 +26,7 @@ output "role_assignments" {
       access_level = local.database_access_level
       scope        = azurerm_cosmosdb_sql_role_assignment.database_access[0].scope
     }
-  } : {
+    } : {
     for k, v in azurerm_cosmosdb_sql_role_assignment.container_access : k => {
       id           = v.id
       access_level = local.permissions_map[k]
