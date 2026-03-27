@@ -31,7 +31,8 @@ DROP OWNED BY "$USERNAME";
 
 -- Now drop the user
 DROP USER IF EXISTS "$USERNAME";
-EOF)
+EOF
+)
 
 ../run_query_in_pod.sh "$SERVICE_HOSTNAME" "$SERVICE_PORT" "$SERVICE_DBNAME" "postgres" "$ADMIN_PASSWORD" "$QUERY" "ddl"
 
