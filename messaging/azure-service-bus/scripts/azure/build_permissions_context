@@ -1,0 +1,61 @@
+#!/bin/bash
+
+set -euo pipefail
+
+echo "=== Build Permissions Context ==="
+echo "Access level: $LINK_ACCESS_LEVEL"
+echo "Namespace: $NAMESPACE_NAME"
+echo "Namespace resource group: $NAMESPACE_RESOURCE_GROUP"
+echo "App name: $APP_NAME"
+echo "App resource group: $APP_RESOURCE_GROUP"
+
+TOFU_VARIABLES=$(jq -n \
+  --arg subscription_id "$SUBSCRIPTION_ID" \
+  --arg resource_group_name "$NAMESPACE_RESOURCE_GROUP" \
+  --arg servicebus_namespace_name "$NAMESPACE_NAME" \
+  --arg app_name "$APP_NAME" \
+  --arg app_resource_group "$APP_RESOURCE_GROUP" \
+  --arg access_level "$LINK_ACCESS_LEVEL" \
+  '{
+    subscription_id: $subscription_id,
+    resource_group_name: $resource_group_name,
+    servicebus_namespace_name: $servicebus_namespace_name,
+    app_name: $app_name,
+    app_resource_group: $app_resource_group,
+    access_level: $access_level
+  }')
+
+echo "Generated tfvars:"
+echo "$TOFU_VARIABLES" | jq .
+
+TOFU_MODULE_DIR="$SERVICE_PATH/permissions"
+
+# Backend config for tfstate
+if [ -n "${AZURE_TFSTATE_STORAGE_ACCOUNT:-}" ] && [ -n "${AZURE_TFSTATE_CONTAINER:-}" ]; then
+  echo "Using Azure backend for tfstate"
+
+  TFSTATE_RESOURCE_GROUP="${AZURE_TFSTATE_RESOURCE_GROUP:-$NAMESPACE_RESOURCE_GROUP}"
+  TFSTATE_KEY="service-bus/${SERVICE_ID}/links/${LINK_ID}/permissions.tfstate"
+
+  cat > "$TOFU_MODULE_DIR/backend.tf" <<EOF
+terraform {
+  backend "azurerm" {}
+}
+EOF
+
+  TOFU_INIT_VARIABLES="-backend-config=resource_group_name=${TFSTATE_RESOURCE_GROUP} -backend-config=storage_account_name=${AZURE_TFSTATE_STORAGE_ACCOUNT} -backend-config=container_name=${AZURE_TFSTATE_CONTAINER} -backend-config=key=${TFSTATE_KEY}"
+else
+  echo "Using local backend for tfstate"
+  rm -f "$TOFU_MODULE_DIR/backend.tf"
+  TOFU_INIT_VARIABLES=""
+fi
+
+PERMISSIONS_OUTPUT_DIR="$OUTPUT_DIR/permissions"
+mkdir -p "$PERMISSIONS_OUTPUT_DIR"
+
+export TOFU_MODULE_DIR
+export TOFU_VARIABLES
+export TOFU_INIT_VARIABLES
+export OUTPUT_DIR="$PERMISSIONS_OUTPUT_DIR"
+
+echo "=== Permissions context ready ==="

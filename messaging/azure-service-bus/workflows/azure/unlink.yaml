@@ -1,0 +1,9 @@
+include:
+  - "$SERVICE_PATH/workflows/azure/link.yaml"
+steps:
+  - name: tofu
+    type: script
+    file: $SERVICE_PATH/scripts/azure/do_tofu
+    action: replace
+    configuration:
+      TOFU_ACTION: destroy
