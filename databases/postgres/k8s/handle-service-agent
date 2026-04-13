@@ -3,7 +3,12 @@
 WORKING_DIRECTORY="$(dirname "$(realpath "$0")")"
 cd "$WORKING_DIRECTORY" || exit 1
 
+# Bridge: np-agent exposes NP_API_KEY, but np CLI expects NULLPLATFORM_API_KEY
+if [ -n "${NP_API_KEY:-}" ] && [ -z "${NULLPLATFORM_API_KEY:-}" ]; then
+  export NULLPLATFORM_API_KEY="$NP_API_KEY"
+fi
+
 echo "Starting handle agent service"
 
-np service-action exec --live-output --live-report --debug 
+np service-action exec --live-output --live-report --debug
 exit $?
