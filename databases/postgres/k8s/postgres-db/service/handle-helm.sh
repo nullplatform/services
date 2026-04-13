@@ -3,6 +3,7 @@ export WORKING_DIRECTORY_ORIGINAL="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && p
 cd $WORKING_DIRECTORY_ORIGINAL
 
 source ./project.sh
+source ./ensure_helm_deps.sh
 
 # Add Bitnami Helm repo if not already added
 helm repo add bitnami https://charts.bitnami.com/bitnami || true
