@@ -1,0 +1,4 @@
+#!/bin/bash
+set -e
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+exec "$SCRIPT_DIR/../handle-service-agent" "$@"
