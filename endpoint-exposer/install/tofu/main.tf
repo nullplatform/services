@@ -18,6 +18,11 @@ module "service_definition" {
   repository_token  = var.github_token
 
   service_name = var.service_name
+
+  # Override the module's default `available_links = ["connect"]`: this service
+  # doesn't ship a `specs/links/connect.json.tpl`, and fetching a non-existent
+  # template would make `jsondecode()` abort planning.
+  available_links = []
 }
 
 ################################################################################
