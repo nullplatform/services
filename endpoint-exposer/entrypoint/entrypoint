@@ -46,6 +46,15 @@ for arg in "$@"; do
   esac
 done
 
+# Fall back to deriving SERVICE_PATH from the script's own location when the
+# caller doesn't pass --service-path. WORKING_DIRECTORY points at the
+# `entrypoint/` directory inside the service; the parent is the service root
+# (e.g. `/root/.np/nullplatform/services/endpoint-exposer`). Without this
+# fallback, every absolute path below becomes `/workflows/...` instead of
+# `<service-root>/workflows/...`, and the np CLI fails with
+# "failed to read workflow file: open /workflows/<type>/<action>.yaml".
+SERVICE_PATH="${SERVICE_PATH:-$(cd "$WORKING_DIRECTORY/.." && pwd)}"
+
 OVERRIDES_PATH="${OVERRIDES_PATH:-$SERVICE_PATH/overrides}"
 
 export SERVICE_PATH
