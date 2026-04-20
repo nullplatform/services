@@ -1,0 +1,111 @@
+#!/bin/bash
+
+set -euo pipefail
+
+SERVICE_ID=$(echo "$CONTEXT" | jq -r .service.id)
+SERVICE_SLUG=$(echo "$CONTEXT" | jq -r .service.slug)
+
+ACTION_ID=$(echo "$CONTEXT" | jq -r .id)
+ACTION_NAME=$(echo "$CONTEXT" | jq -r .slug)
+
+# Link context (when action comes from a link)
+LINK_ID=$(echo "$CONTEXT" | jq -r '.link.id // ""')
+LINK_NAME=$(echo "$CONTEXT" | jq -r '.link.slug // ""')
+SCOPE_ID=$(echo "$CONTEXT" | jq -r '.tags.scope_id // ""')
+SCOPE_NRN=$(echo "$CONTEXT" | jq -r '.tags.nrn // ""')
+
+# Link attributes (from link-spec schema)
+LINK_ALL_CONTAINERS=$(echo "$CONTEXT" | jq -r '.parameters.all_containers // .link.attributes.all_containers // false')
+LINK_SELECTED_CONTAINERS=$(echo "$CONTEXT" | jq -c '.parameters.target // []')
+
+# Read configuration from values.yaml
+VALUES_FILE="$SERVICE_PATH/values.yaml"
+
+if [ -f "$VALUES_FILE" ]; then
+  RESOURCE_GROUP=$(yq -r '.resource_group_name // ""' "$VALUES_FILE")
+  ACCOUNT_NAME=$(yq -r '.cosmos_account_name // ""' "$VALUES_FILE")
+  ENDPOINT=$(yq -r '.cosmos_account_endpoint // ""' "$VALUES_FILE")
+else
+  echo "WARNING: values.yaml not found at $VALUES_FILE"
+  RESOURCE_GROUP=""
+  ACCOUNT_NAME=""
+  ENDPOINT=""
+fi
+
+# Subscription ID from environment
+SUBSCRIPTION_ID="$AZURE_SUBSCRIPTION_ID"
+
+# Database name from service slug
+DATABASE_NAME=$(echo "$SERVICE_SLUG" | tr '-' '_')
+
+# Extract containers array from parameters
+CONTAINERS_RAW=$(echo "$CONTEXT" | jq -c '.parameters.containers // []')
+ALL_CONTAINERS=$(echo "$CONTAINERS_RAW" | jq -c '[.[] | {
+  container_name: (.container_name),
+  partition_key: (.partition_key)
+}]')
+
+OUTPUT_DIR="$SERVICE_PATH/output/$SERVICE_SLUG-$SERVICE_ID/$ACTION_NAME-$ACTION_ID"
+
+mkdir -p "$OUTPUT_DIR"
+
+TOFU_MODULE_DIR="$SERVICE_PATH/deployment"
+
+# Backend config for tfstate (values from environment, if configured)
+if [ -n "${AZURE_TFSTATE_STORAGE_ACCOUNT:-}" ] && [ -n "${AZURE_TFSTATE_CONTAINER:-}" ]; then
+  echo "Using Azure backend for tfstate"
+
+  TFSTATE_RESOURCE_GROUP="${AZURE_TFSTATE_RESOURCE_GROUP:-$RESOURCE_GROUP}"
+  TFSTATE_KEY="cosmos-db/${SERVICE_ID}/infrastructure.tfstate"
+
+  # Generate backend.tf dynamically
+  cat > "$TOFU_MODULE_DIR/backend.tf" <<EOF
+terraform {
+  backend "azurerm" {}
+}
+EOF
+
+  TOFU_INIT_VARIABLES="-backend-config=resource_group_name=${TFSTATE_RESOURCE_GROUP} -backend-config=storage_account_name=${AZURE_TFSTATE_STORAGE_ACCOUNT} -backend-config=container_name=${AZURE_TFSTATE_CONTAINER} -backend-config=key=${TFSTATE_KEY}"
+else
+  echo "Using local backend for tfstate"
+
+  # Remove backend.tf if exists to use local backend
+  rm -f "$TOFU_MODULE_DIR/backend.tf"
+
+  TOFU_INIT_VARIABLES=""
+fi
+
+TOFU_VARIABLES=$(jq -n \
+  --arg cosmos_account_name "$ACCOUNT_NAME" \
+  --arg resource_group_name "$RESOURCE_GROUP" \
+  --arg subscription_id "$SUBSCRIPTION_ID" \
+  --arg database_name "$DATABASE_NAME" \
+  --argjson containers "$ALL_CONTAINERS" \
+  '{
+    cosmos_account_name: $cosmos_account_name,
+    resource_group_name: $resource_group_name,
+    subscription_id: $subscription_id,
+    database_name: $database_name,
+    containers: $containers
+  }')
+
+export SERVICE_ID
+export SERVICE_SLUG
+export ACTION_ID
+export ACTION_NAME
+export LINK_ID
+export LINK_NAME
+export SCOPE_ID
+export SCOPE_NRN
+export LINK_ALL_CONTAINERS
+export LINK_SELECTED_CONTAINERS
+export ACCOUNT_NAME
+export ENDPOINT
+export RESOURCE_GROUP
+export SUBSCRIPTION_ID
+export DATABASE_NAME
+export ALL_CONTAINERS
+export OUTPUT_DIR
+export TOFU_MODULE_DIR
+export TOFU_INIT_VARIABLES
+export TOFU_VARIABLES

@@ -1,0 +1,60 @@
+{
+  "id": "9e3cba2e-a3dc-48a6-8422-bfd27f0f0fd2",
+  "source": "service",
+  "event": "service:action:create",
+  "created_at": "2026-01-20T16:12:39.095Z",
+  "notification": {
+    "action": "service:action:create",
+    "id": "13879cea-55e2-465c-8086-0642b0425327",
+    "name": "create-the-service-name-from-the-user",
+    "slug": "create-the-service-name-from-the-user",
+    "status": "pending",
+    "created_at": "2026-01-20T16:12:39.095Z",
+    "updated_at": "2026-01-20T16:12:39.095Z",
+    "parameters": {
+      "containers": [
+        {
+          "default_ttl": -1,
+          "throughput": 1000,
+          "throughput_type": "autoscale",
+          "partition_key": "a",
+          "container_name": "Container1"
+        },
+        {
+          "default_ttl": -1,
+          "throughput": 1000,
+          "throughput_type": "autoscale",
+          "container_name": "Container2"
+        }
+      ],
+      "account_name": "azure-implementations",
+      "capacity_mode": "provisioned",
+      "database_name": "TestDatabase",
+      "consistency_level": "Session",
+      "endpoint": "https://azure-implementations.documents.azure.com:443/",
+      "resource_group_name": "rg-nullplatform-demos-shared"
+    },
+    "results": {},
+    "type": "create",
+    "specification": {
+      "id": "e053e151-7c1f-411d-b261-8b3d57a7ecf0",
+      "slug": "create-azure-cosmos-db"
+    },
+    "service": {
+      "id": "17648f48-fdfe-4350-bd56-30e3b5ed092c",
+      "slug": "the-service-name-from-the-user",
+      "attributes": {},
+      "specification": {
+        "id": "b9f5f4d2-b489-4473-8d9a-d6122d0b3878",
+        "slug": "azure-cosmos-db"
+      },
+      "dimensions": {}
+    },
+    "link": null,
+    "tags": {
+      "organization_id": "1698562351",
+      "organization": "implementations"
+    },
+    "entity_nrn": "organization=1698562351"
+  }
+}

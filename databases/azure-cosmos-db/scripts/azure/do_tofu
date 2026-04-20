@@ -1,0 +1,21 @@
+#!/bin/bash
+
+set -eoux pipefail
+
+env | grep -E '^(AZURE|ARM)' || true
+
+TOFU_VAR_FILE="$OUTPUT_DIR/terraform.tfvars.json"
+
+echo "$TOFU_VARIABLES" > "$TOFU_VAR_FILE"
+
+tofu -chdir="$TOFU_MODULE_DIR" init -input=false $TOFU_INIT_VARIABLES
+
+tofu -chdir="$TOFU_MODULE_DIR" "$TOFU_ACTION" -auto-approve -var-file="$TOFU_VAR_FILE"
+
+if [ "$TOFU_ACTION" = "apply" ]; then
+  RESULTS=$(tofu -chdir="$TOFU_MODULE_DIR" output -json | jq 'map_values(.value)')
+
+  # Update action results and mark as success (service-id and service-action-id are inferred from NP_ACTION_CONTEXT)
+  np "$ACTION_SOURCE" action update --results "$RESULTS" --status "success"
+fi
+

@@ -1,0 +1,7 @@
+# Azure Cosmos DB Service Configuration
+# These values are not exposed in the UI and are set via configuration
+
+# Azure Resource Configuration
+resource_group_name: "rg-nullplatform-demos-shared"
+cosmos_account_name: "azure-implementations"
+cosmos_account_endpoint: "https://azure-implementations.documents.azure.com:443"
