@@ -143,8 +143,7 @@
                             "method",
                             "path",
                             "scope",
-                            "visibility",
-                            "environment"
+                            "visibility"
                         ],
                         "properties": {
                             "path": {
@@ -618,8 +617,7 @@
                                     "method",
                                     "path",
                                     "scope",
-                                    "visibility",
-                                    "environment"
+                                    "visibility"
                                 ],
                                 "properties": {
                                     "path": {
@@ -853,8 +851,7 @@
                                     "method",
                                     "path",
                                     "scope",
-                                    "visibility",
-                                    "environment"
+                                    "visibility"
                                 ],
                                 "properties": {
                                     "path": {
@@ -1076,8 +1073,7 @@
                                     "method",
                                     "path",
                                     "scope",
-                                    "visibility",
-                                    "environment"
+                                    "visibility"
                                 ],
                                 "properties": {
                                     "path": {
