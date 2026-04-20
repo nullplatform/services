@@ -67,6 +67,17 @@ tofu apply
 
 The `publicDomain` / `privateDomain` fields in the service spec are free-text strings. Developers type the concrete FQDN at scope-creation time (via the nullplatform UI, CLI, or API). The base domain must resolve to the appropriate Istio gateway in the target cluster (public or private).
 
+## Spec fields governed by Terraform
+
+A few top-level fields in `install/specs/service-spec.json.tpl` are **overridden by the `service_definition` module at apply time**, so their value in the `.tpl` is ignored:
+
+| Spec field | Source at apply time |
+|---|---|
+| `name` | `var.service_name` |
+| `visible_to` | `concat([var.nrn], var.extra_visibile_to_nrns)` |
+
+Do not add `{{ env.Getenv ... }}` template expressions to other fields expecting runtime substitution — there is no template engine in the pipeline (the module reads the spec with `data "http"` + `jsondecode()`). Any template string in a non-overridden field will reach the nullplatform API as a literal.
+
 ## Overrides
 
 If the account requires local configuration overrides (e.g. from a networking repo), enable the override flag so the agent receives `--overrides-path` as an argument:
