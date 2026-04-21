@@ -8,7 +8,7 @@ The agent pod must have the following repository cloned at the expected path:
 |---|---|
 | [nullplatform/services](https://github.com/nullplatform/services) | `/root/.np/nullplatform/services/endpoint-exposer` |
 
-Override the default path via the `repo_path` variable in `terraform.tfvars`.
+Override the default path via the `repository_org` / `repository_name` / `agent_service_path` variables in `terraform.tfvars`.
 
 ## Required tooling on the agent pod
 
@@ -61,6 +61,6 @@ A `Gateway` resource must exist in the cluster for both public and private traff
 
 ## GitHub Token
 
-A GitHub personal access token with `contents: read` permission on the `nullplatform/services` repository is required to fetch spec templates during `tofu apply`.
+The `service_definition` module fetches spec templates from GitHub at `tofu apply` time via authenticated or anonymous HTTP. Since `nullplatform/services` is a **public** repository, **no token is required** for the default setup.
 
-Set it in `terraform.tfvars` as `github_token`.
+If you point `repository_org` / `repository_name` at a private fork, provide a GitHub personal access token with `contents: read` permission on that repo via the `github_token` variable in `terraform.tfvars`.

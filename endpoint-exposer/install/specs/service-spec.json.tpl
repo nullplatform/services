@@ -1,9 +1,7 @@
 {
-    "name":  "{{ env.Getenv \"SERVICE_NAME\" | default \"Endpoint Exposer\" }}",
+    "name": "Endpoint Exposer",
     "type": "dependency",
-    "visible_to": [
-        "{{ env.Getenv \"NRN\" }}"
-    ],
+    "visible_to": [],
     "dimensions": {},
     "scopes": {},
     "assignable_to": "any",
@@ -145,8 +143,7 @@
                             "method",
                             "path",
                             "scope",
-                            "visibility",
-                            "environment"
+                            "visibility"
                         ],
                         "properties": {
                             "path": {
@@ -210,22 +207,18 @@
                     }
                 },
                 "publicDomain": {
-                    "enum": [
-                        "hello.idp.poc.nullapps.io"
-                    ],
                     "type": "string",
                     "title": "Public Domain",
+                    "description": "Base domain for routes with visibility=public. Tenant-specific — provide the FQDN that resolves to the public Istio gateway of the target cluster.",
                     "editableOn": [
                         "create",
                         "update"
                     ]
                 },
                 "privateDomain": {
-                    "enum": [
-                        "hello.idp.poc.nullapps.io"
-                    ],
                     "type": "string",
                     "title": "Private Domain",
+                    "description": "Base domain for routes with visibility=private. Tenant-specific — provide the FQDN that resolves to the private (internal) Istio gateway of the target cluster.",
                     "editableOn": [
                         "create",
                         "update"
@@ -464,11 +457,9 @@
                             }
                         },
                         "publicDomain": {
-                            "enum": [
-                                "hello.idp.poc.nullapps.io"
-                            ],
                             "type": "string",
                             "title": "Public Domain",
+                            "description": "Base domain for routes with visibility=public. Tenant-specific — provide the FQDN that resolves to the public Istio gateway of the target cluster.",
                             "target": "publicDomain",
                             "editableOn": [
                                 "create",
@@ -476,11 +467,9 @@
                             ]
                         },
                         "privateDomain": {
-                            "enum": [
-                                "hello.idp.poc.nullapps.io"
-                            ],
                             "type": "string",
                             "title": "Private Domain",
+                            "description": "Base domain for routes with visibility=private. Tenant-specific — provide the FQDN that resolves to the private (internal) Istio gateway of the target cluster.",
                             "target": "privateDomain",
                             "editableOn": [
                                 "create",
@@ -628,8 +617,7 @@
                                     "method",
                                     "path",
                                     "scope",
-                                    "visibility",
-                                    "environment"
+                                    "visibility"
                                 ],
                                 "properties": {
                                     "path": {
@@ -695,11 +683,9 @@
                             }
                         },
                         "publicDomain": {
-                            "enum": [
-                                "hello.idp.poc.nullapps.io"
-                            ],
                             "type": "string",
                             "title": "Public Domain",
+                            "description": "Base domain for routes with visibility=public. Tenant-specific — provide the FQDN that resolves to the public Istio gateway of the target cluster.",
                             "target": "publicDomain",
                             "editableOn": [
                                 "create",
@@ -707,11 +693,9 @@
                             ]
                         },
                         "privateDomain": {
-                            "enum": [
-                                "hello.idp.poc.nullapps.io"
-                            ],
                             "type": "string",
                             "title": "Private Domain",
+                            "description": "Base domain for routes with visibility=private. Tenant-specific — provide the FQDN that resolves to the private (internal) Istio gateway of the target cluster.",
                             "target": "privateDomain",
                             "editableOn": [
                                 "create",
@@ -867,8 +851,7 @@
                                     "method",
                                     "path",
                                     "scope",
-                                    "visibility",
-                                    "environment"
+                                    "visibility"
                                 ],
                                 "properties": {
                                     "path": {
@@ -932,22 +915,18 @@
                             }
                         },
                         "publicDomain": {
-                            "enum": [
-                                "hello.idp.poc.nullapps.io"
-                            ],
                             "type": "string",
                             "title": "Public Domain",
+                            "description": "Base domain for routes with visibility=public. Tenant-specific — provide the FQDN that resolves to the public Istio gateway of the target cluster.",
                             "editableOn": [
                                 "create",
                                 "update"
                             ]
                         },
                         "privateDomain": {
-                            "enum": [
-                                "hello.idp.poc.nullapps.io"
-                            ],
                             "type": "string",
                             "title": "Private Domain",
+                            "description": "Base domain for routes with visibility=private. Tenant-specific — provide the FQDN that resolves to the private (internal) Istio gateway of the target cluster.",
                             "editableOn": [
                                 "create",
                                 "update"
@@ -1094,8 +1073,7 @@
                                     "method",
                                     "path",
                                     "scope",
-                                    "visibility",
-                                    "environment"
+                                    "visibility"
                                 ],
                                 "properties": {
                                     "path": {
@@ -1159,22 +1137,18 @@
                             }
                         },
                         "publicDomain": {
-                            "enum": [
-                                "hello.idp.poc.nullapps.io"
-                            ],
                             "type": "string",
                             "title": "Public Domain",
+                            "description": "Base domain for routes with visibility=public. Tenant-specific — provide the FQDN that resolves to the public Istio gateway of the target cluster.",
                             "editableOn": [
                                 "create",
                                 "update"
                             ]
                         },
                         "privateDomain": {
-                            "enum": [
-                                "hello.idp.poc.nullapps.io"
-                            ],
                             "type": "string",
                             "title": "Private Domain",
+                            "description": "Base domain for routes with visibility=private. Tenant-specific — provide the FQDN that resolves to the private (internal) Istio gateway of the target cluster.",
                             "editableOn": [
                                 "create",
                                 "update"
