@@ -43,7 +43,7 @@
                                 "label": "Routes",
                                 "elements": [
                                     {
-                                        "text": "### Route Configuration\nDefine how incoming requests are matched and forwarded to backend services.\n\n| Field | Description |\n|-------|-------------|\n| **Verb** | HTTP method to match (GET, POST, PUT, etc.) |\n| **Path** | URL path pattern. See *Path Types* below |\n| **Scope** | Target service that will handle the request |\n| **Visibility** | `public` (external) or `private` (internal network only) |\n| **Groups** | Security groups allowed to access this route. Leave empty for unrestricted access |\n\n### Path Types\n| Type | Example | Description |\n|------|---------|-------------|\n| **Exact** | `/api/users` | Matches the exact path only |\n| **Parameterized** | `/api/users/{id}` | Matches path with dynamic segments |\n| **Wildcard** | `/api/users/*` | Matches any path starting with the prefix |",
+                                        "text": "### Route Configuration\nDefine how incoming requests are matched and forwarded to backend services.\n\n| Field | Description |\n|-------|-------------|\n| **Verb** | HTTP method to match (GET, POST, PUT, etc.) |\n| **Path** | URL path pattern. See *Path Types* below |\n| **Scope** | Target service that will handle the request |\n| **Visibility** | `public` (external) or `private` (internal network only) |\n\n### Path Types\n| Type | Example | Description |\n|------|---------|-------------|\n| **Exact** | `/api/users` | Matches the exact path only |\n| **Parameterized** | `/api/users/{id}` | Matches path with dynamic segments |\n| **Wildcard** | `/api/users/*` | Matches any path starting with the prefix |",
                                         "type": "Label",
                                         "options": {
                                             "format": "markdown"
@@ -56,7 +56,7 @@
                                 "label": "Examples",
                                 "elements": [
                                     {
-                                        "text": "### Public API Route\n```json\n{\n  \"method\": \"GET\",\n  \"path\": \"/api/v1/wells\",\n  \"scope\": \"wells-service\",\n  \"visibility\": \"public\",\n  \"groups\": []\n}\n```\n\n### Protected Internal Route\n```json\n{\n  \"method\": \"POST\",\n  \"path\": \"/internal/sync\",\n  \"scope\": \"sync-service\",\n  \"visibility\": \"private\",\n  \"groups\": [\"AWS_PlataformaUpstream_Administrador_Desa\"]\n}\n```",
+                                        "text": "### Public API Route\n```json\n{\n  \"method\": \"GET\",\n  \"path\": \"/api/v1/wells\",\n  \"scope\": \"wells-service\",\n  \"visibility\": \"public\"\n}\n```\n\n### Private Internal Route\n```json\n{\n  \"method\": \"POST\",\n  \"path\": \"/internal/sync\",\n  \"scope\": \"sync-service\",\n  \"visibility\": \"private\"\n}\n```",
                                         "type": "Label",
                                         "options": {
                                             "format": "markdown"
@@ -119,11 +119,6 @@
                                                         "scope": "#/properties/visibility"
                                                     }
                                                 ]
-                                            },
-                                            {
-                                                "type": "Control",
-                                                "label": "Required Endpoint Permissions",
-                                                "scope": "#/properties/groups"
                                             }
                                         ]
                                     },
@@ -156,22 +151,6 @@
                                 "additionalKeywords": {
                                     "enum": "[.scopes[]?.slug] | if length == 0 then [\"No scopes available for selected environment\"] else . end"
                                 }
-                            },
-                            "groups": {
-                                "type": "array",
-                                "items": {
-                                    "oneOf": [
-                                        { "const": "AWS_PlataformaUpstream_Gestor_Desa", "title": "Gestor Desarrollo" },
-                                        { "const": "AWS_PlataformaUpstream_Programador_Desa", "title": "Programador Desarrollo" },
-                                        { "const": "AWS_PlataformaUpstream_Pulling_Desa", "title": "Pulling Desarrollo" },
-                                        { "const": "AWS_PlataformaUpstream_Workover_Desa", "title": "Workover Desarrollo" },
-                                        { "const": "AWS_PlataformaUpstream_Visita_Desa", "title": "Visita Desarrollo" },
-                                        { "const": "AWS_PlataformaUpstream_Administrador_Desa", "title": "Administrador Desarrollo" }
-                                    ],
-                                    "type": "string"
-                                },
-                                "title": "Authorized Groups",
-                                "uniqueItems": true
                             },
                             "method": {
                                 "enum": [
@@ -297,7 +276,7 @@
                                         "label": "Routes",
                                         "elements": [
                                             {
-                                                "text": "### Route Configuration\nDefine how incoming requests are matched and forwarded to backend services.\n\n| Field | Description |\n|-------|-------------|\n| **Verb** | HTTP method to match (GET, POST, PUT, etc.) |\n| **Path** | URL path pattern. See *Path Types* below |\n| **Scope** | Target service that will handle the request |\n| **Visibility** | `public` (external) or `private` (internal network only) |\n| **Groups** | Security groups allowed to access this route. Leave empty for unrestricted access |\n\n### Path Types\n| Type | Example | Description |\n|------|---------|-------------|\n| **Exact** | `/api/users` | Matches the exact path only |\n| **Parameterized** | `/api/users/{id}` | Matches path with dynamic segments |\n| **Wildcard** | `/api/users/*` | Matches any path starting with the prefix |",
+                                                "text": "### Route Configuration\nDefine how incoming requests are matched and forwarded to backend services.\n\n| Field | Description |\n|-------|-------------|\n| **Verb** | HTTP method to match (GET, POST, PUT, etc.) |\n| **Path** | URL path pattern. See *Path Types* below |\n| **Scope** | Target service that will handle the request |\n| **Visibility** | `public` (external) or `private` (internal network only) |\n\n### Path Types\n| Type | Example | Description |\n|------|---------|-------------|\n| **Exact** | `/api/users` | Matches the exact path only |\n| **Parameterized** | `/api/users/{id}` | Matches path with dynamic segments |\n| **Wildcard** | `/api/users/*` | Matches any path starting with the prefix |",
                                                 "type": "Label",
                                                 "options": {
                                                     "format": "markdown"
@@ -310,7 +289,7 @@
                                         "label": "Examples",
                                         "elements": [
                                             {
-                                                "text": "### Public API Route\n```json\n{\n  \"method\": \"GET\",\n  \"path\": \"/api/v1/wells\",\n  \"scope\": \"wells-service\",\n  \"visibility\": \"public\",\n  \"groups\": []\n}\n```\n\n### Protected Internal Route\n```json\n{\n  \"method\": \"POST\",\n  \"path\": \"/internal/sync\",\n  \"scope\": \"sync-service\",\n  \"visibility\": \"private\",\n  \"groups\": [\"AWS_PlataformaUpstream_Administrador_Desa\"]\n}\n```",
+                                                "text": "### Public API Route\n```json\n{\n  \"method\": \"GET\",\n  \"path\": \"/api/v1/wells\",\n  \"scope\": \"wells-service\",\n  \"visibility\": \"public\"\n}\n```\n\n### Private Internal Route\n```json\n{\n  \"method\": \"POST\",\n  \"path\": \"/internal/sync\",\n  \"scope\": \"sync-service\",\n  \"visibility\": \"private\"\n}\n```",
                                                 "type": "Label",
                                                 "options": {
                                                     "format": "markdown"
@@ -373,11 +352,6 @@
                                                                 "scope": "#/properties/visibility"
                                                             }
                                                         ]
-                                                    },
-                                                    {
-                                                        "type": "Control",
-                                                        "label": "Groups",
-                                                        "scope": "#/properties/groups"
                                                     }
                                                 ]
                                             },
@@ -404,22 +378,6 @@
                                         "additionalKeywords": {
                                             "enum": "[.scopes[]?.slug] | if length == 0 then [\"No scopes available for selected environment\"] else . end"
                                         }
-                                    },
-                                    "groups": {
-                                        "type": "array",
-                                        "items": {
-                                            "enum": [
-                                                "AWS_PlataformaUpstream_Gestor_Desa",
-                                                "AWS_PlataformaUpstream_Programador_Desa",
-                                                "AWS_PlataformaUpstream_Pulling_Desa",
-                                                "AWS_PlataformaUpstream_Workover_Desa",
-                                                "AWS_PlataformaUpstream_Visita_Desa",
-                                                "AWS_PlataformaUpstream_Administrador_Desa"
-                                            ],
-                                            "type": "string"
-                                        },
-                                        "title": "Authorized Groups",
-                                        "uniqueItems": true
                                     },
                                     "method": {
                                         "enum": [
@@ -517,7 +475,7 @@
                                         "label": "Routes",
                                         "elements": [
                                             {
-                                                "text": "### Route Configuration\nDefine how incoming requests are matched and forwarded to backend services.\n\n| Field | Description |\n|-------|-------------|\n| **Verb** | HTTP method to match (GET, POST, PUT, etc.) |\n| **Path** | URL path pattern. See *Path Types* below |\n| **Scope** | Target service that will handle the request |\n| **Visibility** | `public` (external) or `private` (internal network only) |\n| **Groups** | Security groups allowed to access this route. Leave empty for unrestricted access |\n\n### Path Types\n| Type | Example | Description |\n|------|---------|-------------|\n| **Exact** | `/api/users` | Matches the exact path only |\n| **Parameterized** | `/api/users/{id}` | Matches path with dynamic segments |\n| **Wildcard** | `/api/users/*` | Matches any path starting with the prefix |",
+                                                "text": "### Route Configuration\nDefine how incoming requests are matched and forwarded to backend services.\n\n| Field | Description |\n|-------|-------------|\n| **Verb** | HTTP method to match (GET, POST, PUT, etc.) |\n| **Path** | URL path pattern. See *Path Types* below |\n| **Scope** | Target service that will handle the request |\n| **Visibility** | `public` (external) or `private` (internal network only) |\n\n### Path Types\n| Type | Example | Description |\n|------|---------|-------------|\n| **Exact** | `/api/users` | Matches the exact path only |\n| **Parameterized** | `/api/users/{id}` | Matches path with dynamic segments |\n| **Wildcard** | `/api/users/*` | Matches any path starting with the prefix |",
                                                 "type": "Label",
                                                 "options": {
                                                     "format": "markdown"
@@ -530,7 +488,7 @@
                                         "label": "Examples",
                                         "elements": [
                                             {
-                                                "text": "### Public API Route\n```json\n{\n  \"method\": \"GET\",\n  \"path\": \"/api/v1/wells\",\n  \"scope\": \"wells-service\",\n  \"visibility\": \"public\",\n  \"groups\": []\n}\n```\n\n### Protected Internal Route\n```json\n{\n  \"method\": \"POST\",\n  \"path\": \"/internal/sync\",\n  \"scope\": \"sync-service\",\n  \"visibility\": \"private\",\n  \"groups\": [\"AWS_PlataformaUpstream_Administrador_Desa\"]\n}\n```",
+                                                "text": "### Public API Route\n```json\n{\n  \"method\": \"GET\",\n  \"path\": \"/api/v1/wells\",\n  \"scope\": \"wells-service\",\n  \"visibility\": \"public\"\n}\n```\n\n### Private Internal Route\n```json\n{\n  \"method\": \"POST\",\n  \"path\": \"/internal/sync\",\n  \"scope\": \"sync-service\",\n  \"visibility\": \"private\"\n}\n```",
                                                 "type": "Label",
                                                 "options": {
                                                     "format": "markdown"
@@ -593,11 +551,6 @@
                                                                 "scope": "#/properties/visibility"
                                                             }
                                                         ]
-                                                    },
-                                                    {
-                                                        "type": "Control",
-                                                        "label": "Groups",
-                                                        "scope": "#/properties/groups"
                                                     }
                                                 ]
                                             },
@@ -630,22 +583,6 @@
                                         "additionalKeywords": {
                                             "enum": "[.scopes[]?.slug] | if length == 0 then [\"No scopes available for selected environment\"] else . end"
                                         }
-                                    },
-                                    "groups": {
-                                        "type": "array",
-                                        "items": {
-                                            "enum": [
-                                                "AWS_PlataformaUpstream_Gestor_Desa",
-                                                "AWS_PlataformaUpstream_Programador_Desa",
-                                                "AWS_PlataformaUpstream_Pulling_Desa",
-                                                "AWS_PlataformaUpstream_Workover_Desa",
-                                                "AWS_PlataformaUpstream_Visita_Desa",
-                                                "AWS_PlataformaUpstream_Administrador_Desa"
-                                            ],
-                                            "type": "string"
-                                        },
-                                        "title": "Authorized Groups",
-                                        "uniqueItems": true
                                     },
                                     "method": {
                                         "enum": [
@@ -751,7 +688,7 @@
                                         "label": "Routes",
                                         "elements": [
                                             {
-                                                "text": "### Route Configuration\nDefine how incoming requests are matched and forwarded to backend services.\n\n| Field | Description |\n|-------|-------------|\n| **Verb** | HTTP method to match (GET, POST, PUT, etc.) |\n| **Path** | URL path pattern. See *Path Types* below |\n| **Scope** | Target service that will handle the request |\n| **Visibility** | `public` (external) or `private` (internal network only) |\n| **Groups** | Security groups allowed to access this route. Leave empty for unrestricted access |\n\n### Path Types\n| Type | Example | Description |\n|------|---------|-------------|\n| **Exact** | `/api/users` | Matches the exact path only |\n| **Parameterized** | `/api/users/{id}` | Matches path with dynamic segments |\n| **Wildcard** | `/api/users/*` | Matches any path starting with the prefix |",
+                                                "text": "### Route Configuration\nDefine how incoming requests are matched and forwarded to backend services.\n\n| Field | Description |\n|-------|-------------|\n| **Verb** | HTTP method to match (GET, POST, PUT, etc.) |\n| **Path** | URL path pattern. See *Path Types* below |\n| **Scope** | Target service that will handle the request |\n| **Visibility** | `public` (external) or `private` (internal network only) |\n\n### Path Types\n| Type | Example | Description |\n|------|---------|-------------|\n| **Exact** | `/api/users` | Matches the exact path only |\n| **Parameterized** | `/api/users/{id}` | Matches path with dynamic segments |\n| **Wildcard** | `/api/users/*` | Matches any path starting with the prefix |",
                                                 "type": "Label",
                                                 "options": {
                                                     "format": "markdown"
@@ -764,7 +701,7 @@
                                         "label": "Examples",
                                         "elements": [
                                             {
-                                                "text": "### Public API Route\n```json\n{\n  \"method\": \"GET\",\n  \"path\": \"/api/v1/wells\",\n  \"scope\": \"wells-service\",\n  \"visibility\": \"public\",\n  \"groups\": []\n}\n```\n\n### Protected Internal Route\n```json\n{\n  \"method\": \"POST\",\n  \"path\": \"/internal/sync\",\n  \"scope\": \"sync-service\",\n  \"visibility\": \"private\",\n  \"groups\": [\"AWS_PlataformaUpstream_Administrador_Desa\"]\n}\n```",
+                                                "text": "### Public API Route\n```json\n{\n  \"method\": \"GET\",\n  \"path\": \"/api/v1/wells\",\n  \"scope\": \"wells-service\",\n  \"visibility\": \"public\"\n}\n```\n\n### Private Internal Route\n```json\n{\n  \"method\": \"POST\",\n  \"path\": \"/internal/sync\",\n  \"scope\": \"sync-service\",\n  \"visibility\": \"private\"\n}\n```",
                                                 "type": "Label",
                                                 "options": {
                                                     "format": "markdown"
@@ -827,11 +764,6 @@
                                                                 "scope": "#/properties/visibility"
                                                             }
                                                         ]
-                                                    },
-                                                    {
-                                                        "type": "Control",
-                                                        "label": "Groups",
-                                                        "scope": "#/properties/groups"
                                                     }
                                                 ]
                                             },
@@ -864,22 +796,6 @@
                                         "additionalKeywords": {
                                             "enum": "[.scopes[]?.slug] | if length == 0 then [\"No scopes available for selected environment\"] else . end"
                                         }
-                                    },
-                                    "groups": {
-                                        "type": "array",
-                                        "items": {
-                                            "enum": [
-                                                "AWS_PlataformaUpstream_Gestor_Desa",
-                                                "AWS_PlataformaUpstream_Programador_Desa",
-                                                "AWS_PlataformaUpstream_Pulling_Desa",
-                                                "AWS_PlataformaUpstream_Workover_Desa",
-                                                "AWS_PlataformaUpstream_Visita_Desa",
-                                                "AWS_PlataformaUpstream_Administrador_Desa"
-                                            ],
-                                            "type": "string"
-                                        },
-                                        "title": "Authorized Groups",
-                                        "uniqueItems": true
                                     },
                                     "method": {
                                         "enum": [
@@ -973,7 +889,7 @@
                                         "label": "Routes",
                                         "elements": [
                                             {
-                                                "text": "### Route Configuration\nDefine how incoming requests are matched and forwarded to backend services.\n\n| Field | Description |\n|-------|-------------|\n| **Verb** | HTTP method to match (GET, POST, PUT, etc.) |\n| **Path** | URL path pattern. See *Path Types* below |\n| **Scope** | Target service that will handle the request |\n| **Visibility** | `public` (external) or `private` (internal network only) |\n| **Groups** | Security groups allowed to access this route. Leave empty for unrestricted access |\n\n### Path Types\n| Type | Example | Description |\n|------|---------|-------------|\n| **Exact** | `/api/users` | Matches the exact path only |\n| **Parameterized** | `/api/users/{id}` | Matches path with dynamic segments |\n| **Wildcard** | `/api/users/*` | Matches any path starting with the prefix |",
+                                                "text": "### Route Configuration\nDefine how incoming requests are matched and forwarded to backend services.\n\n| Field | Description |\n|-------|-------------|\n| **Verb** | HTTP method to match (GET, POST, PUT, etc.) |\n| **Path** | URL path pattern. See *Path Types* below |\n| **Scope** | Target service that will handle the request |\n| **Visibility** | `public` (external) or `private` (internal network only) |\n\n### Path Types\n| Type | Example | Description |\n|------|---------|-------------|\n| **Exact** | `/api/users` | Matches the exact path only |\n| **Parameterized** | `/api/users/{id}` | Matches path with dynamic segments |\n| **Wildcard** | `/api/users/*` | Matches any path starting with the prefix |",
                                                 "type": "Label",
                                                 "options": {
                                                     "format": "markdown"
@@ -986,7 +902,7 @@
                                         "label": "Examples",
                                         "elements": [
                                             {
-                                                "text": "### Public API Route\n```json\n{\n  \"method\": \"GET\",\n  \"path\": \"/api/v1/wells\",\n  \"scope\": \"wells-service\",\n  \"visibility\": \"public\",\n  \"groups\": []\n}\n```\n\n### Protected Internal Route\n```json\n{\n  \"method\": \"POST\",\n  \"path\": \"/internal/sync\",\n  \"scope\": \"sync-service\",\n  \"visibility\": \"private\",\n  \"groups\": [\"AWS_PlataformaUpstream_Administrador_Desa\"]\n}\n```",
+                                                "text": "### Public API Route\n```json\n{\n  \"method\": \"GET\",\n  \"path\": \"/api/v1/wells\",\n  \"scope\": \"wells-service\",\n  \"visibility\": \"public\"\n}\n```\n\n### Private Internal Route\n```json\n{\n  \"method\": \"POST\",\n  \"path\": \"/internal/sync\",\n  \"scope\": \"sync-service\",\n  \"visibility\": \"private\"\n}\n```",
                                                 "type": "Label",
                                                 "options": {
                                                     "format": "markdown"
@@ -1049,11 +965,6 @@
                                                                 "scope": "#/properties/visibility"
                                                             }
                                                         ]
-                                                    },
-                                                    {
-                                                        "type": "Control",
-                                                        "label": "Groups",
-                                                        "scope": "#/properties/groups"
                                                     }
                                                 ]
                                             },
@@ -1086,22 +997,6 @@
                                         "additionalKeywords": {
                                             "enum": "[.scopes[]?.slug] | if length == 0 then [\"No scopes available for selected environment\"] else . end"
                                         }
-                                    },
-                                    "groups": {
-                                        "type": "array",
-                                        "items": {
-                                            "enum": [
-                                                "AWS_PlataformaUpstream_Gestor_Desa",
-                                                "AWS_PlataformaUpstream_Programador_Desa",
-                                                "AWS_PlataformaUpstream_Pulling_Desa",
-                                                "AWS_PlataformaUpstream_Workover_Desa",
-                                                "AWS_PlataformaUpstream_Visita_Desa",
-                                                "AWS_PlataformaUpstream_Administrador_Desa"
-                                            ],
-                                            "type": "string"
-                                        },
-                                        "title": "Authorized Groups",
-                                        "uniqueItems": true
                                     },
                                     "method": {
                                         "enum": [
