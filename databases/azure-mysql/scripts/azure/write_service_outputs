@@ -1,0 +1,36 @@
+#!/bin/bash
+set -euo pipefail
+
+SERVICE_ID=$(echo "$CONTEXT" | jq -r '.service.id')
+
+echo "Reading Terraform outputs for service $SERVICE_ID from module: $TOFU_MODULE_DIR"
+
+HOSTNAME=$(tofu -chdir="$TOFU_MODULE_DIR" output -raw hostname 2>/dev/null || echo "")
+PORT=$(tofu -chdir="$TOFU_MODULE_DIR" output -raw port 2>/dev/null || echo "")
+ADMIN_LOGIN=$(tofu -chdir="$TOFU_MODULE_DIR" output -raw administrator_login 2>/dev/null || echo "")
+ADMIN_PWD_SECRET_ID=$(tofu -chdir="$TOFU_MODULE_DIR" output -raw admin_password_secret_id 2>/dev/null || echo "")
+
+if [ -z "$HOSTNAME" ]; then
+  echo "WARNING: No hostname output found. Skipping attribute update."
+  exit 0
+fi
+
+ATTRS=$(jq -n \
+  --arg hostname                "$HOSTNAME" \
+  --arg administrator_login     "$ADMIN_LOGIN" \
+  --arg admin_password_secret_id "$ADMIN_PWD_SECRET_ID" \
+  --argjson port                "${PORT:-3306}" \
+  '{
+    hostname:                 $hostname,
+    port:                     $port,
+    administrator_login:      $administrator_login,
+    admin_password_secret_id: $admin_password_secret_id
+  }')
+
+echo "Updating service $SERVICE_ID attributes:"
+echo "  hostname:             $HOSTNAME"
+echo "  port:                 ${PORT:-3306}"
+echo "  administrator_login:  $ADMIN_LOGIN"
+
+np service patch --id "$SERVICE_ID" --body "{\"attributes\": $ATTRS}"
+echo "Service attributes updated successfully."

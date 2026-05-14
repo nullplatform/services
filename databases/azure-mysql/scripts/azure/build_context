@@ -1,0 +1,157 @@
+#!/bin/bash
+
+set -euo pipefail
+
+# --- Parse service context --------------------------------------------------
+
+SERVICE_ID=$(echo "$CONTEXT" | jq -r '.service.id')
+SERVICE_NAME=$(echo "$CONTEXT" | jq -r '.service.name // ""')
+SERVICE_NAME="${SERVICE_NAME:-svc-${SERVICE_ID}}"
+
+# Sanitize: lowercase, alphanumeric + hyphens, strip leading/trailing hyphens
+SANITIZED_NAME=$(echo "$SERVICE_NAME" | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9' '-' | sed 's/^-*//;s/-*$//')
+
+# Azure MySQL Flexible Server names must be globally unique and ≤ 63 chars.
+# Use first 8 chars of SERVICE_ID (UUID) as a uniqueness suffix.
+SERVICE_ID_PREFIX="${SERVICE_ID:0:8}"
+SERVER_NAME="np-$("$SERVICE_PATH/scripts/azure/generate_resource_name" 60 "$SANITIZED_NAME" "$SERVICE_ID_PREFIX")"
+
+# Merge .service.attributes with action .parameters (parameters take precedence on create)
+SERVICE_ATTRS=$(echo "$CONTEXT" | jq -r '(.service.attributes // {}) * (.parameters // {})')
+
+SKU_NAME=$(echo "$SERVICE_ATTRS"             | jq -r '.sku_name             // "B_Standard_B1ms"')
+MYSQL_VERSION=$(echo "$SERVICE_ATTRS"        | jq -r '.mysql_version        // "8.0.21"')
+STORAGE_SIZE_GB=$(echo "$SERVICE_ATTRS"      | jq -r '.storage_size_gb      // 20')
+BACKUP_RETENTION_DAYS=$(echo "$SERVICE_ATTRS" | jq -r '.backup_retention_days // 7')
+
+# Read static config from values.yaml
+# CRITICAL: $VALUES is a FILE PATH, not JSON content.
+yaml_value() {
+  local key="$1" default="$2" file="$3"
+  local val
+  val=$(grep "^${key}:" "$file" 2>/dev/null | sed 's/^[^:]*: *//;s/^"//;s/"$//' | head -1)
+  echo "${val:-$default}"
+}
+
+VALUES_FILE="${VALUES:-$SERVICE_PATH/values.yaml}"
+
+RESOURCE_GROUP=$(yaml_value "resource_group_name" "" "$VALUES_FILE")
+LOCATION=$(yaml_value "location" "eastus" "$VALUES_FILE")
+ADMIN_LOGIN=$(yaml_value "administrator_login" "npadmin" "$VALUES_FILE")
+KEY_VAULT_NAME=$(yaml_value "key_vault_name" "" "$VALUES_FILE")
+
+if [ -z "$RESOURCE_GROUP" ]; then
+  echo "ERROR: resource_group_name not found in values.yaml" >&2
+  exit 1
+fi
+
+if [ -z "$KEY_VAULT_NAME" ]; then
+  echo "ERROR: key_vault_name not found in values.yaml" >&2
+  exit 1
+fi
+
+# Subscription ID from environment
+SUBSCRIPTION_ID="${AZURE_SUBSCRIPTION_ID:-}"
+if [ -z "$SUBSCRIPTION_ID" ]; then
+  echo "ERROR: AZURE_SUBSCRIPTION_ID environment variable is not set" >&2
+  exit 1
+fi
+
+# --- Output / workspace directories -----------------------------------------
+
+OUTPUT_DIR="$SERVICE_PATH/output/$SERVICE_ID"
+mkdir -p "$OUTPUT_DIR"
+
+# --- Backend config for tfstate ----------------------------------------------
+
+TOFU_MODULE_DIR="$SERVICE_PATH/deployment"
+
+if [ -n "${AZURE_TFSTATE_STORAGE_ACCOUNT:-}" ] && [ -n "${AZURE_TFSTATE_CONTAINER:-}" ]; then
+  echo "Using Azure backend for tfstate"
+
+  TFSTATE_RESOURCE_GROUP="${AZURE_TFSTATE_RESOURCE_GROUP:-$RESOURCE_GROUP}"
+  TFSTATE_KEY="mysql/${SERVICE_ID}/infrastructure.tfstate"
+
+  cat > "$TOFU_MODULE_DIR/backend.tf" <<EOF
+terraform {
+  backend "azurerm" {}
+}
+EOF
+
+  TOFU_INIT_VARIABLES="-backend-config=resource_group_name=${TFSTATE_RESOURCE_GROUP} -backend-config=storage_account_name=${AZURE_TFSTATE_STORAGE_ACCOUNT} -backend-config=container_name=${AZURE_TFSTATE_CONTAINER} -backend-config=key=${TFSTATE_KEY}"
+else
+  echo "Using local backend for tfstate"
+  rm -f "$TOFU_MODULE_DIR/backend.tf"
+  TOFU_INIT_VARIABLES=""
+fi
+
+# --- Terraform variables (JSON) ---------------------------------------------
+
+TOFU_VARIABLES=$(jq -n \
+  --arg subscription_id        "$SUBSCRIPTION_ID" \
+  --arg resource_group_name    "$RESOURCE_GROUP" \
+  --arg location               "$LOCATION" \
+  --arg service_id             "$SERVICE_ID" \
+  --arg server_name            "$SERVER_NAME" \
+  --arg administrator_login    "$ADMIN_LOGIN" \
+  --arg sku_name               "$SKU_NAME" \
+  --arg mysql_version          "$MYSQL_VERSION" \
+  --arg key_vault_name         "$KEY_VAULT_NAME" \
+  --argjson storage_size_gb      "$STORAGE_SIZE_GB" \
+  --argjson backup_retention_days "$BACKUP_RETENTION_DAYS" \
+  '{
+    subscription_id:         $subscription_id,
+    resource_group_name:     $resource_group_name,
+    location:                $location,
+    service_id:              $service_id,
+    server_name:             $server_name,
+    administrator_login:     $administrator_login,
+    sku_name:                $sku_name,
+    mysql_version:           $mysql_version,
+    storage_size_gb:         $storage_size_gb,
+    backup_retention_days:   $backup_retention_days,
+    key_vault_name:          $key_vault_name
+  }')
+
+# --- Export -----------------------------------------------------------------
+
+export SERVICE_ID
+export SERVER_NAME
+export SUBSCRIPTION_ID
+export RESOURCE_GROUP
+export OUTPUT_DIR
+export TOFU_MODULE_DIR
+export TOFU_INIT_VARIABLES
+export TOFU_VARIABLES
+
+# --- Service attributes (needed by build_permissions_context for link actions) ---
+
+MYSQL_HOST=$(echo "$CONTEXT"             | jq -r '.service.attributes.hostname                // ""')
+MYSQL_PORT=$(echo "$CONTEXT"             | jq -r '.service.attributes.port                    // "3306"')
+ADMINISTRATOR_LOGIN=$(echo "$CONTEXT"    | jq -r '.service.attributes.administrator_login     // ""')
+ADMIN_PASSWORD_SECRET_ID=$(echo "$CONTEXT" | jq -r '.service.attributes.admin_password_secret_id // ""')
+
+export MYSQL_HOST
+export MYSQL_PORT
+export ADMINISTRATOR_LOGIN
+export ADMIN_PASSWORD_SECRET_ID
+
+# --- Link context (link workflows only) -------------------------------------
+
+if [ "${ACTION_SOURCE:-}" = "link" ]; then
+  LINK_ID=$(echo "$CONTEXT"   | jq -r '.link.id       // ""')
+  LINK_NAME=$(echo "$CONTEXT" | jq -r '.link.name     // ""')
+  SCOPE_ID=$(echo "$CONTEXT"  | jq -r '.link.scope.id // ""')
+  SCOPE_NRN=$(echo "$CONTEXT" | jq -r '.link.scope.nrn // .tags.nrn // ""')
+
+  LINK_ATTRS=$(echo "$CONTEXT" | jq -r '(.link.attributes // {}) * (.parameters // {})')
+  LINK_DB_NAME=$(echo "$LINK_ATTRS"     | jq -r '.db_name      // ""')
+  LINK_ACCESS_LEVEL=$(echo "$LINK_ATTRS" | jq -r '.access_level // "read-write"')
+
+  export LINK_ID
+  export LINK_NAME
+  export SCOPE_ID
+  export SCOPE_NRN
+  export LINK_DB_NAME
+  export LINK_ACCESS_LEVEL
+fi

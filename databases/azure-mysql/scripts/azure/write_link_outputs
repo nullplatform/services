@@ -1,0 +1,33 @@
+#!/bin/bash
+set -euo pipefail
+
+LINK_ID_VAL=$(echo "$CONTEXT" | jq -r '.link.id')
+
+echo "Reading Terraform outputs for link $LINK_ID_VAL from module: $TOFU_MODULE_DIR"
+
+DB_USERNAME=$(tofu -chdir="$TOFU_MODULE_DIR" output -raw db_username 2>/dev/null || echo "")
+DB_PASSWORD=$(tofu -chdir="$TOFU_MODULE_DIR" output -raw db_password 2>/dev/null || echo "")
+DATABASE_NAME=$(tofu -chdir="$TOFU_MODULE_DIR" output -raw database_name 2>/dev/null || echo "")
+
+if [ -z "$DB_USERNAME" ]; then
+  echo "WARNING: No db_username output found. Skipping link attribute update."
+  exit 0
+fi
+
+ATTRS=$(jq -n \
+  --arg username      "$DB_USERNAME" \
+  --arg password      "$DB_PASSWORD" \
+  --arg database_name "$DATABASE_NAME" \
+  '{
+    username:      $username,
+    password:      $password,
+    database_name: $database_name
+  }')
+
+echo "Updating link $LINK_ID_VAL attributes:"
+echo "  username:      $DB_USERNAME"
+echo "  database_name: $DATABASE_NAME"
+echo "  password:      ****"
+
+np link patch --id "$LINK_ID_VAL" --body "{\"attributes\": $ATTRS}"
+echo "Link attributes updated successfully."

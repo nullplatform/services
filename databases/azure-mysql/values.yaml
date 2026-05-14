@@ -1,0 +1,10 @@
+# Azure MySQL Flexible Server Configuration
+# These values are not exposed in the UI and are set via configuration
+
+# Azure Resource Configuration
+resource_group_name: "rg-nullplatform-demos-shared"
+location: "eastus"
+administrator_login: "npadmin"
+
+# Existing Key Vault where the admin password will be stored as a secret
+key_vault_name: "kv-nullplatform-shared"

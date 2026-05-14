@@ -1,0 +1,105 @@
+#!/bin/bash
+
+set -euo pipefail
+
+echo "=== Build Permissions Context ==="
+echo "Link ID:       $LINK_ID"
+echo "Link DB name:  $LINK_DB_NAME"
+echo "Access level:  $LINK_ACCESS_LEVEL"
+echo "MySQL host:    $MYSQL_HOST"
+echo "Admin login:   $ADMINISTRATOR_LOGIN"
+
+# --- Validate required inputs -----------------------------------------------
+
+if [ -z "${MYSQL_HOST:-}" ]; then
+  echo "ERROR: MySQL hostname not found in service attributes." >&2
+  echo "       Has the MySQL Flexible Server been created and write_service_outputs completed?" >&2
+  exit 1
+fi
+
+if [ -z "${ADMIN_PASSWORD_SECRET_ID:-}" ]; then
+  echo "ERROR: admin_password_secret_id not found in service attributes." >&2
+  exit 1
+fi
+
+if [ -z "${LINK_DB_NAME:-}" ]; then
+  echo "ERROR: db_name is required to create a link." >&2
+  exit 1
+fi
+
+# --- Retrieve admin password from Azure Key Vault ---------------------------
+
+echo "Retrieving admin password from Key Vault secret: $ADMIN_PASSWORD_SECRET_ID"
+ADMIN_PASSWORD=$(az keyvault secret show --id "$ADMIN_PASSWORD_SECRET_ID" --query value -o tsv)
+
+if [ -z "$ADMIN_PASSWORD" ]; then
+  echo "ERROR: Failed to retrieve admin password from Key Vault." >&2
+  exit 1
+fi
+
+# --- Derive per-link MySQL username -----------------------------------------
+# Deterministic: always produces the same username for the same link.
+# Format: np_<first 16 hex chars of link ID>  (≤ 20 chars, safe for MySQL)
+
+LINK_USERNAME="np_$(echo "${LINK_ID}" | tr -d '-' | cut -c1-16 | tr '[:upper:]' '[:lower:]')"
+
+echo "Derived link username: $LINK_USERNAME"
+
+# --- Output / workspace directories -----------------------------------------
+
+PERMISSIONS_OUTPUT_DIR="$OUTPUT_DIR/permissions"
+mkdir -p "$PERMISSIONS_OUTPUT_DIR"
+
+# --- Backend config for permissions tfstate ---------------------------------
+
+TOFU_MODULE_DIR="$SERVICE_PATH/permissions"
+
+if [ -n "${AZURE_TFSTATE_STORAGE_ACCOUNT:-}" ] && [ -n "${AZURE_TFSTATE_CONTAINER:-}" ]; then
+  echo "Using Azure backend for permissions tfstate"
+
+  TFSTATE_RESOURCE_GROUP="${AZURE_TFSTATE_RESOURCE_GROUP:-$RESOURCE_GROUP}"
+  TFSTATE_KEY="mysql/${SERVICE_ID}/links/${LINK_ID}/permissions.tfstate"
+
+  cat > "$TOFU_MODULE_DIR/backend.tf" <<EOF
+terraform {
+  backend "azurerm" {}
+}
+EOF
+
+  TOFU_INIT_VARIABLES="-backend-config=resource_group_name=${TFSTATE_RESOURCE_GROUP} -backend-config=storage_account_name=${AZURE_TFSTATE_STORAGE_ACCOUNT} -backend-config=container_name=${AZURE_TFSTATE_CONTAINER} -backend-config=key=${TFSTATE_KEY}"
+else
+  echo "Using local backend for permissions tfstate"
+  rm -f "$TOFU_MODULE_DIR/backend.tf"
+  TOFU_INIT_VARIABLES=""
+fi
+
+# --- Terraform variables (JSON) ---------------------------------------------
+
+TOFU_VARIABLES=$(jq -n \
+  --arg subscription_id  "$SUBSCRIPTION_ID" \
+  --arg mysql_host       "$MYSQL_HOST" \
+  --argjson mysql_port    "${MYSQL_PORT:-3306}" \
+  --arg admin_username   "$ADMINISTRATOR_LOGIN" \
+  --arg admin_password   "$ADMIN_PASSWORD" \
+  --arg db_name          "$LINK_DB_NAME" \
+  --arg link_username    "$LINK_USERNAME" \
+  --arg access_level     "${LINK_ACCESS_LEVEL:-read-write}" \
+  '{
+    subscription_id: $subscription_id,
+    mysql_host:      $mysql_host,
+    mysql_port:      $mysql_port,
+    admin_username:  $admin_username,
+    admin_password:  $admin_password,
+    db_name:         $db_name,
+    link_username:   $link_username,
+    access_level:    $access_level
+  }')
+
+# --- Export -----------------------------------------------------------------
+
+export OUTPUT_DIR="$PERMISSIONS_OUTPUT_DIR"
+export TOFU_MODULE_DIR
+export TOFU_INIT_VARIABLES
+export TOFU_VARIABLES
+
+echo "=== Permissions context ready ==="
