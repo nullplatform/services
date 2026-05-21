@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -euo pipefail
+
+# Delete existing policies then recreate from current routes
+"$SERVICE_PATH/scripts/avp/delete_policies"
+"$SERVICE_PATH/scripts/avp/create_policies"

@@ -1,71 +1,10 @@
+include:
+  - "$SERVICE_PATH/workflows/istio/create.yaml"
 steps:
-  - name: "find k8s namespace"
+  - name: "manage avp policies"
     type: script
-    file: "$SERVICE_PATH/scripts/istio/fetch_provider_data"
-    output:
-      - name: K8S_NAMESPACE
-        type: environment
-  - name: "build context"
-    type: script
-    file: "$SERVICE_PATH/scripts/istio/build_context"
-    output:
-      - name: SERVICE_ID
-        type: environment
-      - name: SERVICE_SLUG
-        type: environment
-      - name: ACTION_ID
-        type: environment
-      - name: ACTION_NAME
-        type: environment
-      - name: PUBLIC_DOMAIN
-        type: environment
-      - name: PRIVATE_DOMAIN
-        type: environment
-      - name: ROUTES_JSON
-        type: environment
-      - name: PUBLIC_ROUTES_JSON
-        type: environment
-      - name: PRIVATE_ROUTES_JSON
-        type: environment
-  - name: "build public httproute"
-    type: script
-    file: "$SERVICE_PATH/scripts/istio/build_httproute"
-    configuration:
-      VISIBILITY: "public"
-    output:
-      - name: HTTPROUTE_PUBLIC_FILE
-        type: file
-        file: "$OUTPUT_DIR/httproute-$SERVICE_ID-public.yaml"
-  - name: "build private httproute"
-    type: script
-    file: "$SERVICE_PATH/scripts/istio/build_httproute"
-    configuration:
-      VISIBILITY: "private"
-    output:
-      - name: HTTPROUTE_PRIVATE_FILE
-        type: file
-        file: "$OUTPUT_DIR/httproute-$SERVICE_ID-private.yaml"
-  - name: "build public authz policy"
-    type: script
-    file: "$SERVICE_PATH/scripts/istio/build_authz_policy"
-    configuration:
-      VISIBILITY: "public"
-    output:
-      - name: AUTHZ_PUBLIC_FILE
-        type: file
-        file: "$OUTPUT_DIR/authz-$SERVICE_ID-public.yaml"
-  - name: "build private authz policy"
-    type: script
-    file: "$SERVICE_PATH/scripts/istio/build_authz_policy"
-    configuration:
-      VISIBILITY: "private"
-    output:
-      - name: AUTHZ_PRIVATE_FILE
-        type: file
-        file: "$OUTPUT_DIR/authz-$SERVICE_ID-private.yaml"
+    file: "$SERVICE_PATH/scripts/avp/sync_policies"
   - name: apply
-    type: script
-    file: "$SERVICE_PATH/scripts/common/apply"
     configuration:
       ACTION: apply
       DRY_RUN: false

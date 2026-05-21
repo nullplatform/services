@@ -1,6 +1,9 @@
 include:
   - "$SERVICE_PATH/workflows/istio/create.yaml"
 steps:
+  - name: "manage avp policies"
+    type: script
+    file: "$SERVICE_PATH/scripts/avp/delete_policies"
   - name: apply
     configuration:
       ACTION: delete

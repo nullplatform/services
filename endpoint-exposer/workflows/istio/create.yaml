@@ -52,6 +52,9 @@ steps:
   - name: "build authz policies"
     type: script
     file: "$SERVICE_PATH/scripts/istio/build_authz_policy"
+  - name: "manage avp policies"
+    type: script
+    file: "$SERVICE_PATH/scripts/avp/create_policies"
   - name: apply
     type: script
     file: "$SERVICE_PATH/scripts/common/apply"

@@ -1,0 +1,84 @@
+#!/bin/bash
+
+set -euo pipefail
+
+source "$SERVICE_PATH/scripts/avp/config"
+
+echo "=== Creating AVP Cedar Policies ==="
+
+ROUTES_JSON=$(echo "$CONTEXT" | jq -c '.parameters.routes // []')
+APPLICATION_ID=$(echo "$CONTEXT" | jq -r '.tags.application_id // ""')
+
+NUM_ROUTES=$(echo "$ROUTES_JSON" | jq 'length')
+if [[ "$NUM_ROUTES" -eq 0 ]]; then
+  echo "No routes configured, skipping AVP policy creation"
+  exit 0
+fi
+
+if [[ -z "$APPLICATION_ID" ]] || [[ "$APPLICATION_ID" == "null" ]]; then
+  echo "ERROR: APPLICATION_ID not found in context"
+  exit 1
+fi
+
+SCOPES_JSON=$(np scope list --application_id "$APPLICATION_ID" --format json | jq '.results // []')
+
+for i in $(seq 0 $((NUM_ROUTES - 1))); do
+  ROUTE=$(echo "$ROUTES_JSON" | jq -c ".[$i]")
+  METHOD=$(echo "$ROUTE" | jq -r '.method')
+  ROUTE_PATH=$(echo "$ROUTE" | jq -r '.path')
+  SCOPE_SLUG=$(echo "$ROUTE" | jq -r '.scope')
+  GROUPS_JSON=$(echo "$ROUTE" | jq -c '.groups // []')
+  NUM_GROUPS=$(echo "$GROUPS_JSON" | jq 'length')
+
+  SCOPE_ID=$(echo "$SCOPES_JSON" | jq -r --arg name "$SCOPE_SLUG" '.[] | select(.name == $name) | .id')
+  if [[ -z "$SCOPE_ID" ]] || [[ "$SCOPE_ID" == "null" ]]; then
+    echo "WARNING: Could not resolve scope '$SCOPE_SLUG', skipping route $METHOD $ROUTE_PATH"
+    continue
+  fi
+
+  SCOPE_DOMAIN=$(np scope read --id "$SCOPE_ID" --format json | jq -r '.domain // ""')
+  if [[ -z "$SCOPE_DOMAIN" ]] || [[ "$SCOPE_DOMAIN" == "null" ]]; then
+    echo "WARNING: Scope '$SCOPE_SLUG' (id: $SCOPE_ID) has no domain, skipping route $METHOD $ROUTE_PATH"
+    continue
+  fi
+
+  if [[ "$NUM_GROUPS" -gt 0 ]]; then
+    GROUP_CONDITIONS=$(echo "$GROUPS_JSON" | jq -r \
+      'map("principal in ApiAccess::Group::\"" + . + "\"") | join(" ||\n        ")')
+    CEDAR_STATEMENT="permit (
+    principal,
+    action == ApiAccess::Action::\"$METHOD\",
+    resource
+)
+when {
+    ($GROUP_CONDITIONS) &&
+    resource.host == \"$SCOPE_DOMAIN\" &&
+    resource.path == \"$ROUTE_PATH\"
+};"
+  else
+    CEDAR_STATEMENT="permit (
+    principal,
+    action == ApiAccess::Action::\"$METHOD\",
+    resource
+)
+when {
+    resource.host == \"$SCOPE_DOMAIN\" &&
+    resource.path == \"$ROUTE_PATH\"
+};"
+  fi
+
+  DESCRIPTION="endpoint-exposer|service-id=$SERVICE_ID|route=$METHOD:$ROUTE_PATH|scope=$SCOPE_ID"
+
+  DEFINITION=$(jq -n \
+    --arg desc "$DESCRIPTION" \
+    --arg stmt "$CEDAR_STATEMENT" \
+    '{"static": {"description": $desc, "statement": $stmt}}')
+
+  POLICY_ID=$(aws verifiedpermissions create-policy \
+    --policy-store-id "$AVP_POLICY_STORE_ID" \
+    --region "$AVP_AWS_REGION" \
+    --definition "$DEFINITION" \
+    --query 'policyId' --output text)
+
+  echo "✅ Cedar policy created: $METHOD $ROUTE_PATH @ $SCOPE_DOMAIN (groups: $NUM_GROUPS, policy-id: $POLICY_ID)"
+done
