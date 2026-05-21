@@ -229,7 +229,7 @@
             "update"
           ],
           "enum": [
-            "idp.poc.nullapps.io"
+            "api-private.playground.nullapps.io"
           ]
         },
         "privateDomain": {
@@ -240,7 +240,7 @@
             "update"
           ],
           "enum": [
-            "idp.poc.nullapps.io"
+            "api-private.playground.nullapps.io"
           ]
         }
       }
