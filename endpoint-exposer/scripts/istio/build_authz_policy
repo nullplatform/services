@@ -8,14 +8,18 @@ AVP_PROVIDER_NAME="${AVP_PROVIDER_NAME:-avp-ext-authz}"
 
 echo "=== Building AuthorizationPolicies by scope ==="
 
+# Re-read from context directly — complex JSON env vars may not survive workflow step boundaries
+ROUTES_JSON=$(echo "$CONTEXT" | jq -c '.parameters.routes // []')
+APPLICATION_ID=$(echo "$CONTEXT" | jq -r '.tags.application_id // ""')
+
 NUM_ROUTES=$(echo "$ROUTES_JSON" | jq 'length')
 if [[ "$NUM_ROUTES" -eq 0 ]]; then
   echo "No routes configured, skipping AuthorizationPolicy generation"
   exit 0
 fi
 
-if [[ -z "${APPLICATION_ID:-}" ]] || [[ "$APPLICATION_ID" == "null" ]]; then
-  echo "ERROR: APPLICATION_ID is not set"
+if [[ -z "$APPLICATION_ID" ]] || [[ "$APPLICATION_ID" == "null" ]]; then
+  echo "ERROR: APPLICATION_ID not found in context"
   exit 1
 fi
 
