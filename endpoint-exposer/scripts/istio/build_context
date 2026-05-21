@@ -13,6 +13,7 @@ PUBLIC_DOMAIN=$(echo "$CONTEXT" | jq -r '.parameters.publicDomain // .parameters
 PRIVATE_DOMAIN=$(echo "$CONTEXT" | jq -r '.parameters.privateDomain // .parameters.private_domain // ""')
 
 K8S_NAMESPACE="${NAMESPACE_OVERRIDE:-nullplatform}"
+APPLICATION_ID=$(echo "$CONTEXT" | jq -r '.tags.application_id // ""')
 
 # Extract routes array from parameters
 ROUTES_JSON=$(echo "$CONTEXT" | jq -c '.parameters.routes // []')
@@ -36,6 +37,7 @@ export SERVICE_ID
 export SERVICE_SLUG
 export ACTION_ID
 export ACTION_NAME
+export APPLICATION_ID
 export PUBLIC_DOMAIN
 export PRIVATE_DOMAIN
 export ROUTES_JSON

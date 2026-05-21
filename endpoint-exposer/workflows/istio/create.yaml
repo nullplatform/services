@@ -29,6 +29,8 @@ steps:
         type: environment
       - name: K8S_NAMESPACE
         type: environment
+      - name: APPLICATION_ID
+        type: environment
   - name: "build public httproute"
     type: script
     file: "$SERVICE_PATH/scripts/istio/build_httproute"
@@ -47,16 +49,9 @@ steps:
       - name: HTTPROUTE_PRIVATE_FILE
         type: file
         file: "$OUTPUT_DIR/httproute-$SERVICE_ID-private.yaml"
-  - name: "build public authz policy"
+  - name: "build authz policies"
     type: script
     file: "$SERVICE_PATH/scripts/istio/build_authz_policy"
-    configuration:
-      VISIBILITY: "public"
-  - name: "build private authz policy"
-    type: script
-    file: "$SERVICE_PATH/scripts/istio/build_authz_policy"
-    configuration:
-      VISIBILITY: "private"
   - name: apply
     type: script
     file: "$SERVICE_PATH/scripts/common/apply"

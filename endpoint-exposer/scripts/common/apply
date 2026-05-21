@@ -37,13 +37,13 @@ if [[ -f "$OUTPUT_DIR/.httproute-private-deleted" ]]; then
 fi
 
 if [[ -f "$OUTPUT_DIR/.authz-public-deleted" ]]; then
-  echo "Public AuthorizationPolicy marked for deletion"
+  echo "Public AuthorizationPolicy marked for deletion (legacy)"
   delete_if_exists "authorizationpolicy" "$SERVICE_SLUG-$SERVICE_ID-authz-public" "$GATEWAY_NAMESPACE"
   rm "$OUTPUT_DIR/.authz-public-deleted"
 fi
 
 if [[ -f "$OUTPUT_DIR/.authz-private-deleted" ]]; then
-  echo "Private AuthorizationPolicy marked for deletion"
+  echo "Private AuthorizationPolicy marked for deletion (legacy)"
   delete_if_exists "authorizationpolicy" "$SERVICE_SLUG-$SERVICE_ID-authz-private" "$GATEWAY_NAMESPACE"
   rm "$OUTPUT_DIR/.authz-private-deleted"
 fi
