@@ -27,6 +27,8 @@ steps:
         type: environment
       - name: PRIVATE_ROUTES_JSON
         type: environment
+      - name: K8S_NAMESPACE
+        type: environment
   - name: "build public httproute"
     type: script
     file: "$SERVICE_PATH/scripts/istio/build_httproute"
