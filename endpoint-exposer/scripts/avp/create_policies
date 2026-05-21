@@ -52,6 +52,7 @@ for i in $(seq 0 $((NUM_ROUTES - 1))); do
 )
 when {
     ($GROUP_CONDITIONS) &&
+    resource has host &&
     resource.host == \"$SCOPE_DOMAIN\" &&
     resource.path == \"$ROUTE_PATH\"
 };"
@@ -62,6 +63,7 @@ when {
     resource
 )
 when {
+    resource has host &&
     resource.host == \"$SCOPE_DOMAIN\" &&
     resource.path == \"$ROUTE_PATH\"
 };"
@@ -78,7 +80,12 @@ when {
     --policy-store-id "$AVP_POLICY_STORE_ID" \
     --region "$AVP_AWS_REGION" \
     --definition "$DEFINITION" \
-    --query 'policyId' --output text)
+    --query 'policyId' --output text) || { echo "ERROR: Failed to create Cedar policy for $METHOD $ROUTE_PATH"; exit 1; }
+
+  if [[ -z "$POLICY_ID" ]] || [[ "$POLICY_ID" == "None" ]]; then
+    echo "ERROR: Policy creation returned no policyId for $METHOD $ROUTE_PATH"
+    exit 1
+  fi
 
   echo "✅ Cedar policy created: $METHOD $ROUTE_PATH @ $SCOPE_DOMAIN (groups: $NUM_GROUPS, policy-id: $POLICY_ID)"
 done
