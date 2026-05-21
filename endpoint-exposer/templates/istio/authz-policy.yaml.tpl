@@ -10,7 +10,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      gateway.networking.k8s.io/gateway-name: gateway-{{ .suffix }}
+      gateway.networking.k8s.io/gateway-name: {{ .gateway_name }}
   action: CUSTOM
   provider:
     name: {{ .provider_name }}

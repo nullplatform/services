@@ -58,6 +58,7 @@ while IFS= read -r SCOPE_SLUG; do
     --arg service_id "$SERVICE_ID" \
     --arg domain "$SCOPE_DOMAIN" \
     --arg gateway_namespace "$GATEWAY_NAMESPACE" \
+    --arg gateway_name "$PUBLIC_GATEWAY_NAME" \
     --arg suffix "scope-$SCOPE_ID" \
     --arg provider_name "$AVP_PROVIDER_NAME" \
     --argjson paths "$PATHS_JSON" \
@@ -67,6 +68,7 @@ while IFS= read -r SCOPE_SLUG; do
       service_id: $service_id,
       domain: $domain,
       gateway_namespace: $gateway_namespace,
+      gateway_name: $gateway_name,
       suffix: $suffix,
       provider_name: $provider_name,
       paths: $paths,
