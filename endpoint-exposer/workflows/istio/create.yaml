@@ -45,6 +45,24 @@ steps:
       - name: HTTPROUTE_PRIVATE_FILE
         type: file
         file: "$OUTPUT_DIR/httproute-$SERVICE_ID-private.yaml"
+  - name: "build public authz policy"
+    type: script
+    file: "$SERVICE_PATH/scripts/istio/build_authz_policy"
+    configuration:
+      VISIBILITY: "public"
+    output:
+      - name: AUTHZ_PUBLIC_FILE
+        type: file
+        file: "$OUTPUT_DIR/authz-$SERVICE_ID-public.yaml"
+  - name: "build private authz policy"
+    type: script
+    file: "$SERVICE_PATH/scripts/istio/build_authz_policy"
+    configuration:
+      VISIBILITY: "private"
+    output:
+      - name: AUTHZ_PRIVATE_FILE
+        type: file
+        file: "$OUTPUT_DIR/authz-$SERVICE_ID-private.yaml"
   - name: apply
     type: script
     file: "$SERVICE_PATH/scripts/common/apply"

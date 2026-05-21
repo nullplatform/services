@@ -1,0 +1,77 @@
+#!/bin/bash
+
+set -euo pipefail
+
+source "$SERVICE_PATH/scripts/istio/config"
+
+VISIBILITY="${VISIBILITY:-public}"
+AVP_PROVIDER_NAME="${AVP_PROVIDER_NAME:-avp-ext-authz}"
+
+echo "=== Building ${VISIBILITY} AuthorizationPolicy ==="
+
+if [[ "$VISIBILITY" == "public" ]]; then
+  ROUTES_JSON="$PUBLIC_ROUTES_JSON"
+  DOMAIN="$PUBLIC_DOMAIN"
+  SUFFIX="public"
+elif [[ "$VISIBILITY" == "private" ]]; then
+  ROUTES_JSON="$PRIVATE_ROUTES_JSON"
+  DOMAIN="$PRIVATE_DOMAIN"
+  SUFFIX="private"
+else
+  echo "ERROR: Invalid VISIBILITY value: $VISIBILITY"
+  exit 1
+fi
+
+NUM_ROUTES=$(echo "$ROUTES_JSON" | jq 'length')
+DOMAIN_EMPTY=false
+if [[ -z "$DOMAIN" ]] || [[ "$DOMAIN" == "null" ]]; then
+  DOMAIN_EMPTY=true
+fi
+
+if [[ "$NUM_ROUTES" -eq 0 ]] || [[ "$DOMAIN_EMPTY" == "true" ]]; then
+  echo "No $VISIBILITY routes or domain, marking authz policy for cleanup..."
+  touch "$OUTPUT_DIR/.authz-$SUFFIX-deleted"
+  exit 0
+fi
+
+# Deduplicate methods and collect paths from routes
+PATHS_JSON=$(echo "$ROUTES_JSON" | jq '[.[].path] | unique')
+METHODS_JSON=$(echo "$ROUTES_JSON" | jq '[.[].method] | unique')
+
+echo "$VISIBILITY Domain: $DOMAIN"
+echo "Paths: $PATHS_JSON"
+echo "Methods: $METHODS_JSON"
+
+AUTHZ_CONTEXT=$(jq -n \
+  --arg service_slug "$SERVICE_SLUG" \
+  --arg service_id "$SERVICE_ID" \
+  --arg domain "$DOMAIN" \
+  --arg gateway_namespace "$GATEWAY_NAMESPACE" \
+  --arg suffix "$SUFFIX" \
+  --arg provider_name "$AVP_PROVIDER_NAME" \
+  --argjson paths "$PATHS_JSON" \
+  --argjson methods "$METHODS_JSON" \
+  '{
+    service_slug: $service_slug,
+    service_id: $service_id,
+    domain: $domain,
+    gateway_namespace: $gateway_namespace,
+    suffix: $suffix,
+    provider_name: $provider_name,
+    paths: $paths,
+    methods: $methods
+  }')
+
+CONTEXT_PATH="$OUTPUT_DIR/authz-$SUFFIX-context-$SERVICE_ID.json"
+AUTHZ_FILE="$OUTPUT_DIR/authz-$SERVICE_ID-$SUFFIX.yaml"
+
+echo "$AUTHZ_CONTEXT" > "$CONTEXT_PATH"
+
+gomplate -c .="$CONTEXT_PATH" \
+  -f "$SERVICE_PATH/templates/istio/authz-policy.yaml.tpl" \
+  -o "$AUTHZ_FILE"
+
+rm "$CONTEXT_PATH"
+
+echo "✅ $VISIBILITY AuthorizationPolicy created: $AUTHZ_FILE"
+export AUTHZ_FILE
