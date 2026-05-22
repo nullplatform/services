@@ -1,0 +1,7 @@
+steps:
+  - name: "delete avp policy"
+    type: script
+    file: "$SERVICE_PATH/scripts/avp/delete_link_policy"
+  - name: "delete httproute"
+    type: script
+    file: "$SERVICE_PATH/scripts/istio/delete_link_httproute"

@@ -1,0 +1,42 @@
+#!/bin/bash
+
+set -euo pipefail
+
+CONTEXT="${CONTEXT:-${NP_ACTION_CONTEXT:-}}"
+if [[ -z "$CONTEXT" ]]; then
+  echo "ERROR: No context available (CONTEXT or NP_ACTION_CONTEXT must be set)"
+  exit 1
+fi
+
+SERVICE_ID=$(echo "$CONTEXT" | jq -r '.service.id')
+SERVICE_SLUG=$(echo "$CONTEXT" | jq -r '.service.slug')
+ACTION_ID=$(echo "$CONTEXT" | jq -r '.id')
+APPLICATION_ID=$(echo "$CONTEXT" | jq -r '.tags.application_id // ""')
+
+METHOD=$(echo "$CONTEXT" | jq -r '.parameters.method')
+ROUTE_PATH=$(echo "$CONTEXT" | jq -r '.parameters.path')
+SCOPE=$(echo "$CONTEXT" | jq -r '.parameters.scope')
+VISIBILITY=$(echo "$CONTEXT" | jq -r '.parameters.visibility // "public"')
+GROUPS_JSON=$(echo "$CONTEXT" | jq -c '.parameters.groups // []')
+
+# Unique HTTPRoute name per link — stored in link attributes for use on delete
+HTTPROUTE_NAME="ee-link-${ACTION_ID}"
+
+K8S_NAMESPACE="${NAMESPACE_OVERRIDE:-nullplatform}"
+
+if [[ -z "${OUTPUT_DIR:-}" ]]; then
+  export OUTPUT_DIR="$SERVICE_PATH/output/$SERVICE_SLUG-$SERVICE_ID/link-$ACTION_ID"
+fi
+mkdir -p "$OUTPUT_DIR"
+
+export SERVICE_ID
+export SERVICE_SLUG
+export ACTION_ID
+export APPLICATION_ID
+export METHOD
+export ROUTE_PATH
+export SCOPE
+export VISIBILITY
+export GROUPS_JSON
+export HTTPROUTE_NAME
+export K8S_NAMESPACE

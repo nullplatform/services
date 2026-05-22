@@ -1,0 +1,19 @@
+#!/bin/bash
+
+set -euo pipefail
+
+HTTPROUTE_NAME="${ACTION_LINK_ATTRIBUTES_HTTPROUTE_NAME:-}"
+K8S_NAMESPACE="${NAMESPACE_OVERRIDE:-nullplatform}"
+
+if [[ -z "$HTTPROUTE_NAME" || "$HTTPROUTE_NAME" == "null" ]]; then
+  echo "WARNING: No httproute_name found in link attributes, skipping HTTPRoute deletion"
+  exit 0
+fi
+
+echo "Deleting HTTPRoute: $HTTPROUTE_NAME"
+if kubectl get httproute "$HTTPROUTE_NAME" -n "$K8S_NAMESPACE" &>/dev/null; then
+  kubectl delete httproute "$HTTPROUTE_NAME" -n "$K8S_NAMESPACE"
+  echo "✅ HTTPRoute $HTTPROUTE_NAME deleted"
+else
+  echo "HTTPRoute $HTTPROUTE_NAME not found (already deleted or never existed)"
+fi

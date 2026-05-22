@@ -1,0 +1,17 @@
+#!/bin/bash
+
+set -euo pipefail
+
+CONTEXT="${CONTEXT:-${NP_ACTION_CONTEXT:-}}"
+
+RESULTS=$(echo "$CONTEXT" | jq \
+  --arg httproute_name "$HTTPROUTE_NAME" \
+  --arg policy_id "$POLICY_ID" \
+  '(.notification.parameters // .parameters // {}) + {
+    httproute_name: $httproute_name,
+    policy_id: $policy_id
+  }')
+
+echo "Storing link results: httproute_name=$HTTPROUTE_NAME, policy_id=$POLICY_ID"
+np link action update --results "$RESULTS"
+echo "✅ Link results stored"

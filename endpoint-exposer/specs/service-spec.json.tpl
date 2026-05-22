@@ -176,10 +176,9 @@
   "slug": "endpoint-exposer",
   "type": "dependency",
   "use_default_actions": true,
-  "available_actions": [
-    "read"
-  ],
+  "available_actions": [],
   "available_links": [
+    "route"
   ],
   "visible_to": [
     "{{ env.Getenv \"NRN\" }}"

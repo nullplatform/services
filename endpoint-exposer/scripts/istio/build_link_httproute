@@ -1,0 +1,81 @@
+#!/bin/bash
+
+set -euo pipefail
+
+source "$SERVICE_PATH/scripts/istio/config"
+source "$SERVICE_PATH/scripts/avp/config"
+
+echo "=== Building HTTPRoute for link: $METHOD $ROUTE_PATH (scope: $SCOPE, visibility: $VISIBILITY) ==="
+
+GATEWAY_NAME="$PUBLIC_GATEWAY_NAME"
+if [[ "$VISIBILITY" == "private" ]]; then
+  GATEWAY_NAME="$PRIVATE_GATEWAY_NAME"
+fi
+
+SCOPES_JSON=$(np scope list --application_id "$APPLICATION_ID" --format json | jq '.results // []')
+
+SCOPE_ID=$(echo "$SCOPES_JSON" | jq -r --arg name "$SCOPE" '.[] | select(.name == $name) | .id')
+if [[ -z "$SCOPE_ID" || "$SCOPE_ID" == "null" ]]; then
+  echo "ERROR: Could not resolve scope '$SCOPE'"
+  exit 1
+fi
+
+SCOPE_DOMAIN=$(np scope read --id "$SCOPE_ID" --format json | jq -r '.domain // ""')
+if [[ -z "$SCOPE_DOMAIN" || "$SCOPE_DOMAIN" == "null" ]]; then
+  echo "ERROR: Scope '$SCOPE' (id: $SCOPE_ID) has no domain"
+  exit 1
+fi
+
+echo "Resolved scope '$SCOPE' → domain: $SCOPE_DOMAIN"
+
+# Detect path match type
+if echo "$ROUTE_PATH" | grep -q '\*'; then
+  PATH_TYPE="PathPrefix"
+  CONVERTED_PATH=$(echo "$ROUTE_PATH" | sed 's/\*.*//')
+elif echo "$ROUTE_PATH" | grep -q ':'; then
+  PATH_TYPE="RegularExpression"
+  CONVERTED_PATH=$(echo "$ROUTE_PATH" | sed 's/:[^/]*/[^\/]+/g')
+else
+  PATH_TYPE="Exact"
+  CONVERTED_PATH="$ROUTE_PATH"
+fi
+
+HTTPROUTE_FILE="$OUTPUT_DIR/httproute-${HTTPROUTE_NAME}.yaml"
+
+cat > "$HTTPROUTE_FILE" <<EOF
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: ${HTTPROUTE_NAME}
+  namespace: ${K8S_NAMESPACE}
+  labels:
+    nullplatform.com/managed-by: endpoint-exposer
+    nullplatform.com/service-id: "${SERVICE_ID}"
+    app.kubernetes.io/name: ${SERVICE_SLUG}
+spec:
+  parentRefs:
+    - name: ${GATEWAY_NAME}
+      namespace: ${GATEWAY_NAMESPACE}
+      group: gateway.networking.k8s.io
+      kind: Gateway
+  hostnames:
+    - ${SCOPE_DOMAIN}
+  rules:
+    - matches:
+        - method: ${METHOD}
+          path:
+            type: ${PATH_TYPE}
+            value: "${CONVERTED_PATH}"
+      backendRefs: []
+EOF
+
+# backendRefs will be populated by process_routes logic
+export HTTPROUTE_FILE="$HTTPROUTE_FILE"
+export SCOPE_ID
+export SCOPE_DOMAIN
+
+# Resolve actual backend for this scope
+export ROUTES_JSON="[{\"method\": \"$METHOD\", \"path\": \"$ROUTE_PATH\", \"scope\": \"$SCOPE\"}]"
+source "$SERVICE_PATH/scripts/istio/process_routes"
+
+echo "✅ HTTPRoute created: $HTTPROUTE_FILE"
