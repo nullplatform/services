@@ -26,10 +26,7 @@
           "type": "string",
           "title": "Scope",
           "editableOn": ["create"],
-          "visibleOn": ["read"],
-          "additionalKeywords": {
-            "enum": "[.scopes[]?.slug]"
-          }
+          "visibleOn": ["read"]
         },
         "visibility": {
           "type": "string",
