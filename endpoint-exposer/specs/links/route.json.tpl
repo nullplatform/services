@@ -20,7 +20,14 @@
           },
           {"type": "Control", "label": "Path", "scope": "#/properties/path"},
           {"type": "Control", "label": "Scope", "scope": "#/properties/scope"},
-          {"type": "Control", "label": "Authorized Groups", "scope": "#/properties/groups"}
+          {
+            "type": "Control",
+            "label": "Authorized Groups",
+            "scope": "#/properties/groups",
+            "options": {
+              "orientation": "vertical"
+            }
+          }
         ]
       },
       "properties": {
