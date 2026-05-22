@@ -1,0 +1,48 @@
+#!/bin/bash
+
+set -euo pipefail
+
+source "$SERVICE_PATH/scripts/avp/config"
+
+echo "=== AVP Cedar Policies for service $SERVICE_ID ==="
+echo ""
+
+DESCRIPTION_PREFIX="endpoint-exposer|service-id=$SERVICE_ID"
+
+POLICIES_JSON=$(aws verifiedpermissions list-policies \
+  --policy-store-id "$AVP_POLICY_STORE_ID" \
+  --region "$AVP_AWS_REGION" \
+  --output json | jq -c \
+  --arg prefix "$DESCRIPTION_PREFIX" \
+  '[.policies[] | select((.definition.static.description // "") | startswith($prefix))]')
+
+NUM_POLICIES=$(echo "$POLICIES_JSON" | jq 'length')
+
+if [[ "$NUM_POLICIES" -eq 0 ]]; then
+  echo "No AVP policies found for service $SERVICE_ID"
+  exit 0
+fi
+
+echo "Found $NUM_POLICIES Cedar policies:"
+echo ""
+printf "%-8s  %-45s  %-55s  %s\n" "METHOD" "PATH" "DOMAIN" "GROUPS"
+printf "%-8s  %-45s  %-55s  %s\n" "------" "----" "------" "------"
+
+for i in $(seq 0 $((NUM_POLICIES - 1))); do
+  POLICY=$(echo "$POLICIES_JSON" | jq -c ".[$i]")
+  DESCRIPTION=$(echo "$POLICY" | jq -r '.definition.static.description // ""')
+  STATEMENT=$(echo "$POLICY" | jq -r '.definition.static.statement // ""')
+
+  ROUTE=$(echo "$DESCRIPTION" | grep -oP 'route=\K[^|]+' || true)
+  METHOD=$(echo "$ROUTE" | cut -d: -f1)
+  ROUTE_PATH=$(echo "$ROUTE" | cut -d: -f2-)
+
+  DOMAIN=$(echo "$STATEMENT" | grep -oP 'resource\.host == "\K[^"]+' || true)
+
+  GROUPS=$(echo "$STATEMENT" | grep -oP 'ApiAccess::Group::"[^"]*"' \
+    | sed 's/ApiAccess::Group::"//; s/"$//' \
+    | tr '\n' ',' | sed 's/,$//' || true)
+  [[ -z "$GROUPS" ]] && GROUPS="(open access)"
+
+  printf "%-8s  %-45s  %-55s  %s\n" "$METHOD" "$ROUTE_PATH" "$DOMAIN" "$GROUPS"
+done
