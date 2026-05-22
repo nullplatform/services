@@ -49,9 +49,9 @@ for i in $(seq 0 $((NUM_POLICIES - 1))); do
   DOMAIN=$(echo "$STATEMENT" | grep -oE 'resource\.host == "[^"]*"' 2>/dev/null \
     | sed 's/resource\.host == "//;s/".*//' || true)
 
-  # Extract groups (BusyBox-compatible)
-  GROUPS=$(echo "$STATEMENT" | grep -oE 'ApiAccess::Group::"[^"]*"' 2>/dev/null \
-    | sed 's/ApiAccess::Group::"//;s/"$//' \
+  # Extract groups (BusyBox sed BRE - one group per line in Cedar statement)
+  GROUPS=$(echo "$STATEMENT" | grep 'ApiAccess::Group::' 2>/dev/null \
+    | sed 's/.*ApiAccess::Group::"\([^"]*\)".*/\1/' \
     | tr '\n' ',' | sed 's/,$//' || true)
   [ -z "$GROUPS" ] && GROUPS="(open access)"
 
