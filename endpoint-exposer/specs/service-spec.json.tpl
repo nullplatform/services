@@ -4,9 +4,7 @@
     "schema": {
       "type": "object",
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "required": [
-        "publicDomain"
-      ],
+      "required": [],
       "uiSchema": {
         "type": "VerticalLayout",
         "elements": [
@@ -57,20 +55,6 @@
                     }
                   }
                 ]
-              }
-            ]
-          },
-          {
-            "type": "Group",
-            "label": "Domains",
-            "elements": [
-              {
-                "type": "Control",
-                "scope": "#/properties/publicDomain"
-              },
-              {
-                "type": "Control",
-                "scope": "#/properties/privateDomain"
               }
             ]
           },
@@ -221,28 +205,6 @@
             }
           }
         },
-        "publicDomain": {
-          "type": "string",
-          "title": "Public Domain",
-          "editableOn": [
-            "create",
-            "update"
-          ],
-          "enum": [
-            "api-private.playground.nullapps.io"
-          ]
-        },
-        "privateDomain": {
-          "type": "string",
-          "title": "Private Domain",
-          "editableOn": [
-            "create",
-            "update"
-          ],
-          "enum": [
-            "api-private.playground.nullapps.io"
-          ]
-        }
       }
     },
     "values": {}

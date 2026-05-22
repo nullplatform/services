@@ -13,12 +13,10 @@ echo "=== Building ${VISIBILITY} HTTPRoute ==="
 # Set variables based on visibility
 if [[ "$VISIBILITY" == "public" ]]; then
   ROUTES_JSON="$PUBLIC_ROUTES_JSON"
-  DOMAIN="$PUBLIC_DOMAIN"
   GATEWAY_NAME="$PUBLIC_GATEWAY_NAME"
   SUFFIX="public"
 elif [[ "$VISIBILITY" == "private" ]]; then
   ROUTES_JSON="$PRIVATE_ROUTES_JSON"
-  DOMAIN="$PRIVATE_DOMAIN"
   GATEWAY_NAME="$PRIVATE_GATEWAY_NAME"
   SUFFIX="private"
 else
@@ -26,22 +24,35 @@ else
   exit 1
 fi
 
-# Check if we have routes and domain
 NUM_ROUTES=$(echo "$ROUTES_JSON" | jq 'length')
 echo "Number of $VISIBILITY routes: $NUM_ROUTES"
-echo "$VISIBILITY Domain: '$DOMAIN'"
 
-# Check if domain is empty/null
-DOMAIN_EMPTY=false
-if [[ -z "$DOMAIN" ]] || [[ "$DOMAIN" == "null" ]] || [[ "$DOMAIN" == "\"null\"" ]]; then
-  DOMAIN_EMPTY=true
-fi
-
-# Determine if we should create an empty resource
+# Derive unique hostnames from scope domains
 CREATE_EMPTY=false
-if [[ "$NUM_ROUTES" -eq 0 ]] || [[ "$DOMAIN_EMPTY" == "true" ]]; then
+HOSTNAMES_JSON="[]"
+
+if [[ "$NUM_ROUTES" -eq 0 ]]; then
   CREATE_EMPTY=true
-  echo "No $VISIBILITY routes or domain configured, creating empty resource for cleanup..."
+  echo "No $VISIBILITY routes configured, creating empty resource for cleanup..."
+else
+  source "$SERVICE_PATH/scripts/avp/config"
+  SCOPES_JSON=$(np scope list --application_id "$APPLICATION_ID" --format json | jq '.results // []')
+
+  SCOPE_SLUGS=$(echo "$ROUTES_JSON" | jq -r '[.[].scope] | unique | .[]')
+  while IFS= read -r SCOPE_SLUG; do
+    SCOPE_ID=$(echo "$SCOPES_JSON" | jq -r --arg name "$SCOPE_SLUG" '.[] | select(.name == $name) | .id')
+    [[ -z "$SCOPE_ID" || "$SCOPE_ID" == "null" ]] && continue
+    SCOPE_DOMAIN=$(np scope read --id "$SCOPE_ID" --format json | jq -r '.domain // ""')
+    [[ -z "$SCOPE_DOMAIN" || "$SCOPE_DOMAIN" == "null" ]] && continue
+    HOSTNAMES_JSON=$(echo "$HOSTNAMES_JSON" | jq --arg d "$SCOPE_DOMAIN" '. + [$d] | unique')
+  done <<< "$SCOPE_SLUGS"
+
+  if [[ "$(echo "$HOSTNAMES_JSON" | jq 'length')" -eq 0 ]]; then
+    CREATE_EMPTY=true
+    echo "No scope domains resolved for $VISIBILITY routes, creating empty resource for cleanup..."
+  else
+    echo "$VISIBILITY domains: $(echo "$HOSTNAMES_JSON" | jq -r '.[]' | tr '\n' ' ')"
+  fi
 fi
 
 # Create HTTPRoute
@@ -61,7 +72,7 @@ else
     --arg service_slug "$SERVICE_SLUG" \
     --arg service_id "$SERVICE_ID" \
     --arg k8s_namespace "$K8S_NAMESPACE" \
-    --arg domain "$DOMAIN" \
+    --argjson hostnames "$HOSTNAMES_JSON" \
     --arg gateway_name "$GATEWAY_NAME" \
     --arg gateway_namespace "$GATEWAY_NAMESPACE" \
     --arg suffix "$SUFFIX" \
@@ -69,7 +80,7 @@ else
       service_slug: $service_slug,
       service_id: $service_id,
       k8s_namespace: $k8s_namespace,
-      domain: $domain,
+      hostnames: $hostnames,
       gateway_name: $gateway_name,
       gateway_namespace: $gateway_namespace,
       suffix: $suffix

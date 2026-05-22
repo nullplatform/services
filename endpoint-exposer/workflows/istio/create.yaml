@@ -17,10 +17,6 @@ steps:
         type: environment
       - name: ACTION_NAME
         type: environment
-      - name: PUBLIC_DOMAIN
-        type: environment
-      - name: PRIVATE_DOMAIN
-        type: environment
       - name: ROUTES_JSON
         type: environment
       - name: PUBLIC_ROUTES_JSON

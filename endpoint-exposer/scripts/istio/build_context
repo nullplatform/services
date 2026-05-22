@@ -8,10 +8,6 @@ SERVICE_SLUG=$(echo "$CONTEXT" | jq -r .service.slug)
 ACTION_ID=$(echo "$CONTEXT" | jq -r .id)
 ACTION_NAME=$(echo "$CONTEXT" | jq -r .slug)
 
-# Extract domains from parameters
-PUBLIC_DOMAIN=$(echo "$CONTEXT" | jq -r '.parameters.publicDomain // .parameters.public_domain // ""')
-PRIVATE_DOMAIN=$(echo "$CONTEXT" | jq -r '.parameters.privateDomain // .parameters.private_domain // ""')
-
 K8S_NAMESPACE="${NAMESPACE_OVERRIDE:-nullplatform}"
 APPLICATION_ID=$(echo "$CONTEXT" | jq -r '.tags.application_id // ""')
 
@@ -38,8 +34,6 @@ export SERVICE_SLUG
 export ACTION_ID
 export ACTION_NAME
 export APPLICATION_ID
-export PUBLIC_DOMAIN
-export PRIVATE_DOMAIN
 export ROUTES_JSON
 export PUBLIC_ROUTES_JSON
 export PRIVATE_ROUTES_JSON

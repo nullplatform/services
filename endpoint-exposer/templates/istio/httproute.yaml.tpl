@@ -14,7 +14,8 @@ spec:
       group: gateway.networking.k8s.io
       kind: Gateway
   hostnames:
-    - {{ .domain }}
+{{ range .hostnames }}    - {{ . }}
+{{ end }}
   rules:
     - matches:
         - path:
