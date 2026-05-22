@@ -33,14 +33,17 @@ for i in $(seq 0 $((NUM_POLICIES - 1))); do
   DESCRIPTION=$(echo "$POLICY" | jq -r '.definition.static.description // ""')
   STATEMENT=$(echo "$POLICY" | jq -r '.definition.static.statement // ""')
 
-  ROUTE=$(echo "$DESCRIPTION" | grep -oP 'route=\K[^|]+' || true)
+  # Parse description using sed (BusyBox-compatible)
+  ROUTE=$(echo "$DESCRIPTION" | sed -n 's/.*route=\([^|]*\).*/\1/p')
   METHOD=$(echo "$ROUTE" | cut -d: -f1)
   ROUTE_PATH=$(echo "$ROUTE" | cut -d: -f2-)
 
-  DOMAIN=$(echo "$STATEMENT" | grep -oP 'resource\.host == "\K[^"]+' || true)
+  # Extract domain from Cedar statement using sed
+  DOMAIN=$(echo "$STATEMENT" | grep -oE 'resource\.host == "[^"]*"' | sed 's/resource\.host == "//;s/"//')
 
-  GROUPS=$(echo "$STATEMENT" | grep -oP 'ApiAccess::Group::"[^"]*"' \
-    | sed 's/ApiAccess::Group::"//; s/"$//' \
+  # Extract groups using grep -E and sed
+  GROUPS=$(echo "$STATEMENT" | grep -oE 'ApiAccess::Group::"[^"]*"' \
+    | sed 's/ApiAccess::Group::"//;s/"$//' \
     | tr '\n' ',' | sed 's/,$//' || true)
   [[ -z "$GROUPS" ]] && GROUPS="(open access)"
 
