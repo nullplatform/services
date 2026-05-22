@@ -8,6 +8,21 @@
     "schema": {
       "type": "object",
       "required": ["method", "path", "scope"],
+      "uiSchema": {
+        "type": "VerticalLayout",
+        "elements": [
+          {
+            "type": "HorizontalLayout",
+            "elements": [
+              {"type": "Control", "label": "HTTP Method", "scope": "#/properties/method"},
+              {"type": "Control", "label": "Visibility", "scope": "#/properties/visibility"}
+            ]
+          },
+          {"type": "Control", "label": "Path", "scope": "#/properties/path"},
+          {"type": "Control", "label": "Scope", "scope": "#/properties/scope"},
+          {"type": "Control", "label": "Authorized Groups", "scope": "#/properties/groups"}
+        ]
+      },
       "properties": {
         "method": {
           "type": "string",
