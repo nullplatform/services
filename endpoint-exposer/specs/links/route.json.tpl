@@ -28,27 +28,23 @@
           "type": "string",
           "title": "HTTP Method",
           "editableOn": ["create"],
-          "visibleOn": ["read"],
           "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
         },
         "path": {
           "type": "string",
           "title": "Path",
-          "editableOn": ["create"],
-          "visibleOn": ["read"]
+          "editableOn": ["create"]
         },
         "scope": {
           "type": "string",
           "title": "Scope",
-          "editableOn": ["create"],
-          "visibleOn": ["read"]
+          "editableOn": ["create"]
         },
         "visibility": {
           "type": "string",
           "title": "Visibility",
           "default": "public",
           "editableOn": ["create"],
-          "visibleOn": ["read"],
           "enum": ["public", "private"]
         },
         "groups": {
@@ -56,7 +52,6 @@
           "title": "Authorized Groups",
           "uniqueItems": true,
           "editableOn": ["create"],
-          "visibleOn": ["read"],
           "items": {
             "type": "string",
             "enum": [
