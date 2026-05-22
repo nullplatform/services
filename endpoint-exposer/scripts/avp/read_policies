@@ -34,15 +34,15 @@ for i in $(seq 0 $((NUM_POLICIES - 1))); do
   STATEMENT=$(echo "$POLICY" | jq -r '.definition.static.statement // ""')
 
   # Parse description using sed (BusyBox-compatible)
-  ROUTE=$(echo "$DESCRIPTION" | sed -n 's/.*route=\([^|]*\).*/\1/p')
+  ROUTE=$(echo "$DESCRIPTION" | sed -n 's/.*route=\([^|]*\).*/\1/p' || true)
   METHOD=$(echo "$ROUTE" | cut -d: -f1)
   ROUTE_PATH=$(echo "$ROUTE" | cut -d: -f2-)
 
   # Extract domain from Cedar statement using sed
-  DOMAIN=$(echo "$STATEMENT" | grep -oE 'resource\.host == "[^"]*"' | sed 's/resource\.host == "//;s/"//')
+  DOMAIN=$(echo "$STATEMENT" | grep -oE 'resource\.host == "[^"]*"' 2>/dev/null | sed 's/resource\.host == "//;s/"//' || true)
 
   # Extract groups using grep -E and sed
-  GROUPS=$(echo "$STATEMENT" | grep -oE 'ApiAccess::Group::"[^"]*"' \
+  GROUPS=$(echo "$STATEMENT" | grep -oE 'ApiAccess::Group::"[^"]*"' 2>/dev/null \
     | sed 's/ApiAccess::Group::"//;s/"$//' \
     | tr '\n' ',' | sed 's/,$//' || true)
   [[ -z "$GROUPS" ]] && GROUPS="(open access)"
