@@ -49,9 +49,6 @@ steps:
       - name: HTTPROUTE_PRIVATE_FILE
         type: file
         file: "$OUTPUT_DIR/httproute-$SERVICE_ID-private.yaml"
-  - name: "build authz policies"
-    type: script
-    file: "$SERVICE_PATH/scripts/istio/build_authz_policy"
   - name: "manage avp policies"
     type: script
     file: "$SERVICE_PATH/scripts/avp/create_policies"
