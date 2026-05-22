@@ -19,23 +19,10 @@
             "elements": [
               {
                 "type": "Category",
-                "label": "Domains",
-                "elements": [
-                  {
-                    "text": "### Public Domain\nBase domain for routes exposed to external traffic. Requests matching routes with `visibility: public` will be served through this domain.\n\n### Private Domain\nBase domain for routes accessible only within the internal network. Use this for service-to-service communication.",
-                    "type": "Label",
-                    "options": {
-                      "format": "markdown"
-                    }
-                  }
-                ]
-              },
-              {
-                "type": "Category",
                 "label": "Routes",
                 "elements": [
                   {
-                    "text": "### Route Configuration\nDefine how incoming requests are matched and forwarded to backend services.\n\n| Field | Description |\n|-------|-------------|\n| **Verb** | HTTP method to match (GET, POST, PUT, etc.) |\n| **Path** | URL path pattern (e.g., `/api/v1/users`) |\n| **Scope** | Target service that will handle the request |\n| **Visibility** | `public` (external) or `private` (internal network only) |\n| **Groups** | Security groups allowed to access this route. Leave empty for unrestricted access |",
+                    "text": "### Route Configuration\nDefine how incoming requests are matched and forwarded to backend services.\n\n| Field | Description |\n|-------|-------------|\n| **Verb** | HTTP method to match (GET, POST, PUT, etc.) |\n| **Path** | URL path pattern (e.g., `/api/v1/users`) |\n| **Scope** | Target service that will handle the request |\n| **Groups** | Security groups allowed to access this route. Leave empty for unrestricted access |",
                     "type": "Label",
                     "options": {
                       "format": "markdown"
@@ -48,7 +35,7 @@
                 "label": "Examples",
                 "elements": [
                   {
-                    "text": "### Public API Route\n```json\n{\n  \"method\": \"GET\",\n  \"path\": \"/api/v1/wells\",\n  \"scope\": \"wells-service\",\n  \"visibility\": \"public\",\n  \"groups\": []\n}\n```\n\n### Protected Internal Route\n```json\n{\n  \"method\": \"POST\",\n  \"path\": \"/internal/sync\",\n  \"scope\": \"sync-service\",\n  \"visibility\": \"private\",\n  \"groups\": [\"AWS_PlataformaUpstream_Administrador_Desa\"]\n}\n```",
+                    "text": "### API Route\n```json\n{\n  \"method\": \"GET\",\n  \"path\": \"/api/v1/wells\",\n  \"scope\": \"wells-service\",\n  \"groups\": []\n}\n```\n\n### Protected Route\n```json\n{\n  \"method\": \"POST\",\n  \"path\": \"/internal/sync\",\n  \"scope\": \"sync-service\",\n  \"groups\": [\"AWS_PlataformaUpstream_Administrador_Desa\"]\n}\n```",
                     "type": "Label",
                     "options": {
                       "format": "markdown"
