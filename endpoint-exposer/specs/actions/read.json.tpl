@@ -3,7 +3,7 @@
     "slug": "read",
     "type": "custom",
     "annotations": {},
-    "enabled_when": "",
+    "enabled_when": "true",
     "retryable": false,
     "service_specification_id": "{{ env.Getenv "SERVICE_SPECIFICATION_ID" }}",
     "parameters": {
