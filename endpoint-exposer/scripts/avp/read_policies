@@ -14,7 +14,7 @@ POLICIES_JSON=$(aws verifiedpermissions list-policies \
   --region "$AVP_AWS_REGION" \
   --output json | jq -c \
   --arg prefix "$DESCRIPTION_PREFIX" \
-  '[.policies[] | select((.definition.static.description // "") | startswith($prefix))]')
+  '[.policies[] | select((.definition.static.description // "") | startswith($prefix)) | {policyId, description: .definition.static.description}]')
 
 NUM_POLICIES=$(echo "$POLICIES_JSON" | jq 'length')
 
@@ -29,23 +29,31 @@ printf "%-8s  %-45s  %-55s  %s\n" "METHOD" "PATH" "DOMAIN" "GROUPS"
 printf "%-8s  %-45s  %-55s  %s\n" "------" "----" "------" "------"
 
 for i in $(seq 0 $((NUM_POLICIES - 1))); do
-  POLICY=$(echo "$POLICIES_JSON" | jq -c ".[$i]")
-  DESCRIPTION=$(echo "$POLICY" | jq -r '.definition.static.description // ""')
-  STATEMENT=$(echo "$POLICY" | jq -r '.definition.static.statement // ""')
+  ENTRY=$(echo "$POLICIES_JSON" | jq -r ".[$i]")
+  POLICY_ID=$(echo "$ENTRY" | jq -r '.policyId')
+  DESCRIPTION=$(echo "$ENTRY" | jq -r '.description')
 
-  # Parse description using sed (BusyBox-compatible)
+  # Parse description (BusyBox-compatible sed)
   ROUTE=$(echo "$DESCRIPTION" | sed -n 's/.*route=\([^|]*\).*/\1/p' || true)
   METHOD=$(echo "$ROUTE" | cut -d: -f1)
   ROUTE_PATH=$(echo "$ROUTE" | cut -d: -f2-)
 
-  # Extract domain from Cedar statement using sed
-  DOMAIN=$(echo "$STATEMENT" | grep -oE 'resource\.host == "[^"]*"' 2>/dev/null | sed 's/resource\.host == "//;s/"//' || true)
+  # Fetch full statement via get-policy
+  STATEMENT=$(aws verifiedpermissions get-policy \
+    --policy-store-id "$AVP_POLICY_STORE_ID" \
+    --region "$AVP_AWS_REGION" \
+    --policy-id "$POLICY_ID" \
+    --output json | jq -r '.definition.static.statement // ""')
 
-  # Extract groups using grep -E and sed
+  # Extract domain (BusyBox-compatible)
+  DOMAIN=$(echo "$STATEMENT" | grep -oE 'resource\.host == "[^"]*"' 2>/dev/null \
+    | sed 's/resource\.host == "//;s/".*//' || true)
+
+  # Extract groups (BusyBox-compatible)
   GROUPS=$(echo "$STATEMENT" | grep -oE 'ApiAccess::Group::"[^"]*"' 2>/dev/null \
     | sed 's/ApiAccess::Group::"//;s/"$//' \
     | tr '\n' ',' | sed 's/,$//' || true)
-  [[ -z "$GROUPS" ]] && GROUPS="(open access)"
+  [ -z "$GROUPS" ] && GROUPS="(open access)"
 
   printf "%-8s  %-45s  %-55s  %s\n" "$METHOD" "$ROUTE_PATH" "$DOMAIN" "$GROUPS"
 done
