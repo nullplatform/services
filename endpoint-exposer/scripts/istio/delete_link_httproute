@@ -2,11 +2,14 @@
 
 set -euo pipefail
 
-BASE_NAME="${ACTION_LINK_ATTRIBUTES_HTTPROUTE_NAME:-}"
 K8S_NAMESPACE="${NAMESPACE_OVERRIDE:-nullplatform}"
 
+# Prefer HTTPROUTE_NAME from build context (stable, derived from LINK_ID)
+# Fall back to stored attribute for backwards compatibility
+BASE_NAME="${HTTPROUTE_NAME:-${ACTION_LINK_ATTRIBUTES_HTTPROUTE_NAME:-}}"
+
 if [[ -z "$BASE_NAME" || "$BASE_NAME" == "null" ]]; then
-  echo "WARNING: No httproute_name found in link attributes, skipping HTTPRoute deletion"
+  echo "WARNING: No httproute_name available, skipping HTTPRoute deletion"
   exit 0
 fi
 
