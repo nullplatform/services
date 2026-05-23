@@ -43,6 +43,7 @@
         "routes": {
           "type": "array",
           "title": "Routes",
+          "description": "HTTP routes to expose",
           "editableOn": ["create", "edit"],
           "items": {
             "type": "object",
