@@ -4,32 +4,33 @@ set -euo pipefail
 
 source "$SERVICE_PATH/scripts/avp/config"
 
+export POLICIES_DELETED="false"
+
 if [[ -z "${HTTPROUTE_NAME:-}" ]]; then
   echo "WARNING: HTTPROUTE_NAME not set, skipping Cedar policy cleanup"
-  exit 0
-fi
+else
+  echo "=== Deleting AVP Cedar Policies for HTTPRoute: $HTTPROUTE_NAME ==="
 
-echo "=== Deleting AVP Cedar Policies for HTTPRoute: $HTTPROUTE_NAME ==="
-
-POLICY_IDS=$(aws verifiedpermissions list-policies \
-  --policy-store-id "$AVP_POLICY_STORE_ID" \
-  --region "$AVP_AWS_REGION" \
-  --output json | jq -r \
-  --arg name "$HTTPROUTE_NAME" \
-  '[.policies[] | select(.definition.static.description | test("link=" + $name)) | .policyId] | .[]')
-
-if [[ -z "$POLICY_IDS" ]]; then
-  echo "No existing Cedar policies found for $HTTPROUTE_NAME"
-  exit 0
-fi
-
-for POLICY_ID in $POLICY_IDS; do
-  echo "Deleting Cedar policy: $POLICY_ID"
-  aws verifiedpermissions delete-policy \
+  POLICY_IDS=$(aws verifiedpermissions list-policies \
     --policy-store-id "$AVP_POLICY_STORE_ID" \
     --region "$AVP_AWS_REGION" \
-    --policy-id "$POLICY_ID" || echo "WARNING: Failed to delete $POLICY_ID (may already be deleted)"
-  echo "✅ Cedar policy $POLICY_ID deleted"
-done
+    --output json | jq -r \
+    --arg name "$HTTPROUTE_NAME" \
+    '[.policies[] | select(.definition.static.description | test("link=" + $name)) | .policyId] | .[]')
 
-export POLICIES_DELETED="true"
+  if [[ -z "$POLICY_IDS" ]]; then
+    echo "No existing Cedar policies found for $HTTPROUTE_NAME"
+  else
+    for POLICY_ID in $POLICY_IDS; do
+      echo "Deleting Cedar policy: $POLICY_ID"
+      aws verifiedpermissions delete-policy \
+        --policy-store-id "$AVP_POLICY_STORE_ID" \
+        --region "$AVP_AWS_REGION" \
+        --policy-id "$POLICY_ID" || echo "WARNING: Failed to delete $POLICY_ID (may already be deleted)"
+      echo "✅ Cedar policy $POLICY_ID deleted"
+    done
+    POLICIES_DELETED="true"
+  fi
+fi
+
+export POLICIES_DELETED

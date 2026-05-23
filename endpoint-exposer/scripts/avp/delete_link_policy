@@ -8,18 +8,17 @@ POLICY_IDS="${ACTION_LINK_ATTRIBUTES_POLICY_IDS:-}"
 
 if [[ -z "$POLICY_IDS" || "$POLICY_IDS" == "null" || "$POLICY_IDS" == "[]" ]]; then
   echo "WARNING: No policy_ids found in link attributes, skipping Cedar policy deletion"
-  exit 0
+else
+  POLICY_COUNT=$(echo "$POLICY_IDS" | jq 'length')
+  echo "=== Deleting $POLICY_COUNT AVP Cedar Policies ==="
+
+  for i in $(seq 0 $((POLICY_COUNT - 1))); do
+    POLICY_ID=$(echo "$POLICY_IDS" | jq -r ".[$i]")
+    echo "Deleting Cedar policy: $POLICY_ID"
+    aws verifiedpermissions delete-policy \
+      --policy-store-id "$AVP_POLICY_STORE_ID" \
+      --region "$AVP_AWS_REGION" \
+      --policy-id "$POLICY_ID" || echo "WARNING: Failed to delete policy $POLICY_ID (may already be deleted)"
+    echo "✅ Cedar policy $POLICY_ID deleted"
+  done
 fi
-
-POLICY_COUNT=$(echo "$POLICY_IDS" | jq 'length')
-echo "=== Deleting $POLICY_COUNT AVP Cedar Policies ==="
-
-for i in $(seq 0 $((POLICY_COUNT - 1))); do
-  POLICY_ID=$(echo "$POLICY_IDS" | jq -r ".[$i]")
-  echo "Deleting Cedar policy: $POLICY_ID"
-  aws verifiedpermissions delete-policy \
-    --policy-store-id "$AVP_POLICY_STORE_ID" \
-    --region "$AVP_AWS_REGION" \
-    --policy-id "$POLICY_ID" || echo "WARNING: Failed to delete policy $POLICY_ID (may already be deleted)"
-  echo "✅ Cedar policy $POLICY_ID deleted"
-done
