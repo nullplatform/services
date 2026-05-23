@@ -17,15 +17,9 @@ steps:
         type: environment
       - name: APPLICATION_ID
         type: environment
-      - name: METHOD
-        type: environment
-      - name: ROUTE_PATH
+      - name: ROUTES_JSON
         type: environment
       - name: SCOPE
-        type: environment
-      - name: VISIBILITY
-        type: environment
-      - name: GROUPS_JSON
         type: environment
       - name: HTTPROUTE_NAME
         type: environment
@@ -43,7 +37,7 @@ steps:
     type: script
     file: "$SERVICE_PATH/scripts/avp/create_link_policy"
     output:
-      - name: POLICY_ID
+      - name: POLICY_IDS
         type: environment
   - name: "apply"
     type: script

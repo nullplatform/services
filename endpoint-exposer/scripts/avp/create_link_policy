@@ -4,14 +4,24 @@ set -euo pipefail
 
 source "$SERVICE_PATH/scripts/avp/config"
 
-echo "=== Creating AVP Cedar Policy: $METHOD $ROUTE_PATH (scope: $SCOPE) ==="
+TOTAL_ROUTES=$(echo "$ROUTES_JSON" | jq 'length')
+echo "=== Creating AVP Cedar Policies for $TOTAL_ROUTES routes ==="
 
-NUM_GROUPS=$(echo "$GROUPS_JSON" | jq 'length')
+POLICY_IDS_LIST=()
 
-if [[ "$NUM_GROUPS" -gt 0 ]]; then
-  GROUP_CONDITIONS=$(echo "$GROUPS_JSON" | jq -r \
-    'map("principal in ApiAccess::Group::\"" + . + "\"") | join(" ||\n        ")')
-  CEDAR_STATEMENT="permit (
+for i in $(seq 0 $((TOTAL_ROUTES - 1))); do
+  ROUTE=$(echo "$ROUTES_JSON" | jq ".[$i]")
+  METHOD=$(echo "$ROUTE" | jq -r '.method')
+  ROUTE_PATH=$(echo "$ROUTE" | jq -r '.path')
+  ROUTE_GROUPS=$(echo "$ROUTE" | jq -c '.groups // []')
+  NUM_GROUPS=$(echo "$ROUTE_GROUPS" | jq 'length')
+
+  echo "Creating policy for: $METHOD $ROUTE_PATH (groups: $NUM_GROUPS)"
+
+  if [[ "$NUM_GROUPS" -gt 0 ]]; then
+    GROUP_CONDITIONS=$(echo "$ROUTE_GROUPS" | jq -r \
+      'map("principal in ApiAccess::Group::\"" + . + "\"") | join(" ||\n        ")')
+    CEDAR_STATEMENT="permit (
     principal,
     action == ApiAccess::Action::\"$METHOD\",
     resource
@@ -22,8 +32,8 @@ when {
     resource.host == \"$SCOPE_DOMAIN\" &&
     resource.path == \"$ROUTE_PATH\"
 };"
-else
-  CEDAR_STATEMENT="permit (
+  else
+    CEDAR_STATEMENT="permit (
     principal,
     action == ApiAccess::Action::\"$METHOD\",
     resource
@@ -33,25 +43,27 @@ when {
     resource.host == \"$SCOPE_DOMAIN\" &&
     resource.path == \"$ROUTE_PATH\"
 };"
-fi
+  fi
 
-DESCRIPTION="endpoint-exposer|service-id=$SERVICE_ID|link=$HTTPROUTE_NAME|route=$METHOD:$ROUTE_PATH|scope=$SCOPE_ID"
+  DESCRIPTION="endpoint-exposer|service-id=$SERVICE_ID|link=$HTTPROUTE_NAME|route=$METHOD:$ROUTE_PATH|scope=$SCOPE_ID"
+  DEFINITION=$(jq -n --arg desc "$DESCRIPTION" --arg stmt "$CEDAR_STATEMENT" \
+    '{"static": {"description": $desc, "statement": $stmt}}')
 
-DEFINITION=$(jq -n \
-  --arg desc "$DESCRIPTION" \
-  --arg stmt "$CEDAR_STATEMENT" \
-  '{"static": {"description": $desc, "statement": $stmt}}')
+  POLICY_ID=$(aws verifiedpermissions create-policy \
+    --policy-store-id "$AVP_POLICY_STORE_ID" \
+    --region "$AVP_AWS_REGION" \
+    --definition "$DEFINITION" \
+    --query 'policyId' --output text) || { echo "ERROR: Failed to create Cedar policy for $METHOD $ROUTE_PATH"; exit 1; }
 
-POLICY_ID=$(aws verifiedpermissions create-policy \
-  --policy-store-id "$AVP_POLICY_STORE_ID" \
-  --region "$AVP_AWS_REGION" \
-  --definition "$DEFINITION" \
-  --query 'policyId' --output text) || { echo "ERROR: Failed to create Cedar policy"; exit 1; }
+  if [[ -z "$POLICY_ID" || "$POLICY_ID" == "None" ]]; then
+    echo "ERROR: Policy creation returned no policyId for $METHOD $ROUTE_PATH"
+    exit 1
+  fi
 
-if [[ -z "$POLICY_ID" || "$POLICY_ID" == "None" ]]; then
-  echo "ERROR: Policy creation returned no policyId"
-  exit 1
-fi
+  echo "✅ Cedar policy created: $METHOD $ROUTE_PATH @ $SCOPE_DOMAIN (policy-id: $POLICY_ID)"
+  POLICY_IDS_LIST+=("\"$POLICY_ID\"")
+done
 
-echo "✅ Cedar policy created: $METHOD $ROUTE_PATH @ $SCOPE_DOMAIN (groups: $NUM_GROUPS, policy-id: $POLICY_ID)"
-export POLICY_ID
+POLICY_IDS="[$(IFS=,; echo "${POLICY_IDS_LIST[*]}")]"
+echo "✅ All Cedar policies created: $POLICY_IDS"
+export POLICY_IDS

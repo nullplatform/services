@@ -13,9 +13,7 @@ SERVICE_SLUG=$(echo "$CONTEXT" | jq -r '.service.slug')
 ACTION_ID=$(echo "$CONTEXT" | jq -r '.id')
 APPLICATION_ID=$(echo "$CONTEXT" | jq -r '.tags.application_id // ""')
 
-METHOD=$(echo "$CONTEXT" | jq -r '.parameters.method')
-ROUTE_PATH=$(echo "$CONTEXT" | jq -r '.parameters.path')
-VISIBILITY=$(echo "$CONTEXT" | jq -r '.parameters.visibility // "public"')
+ROUTES_JSON=$(echo "$CONTEXT" | jq -c '.parameters.routes // []')
 
 # Infer scope from link/service dimensions — avoids requiring user input
 LINK_DIMENSIONS=$(echo "$CONTEXT" | jq -c '.service.dimensions // {}')
@@ -29,9 +27,8 @@ if [[ -z "$SCOPE" ]]; then
   exit 1
 fi
 echo "Inferred scope: $SCOPE"
-GROUPS_JSON=$(echo "$CONTEXT" | jq -c '.parameters.groups // []')
 
-# Unique HTTPRoute name per link — stored in link attributes for use on delete
+# Unique HTTPRoute base name per link — stored in link attributes for use on delete
 HTTPROUTE_NAME="ee-link-${ACTION_ID}"
 
 K8S_NAMESPACE="${NAMESPACE_OVERRIDE:-nullplatform}"
@@ -45,10 +42,7 @@ export SERVICE_ID
 export SERVICE_SLUG
 export ACTION_ID
 export APPLICATION_ID
-export METHOD
-export ROUTE_PATH
+export ROUTES_JSON
 export SCOPE
-export VISIBILITY
-export GROUPS_JSON
 export HTTPROUTE_NAME
 export K8S_NAMESPACE

@@ -6,14 +6,14 @@ CONTEXT="${CONTEXT:-${NP_ACTION_CONTEXT:-}}"
 
 RESULTS=$(echo "$CONTEXT" | jq \
   --arg httproute_name "$HTTPROUTE_NAME" \
-  --arg policy_id "$POLICY_ID" \
+  --argjson policy_ids "$POLICY_IDS" \
   --arg scope "$SCOPE" \
   '(.notification.parameters // .parameters // {}) + {
     httproute_name: $httproute_name,
-    policy_id: $policy_id,
+    policy_ids: $policy_ids,
     scope: $scope
   }')
 
-echo "Storing link results: httproute_name=$HTTPROUTE_NAME, policy_id=$POLICY_ID, scope=$SCOPE"
+echo "Storing link results: httproute_name=$HTTPROUTE_NAME, scope=$SCOPE, policy_ids=$POLICY_IDS"
 np link action update --results "$RESULTS"
 echo "✅ Link results stored"
