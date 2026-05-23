@@ -11,6 +11,9 @@ case "$SERVICE_ACTION_TYPE" in
   "create")
     ACTION_TO_EXECUTE="link"
     ;;
+  "update")
+    ACTION_TO_EXECUTE="link-update"
+    ;;
   "delete")
     ACTION_TO_EXECUTE="unlink"
     ;;

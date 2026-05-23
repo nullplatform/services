@@ -15,21 +15,26 @@ APPLICATION_ID=$(echo "$CONTEXT" | jq -r '.tags.application_id // ""')
 
 ROUTES_JSON=$(echo "$CONTEXT" | jq -c '.parameters.routes // []')
 
-# Infer scope from link/service dimensions — avoids requiring user input
-LINK_DIMENSIONS=$(echo "$CONTEXT" | jq -c '.service.dimensions // {}')
-echo "Inferring scope from dimensions: $LINK_DIMENSIONS"
-SCOPES_JSON=$(np scope list --application_id "$APPLICATION_ID" --format json | jq '.results // []')
-SCOPE=$(echo "$SCOPES_JSON" | jq -r \
-  --argjson dims "$LINK_DIMENSIONS" \
-  '[.[] | select(.name | startswith("deleted-") | not) | select(.dimensions == $dims)] | .[0].name // empty')
-if [[ -z "$SCOPE" ]]; then
-  echo "ERROR: Could not infer scope from dimensions: $LINK_DIMENSIONS"
-  exit 1
-fi
-echo "Inferred scope: $SCOPE"
+# Reuse stored HTTPROUTE_NAME on update, generate new one on create
+HTTPROUTE_NAME="${ACTION_LINK_ATTRIBUTES_HTTPROUTE_NAME:-ee-link-${ACTION_ID}}"
 
-# Unique HTTPRoute base name per link — stored in link attributes for use on delete
-HTTPROUTE_NAME="ee-link-${ACTION_ID}"
+# Reuse stored scope on update, infer from dimensions on create
+SCOPE="${ACTION_LINK_ATTRIBUTES_SCOPE:-}"
+if [[ -z "$SCOPE" || "$SCOPE" == "null" ]]; then
+  LINK_DIMENSIONS=$(echo "$CONTEXT" | jq -c '.service.dimensions // {}')
+  echo "Inferring scope from dimensions: $LINK_DIMENSIONS"
+  SCOPES_JSON=$(np scope list --application_id "$APPLICATION_ID" --format json | jq '.results // []')
+  SCOPE=$(echo "$SCOPES_JSON" | jq -r \
+    --argjson dims "$LINK_DIMENSIONS" \
+    '[.[] | select(.name | startswith("deleted-") | not) | select(.dimensions == $dims)] | .[0].name // empty')
+  if [[ -z "$SCOPE" ]]; then
+    echo "ERROR: Could not infer scope from dimensions: $LINK_DIMENSIONS"
+    exit 1
+  fi
+  echo "Inferred scope: $SCOPE"
+else
+  echo "Reusing stored scope: $SCOPE"
+fi
 
 K8S_NAMESPACE="${NAMESPACE_OVERRIDE:-nullplatform}"
 

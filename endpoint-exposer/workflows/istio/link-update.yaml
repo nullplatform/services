@@ -1,0 +1,53 @@
+steps:
+  - name: "find k8s namespace"
+    type: script
+    file: "$SERVICE_PATH/scripts/istio/fetch_provider_data"
+    output:
+      - name: K8S_NAMESPACE
+        type: environment
+  - name: "build context"
+    type: script
+    file: "$SERVICE_PATH/scripts/istio/build_link_context"
+    output:
+      - name: SERVICE_ID
+        type: environment
+      - name: SERVICE_SLUG
+        type: environment
+      - name: ACTION_ID
+        type: environment
+      - name: APPLICATION_ID
+        type: environment
+      - name: ROUTES_JSON
+        type: environment
+      - name: SCOPE
+        type: environment
+      - name: HTTPROUTE_NAME
+        type: environment
+      - name: K8S_NAMESPACE
+        type: environment
+  - name: "delete avp policies"
+    type: script
+    file: "$SERVICE_PATH/scripts/avp/delete_link_policy"
+  - name: "build httproute"
+    type: script
+    file: "$SERVICE_PATH/scripts/istio/build_link_httproute"
+    output:
+      - name: SCOPE_ID
+        type: environment
+      - name: SCOPE_DOMAIN
+        type: environment
+  - name: "create avp policy"
+    type: script
+    file: "$SERVICE_PATH/scripts/avp/create_link_policy"
+    output:
+      - name: POLICY_IDS
+        type: environment
+  - name: "apply"
+    type: script
+    file: "$SERVICE_PATH/scripts/common/apply"
+    configuration:
+      ACTION: apply
+      DRY_RUN: false
+  - name: "store link results"
+    type: script
+    file: "$SERVICE_PATH/scripts/np/update_link_results"
