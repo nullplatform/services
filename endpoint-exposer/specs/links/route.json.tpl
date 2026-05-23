@@ -43,7 +43,7 @@
         "routes": {
           "type": "array",
           "title": "Routes",
-          "editableOn": ["create"],
+          "editableOn": ["create", "edit"],
           "items": {
             "type": "object",
             "required": ["method", "path"],
