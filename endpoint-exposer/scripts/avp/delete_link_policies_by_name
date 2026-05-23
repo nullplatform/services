@@ -31,3 +31,5 @@ for POLICY_ID in $POLICY_IDS; do
     --policy-id "$POLICY_ID" || echo "WARNING: Failed to delete $POLICY_ID (may already be deleted)"
   echo "✅ Cedar policy $POLICY_ID deleted"
 done
+
+export POLICIES_DELETED="true"

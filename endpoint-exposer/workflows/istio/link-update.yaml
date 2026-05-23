@@ -28,6 +28,9 @@ steps:
   - name: "delete avp policies"
     type: script
     file: "$SERVICE_PATH/scripts/avp/delete_link_policies_by_name"
+    output:
+      - name: POLICIES_DELETED
+        type: environment
   - name: "build httproute"
     type: script
     file: "$SERVICE_PATH/scripts/istio/build_link_httproute"
