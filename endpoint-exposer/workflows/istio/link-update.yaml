@@ -41,6 +41,8 @@ steps:
         type: environment
       - name: SCOPE_DOMAIN
         type: environment
+      - name: HTTPROUTE_NAME
+        type: environment
   - name: "create avp policy"
     type: script
     file: "$SERVICE_PATH/scripts/avp/create_link_policy"

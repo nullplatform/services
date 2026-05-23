@@ -22,8 +22,7 @@
                   {
                     "type": "HorizontalLayout",
                     "elements": [
-                      {"type": "Control", "label": "HTTP Method", "scope": "#/properties/method"},
-                      {"type": "Control", "label": "Visibility", "scope": "#/properties/visibility"}
+                      {"type": "Control", "label": "HTTP Method", "scope": "#/properties/method"}
                     ]
                   },
                   {"type": "Control", "label": "Path", "scope": "#/properties/path"},
@@ -57,12 +56,6 @@
               "path": {
                 "type": "string",
                 "title": "Path"
-              },
-              "visibility": {
-                "type": "string",
-                "title": "Visibility",
-                "default": "public",
-                "enum": ["public", "private"]
               },
               "groups": {
                 "type": "array",

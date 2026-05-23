@@ -5,43 +5,40 @@ set -euo pipefail
 source "$SERVICE_PATH/scripts/istio/config"
 source "$SERVICE_PATH/scripts/avp/config"
 
-echo "=== Building HTTPRoutes for link (scope: $SCOPE) ==="
+echo "=== Building HTTPRoute for link (scope: $SCOPE) ==="
 
-# Resolve scope → ID and domain (shared by all routes in this link)
+# Resolve scope → ID, domain and visibility
 SCOPES_JSON=$(np scope list --application_id "$APPLICATION_ID" --format json | jq '.results // []')
 SCOPE_ID=$(echo "$SCOPES_JSON" | jq -r --arg name "$SCOPE" '.[] | select(.name == $name) | .id')
 if [[ -z "$SCOPE_ID" || "$SCOPE_ID" == "null" ]]; then
   echo "ERROR: Could not resolve scope '$SCOPE'"
   exit 1
 fi
-SCOPE_DOMAIN=$(np scope read --id "$SCOPE_ID" --format json | jq -r '.domain // ""')
+
+SCOPE_DATA=$(np scope read --id "$SCOPE_ID" --format json)
+SCOPE_DOMAIN=$(echo "$SCOPE_DATA" | jq -r '.domain // ""')
 if [[ -z "$SCOPE_DOMAIN" ]]; then
   echo "ERROR: Scope '$SCOPE' has no domain"
   exit 1
 fi
-echo "Resolved scope '$SCOPE' → domain: $SCOPE_DOMAIN"
 
-# Split routes by visibility and inject scope for process_routes
-PUBLIC_ROUTES=$(echo "$ROUTES_JSON" | jq -c --arg s "$SCOPE" \
-  '[.[] | select((.visibility // "public") == "public") | . + {scope: $s}]')
-PRIVATE_ROUTES=$(echo "$ROUTES_JSON" | jq -c --arg s "$SCOPE" \
-  '[.[] | select(.visibility == "private") | . + {scope: $s}]')
-NUM_PUBLIC=$(echo "$PUBLIC_ROUTES" | jq 'length')
-NUM_PRIVATE=$(echo "$PRIVATE_ROUTES" | jq 'length')
-echo "Routes: $NUM_PUBLIC public, $NUM_PRIVATE private"
+# Determine gateway from scope visibility — private scopes use gateway-private
+SCOPE_VISIBILITY=$(echo "$SCOPE_DATA" | jq -r '.service.attributes.visibility // "external"')
+if [[ "$SCOPE_VISIBILITY" == "internal" ]]; then
+  GATEWAY_NAME="$PRIVATE_GATEWAY_NAME"
+  HTTPROUTE_SUFFIX="private"
+else
+  GATEWAY_NAME="$PUBLIC_GATEWAY_NAME"
+  HTTPROUTE_SUFFIX="public"
+fi
+echo "Resolved scope '$SCOPE' → domain: $SCOPE_DOMAIN, visibility: $SCOPE_VISIBILITY, gateway: $GATEWAY_NAME"
 
-# Creates an empty HTTPRoute YAML file and processes all routes into it
-build_httproute() {
-  local name=$1
-  local gateway=$2
-  local routes=$3
-  local file="$OUTPUT_DIR/httproute-${name}.yaml"
-
-  cat > "$file" <<EOF
+HTTPROUTE_FILE="$OUTPUT_DIR/httproute-${HTTPROUTE_NAME}-${HTTPROUTE_SUFFIX}.yaml"
+cat > "$HTTPROUTE_FILE" <<EOF
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: ${name}
+  name: ${HTTPROUTE_NAME}-${HTTPROUTE_SUFFIX}
   namespace: ${K8S_NAMESPACE}
   labels:
     nullplatform.com/managed-by: endpoint-exposer
@@ -49,7 +46,7 @@ metadata:
     app.kubernetes.io/name: ${SERVICE_SLUG}
 spec:
   parentRefs:
-    - name: ${gateway}
+    - name: ${GATEWAY_NAME}
       namespace: ${GATEWAY_NAMESPACE}
       group: gateway.networking.k8s.io
       kind: Gateway
@@ -58,19 +55,13 @@ spec:
   rules: []
 EOF
 
-  export HTTPROUTE_FILE="$file"
-  export ROUTES_JSON="$routes"
-  source "$SERVICE_PATH/scripts/istio/process_routes"
-  echo "✅ HTTPRoute ${name} created ($( echo "$routes" | jq 'length') rules)"
-}
+export HTTPROUTE_FILE
+source "$SERVICE_PATH/scripts/istio/process_routes"
+echo "✅ HTTPRoute ${HTTPROUTE_NAME}-${HTTPROUTE_SUFFIX} created ($(echo "$ROUTES_JSON" | jq 'length') rules)"
 
-if [[ "$NUM_PUBLIC" -gt 0 ]]; then
-  build_httproute "${HTTPROUTE_NAME}-public" "$PUBLIC_GATEWAY_NAME" "$PUBLIC_ROUTES"
-fi
-
-if [[ "$NUM_PRIVATE" -gt 0 ]]; then
-  build_httproute "${HTTPROUTE_NAME}-private" "$PRIVATE_GATEWAY_NAME" "$PRIVATE_ROUTES"
-fi
+# Update HTTPROUTE_NAME to include suffix so downstream scripts use the full name
+HTTPROUTE_NAME="${HTTPROUTE_NAME}-${HTTPROUTE_SUFFIX}"
 
 export SCOPE_ID
 export SCOPE_DOMAIN
+export HTTPROUTE_NAME
