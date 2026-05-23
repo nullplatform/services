@@ -12,8 +12,7 @@ APPLICATION_ID=$(echo "$CONTEXT" | jq -r '.tags.application_id // ""')
 NUM_ROUTES=$(echo "$ROUTES_JSON" | jq 'length')
 if [[ "$NUM_ROUTES" -eq 0 ]]; then
   echo "No routes configured, skipping AVP policy creation"
-  exit 0
-fi
+else
 
 if [[ -z "$APPLICATION_ID" ]] || [[ "$APPLICATION_ID" == "null" ]]; then
   echo "ERROR: APPLICATION_ID not found in context"
@@ -89,3 +88,4 @@ when {
 
   echo "✅ Cedar policy created: $METHOD $ROUTE_PATH @ $SCOPE_DOMAIN (groups: $NUM_GROUPS, policy-id: $POLICY_ID)"
 done
+fi
