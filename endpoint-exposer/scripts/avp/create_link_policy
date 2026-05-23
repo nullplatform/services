@@ -45,7 +45,7 @@ when {
 };"
   fi
 
-  DESCRIPTION="endpoint-exposer|service-id=$SERVICE_ID|link=$HTTPROUTE_NAME|route=$METHOD:$ROUTE_PATH|scope=$SCOPE_ID"
+  DESCRIPTION="ee|link=$HTTPROUTE_NAME|route=$METHOD:$ROUTE_PATH|scope=$SCOPE_ID"
   DEFINITION=$(jq -n --arg desc "$DESCRIPTION" --arg stmt "$CEDAR_STATEMENT" \
     '{"static": {"description": $desc, "statement": $stmt}}')
 
