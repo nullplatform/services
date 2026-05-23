@@ -15,8 +15,20 @@ APPLICATION_ID=$(echo "$CONTEXT" | jq -r '.tags.application_id // ""')
 
 METHOD=$(echo "$CONTEXT" | jq -r '.parameters.method')
 ROUTE_PATH=$(echo "$CONTEXT" | jq -r '.parameters.path')
-SCOPE=$(echo "$CONTEXT" | jq -r '.parameters.scope')
 VISIBILITY=$(echo "$CONTEXT" | jq -r '.parameters.visibility // "public"')
+
+# Infer scope from link/service dimensions — avoids requiring user input
+LINK_DIMENSIONS=$(echo "$CONTEXT" | jq -c '.service.dimensions // {}')
+echo "Inferring scope from dimensions: $LINK_DIMENSIONS"
+SCOPES_JSON=$(np scope list --application_id "$APPLICATION_ID" --format json | jq '.results // []')
+SCOPE=$(echo "$SCOPES_JSON" | jq -r \
+  --argjson dims "$LINK_DIMENSIONS" \
+  '[.[] | select(.name | startswith("deleted-") | not) | select(.dimensions == $dims)] | .[0].name // empty')
+if [[ -z "$SCOPE" ]]; then
+  echo "ERROR: Could not infer scope from dimensions: $LINK_DIMENSIONS"
+  exit 1
+fi
+echo "Inferred scope: $SCOPE"
 GROUPS_JSON=$(echo "$CONTEXT" | jq -c '.parameters.groups // []')
 
 # Unique HTTPRoute name per link — stored in link attributes for use on delete

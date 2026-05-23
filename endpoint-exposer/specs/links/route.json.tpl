@@ -7,7 +7,7 @@
   "attributes": {
     "schema": {
       "type": "object",
-      "required": ["method", "path", "scope"],
+      "required": ["method", "path"],
       "uiSchema": {
         "type": "VerticalLayout",
         "elements": [
@@ -19,7 +19,6 @@
             ]
           },
           {"type": "Control", "label": "Path", "scope": "#/properties/path"},
-          {"type": "Control", "label": "Scope", "scope": "#/properties/scope"},
           {
             "type": "Control",
             "label": "Authorized Groups",
@@ -45,7 +44,8 @@
         "scope": {
           "type": "string",
           "title": "Scope",
-          "editableOn": ["create"]
+          "editableOn": [],
+          "visibleOn": ["read"]
         },
         "visibility": {
           "type": "string",
