@@ -1,0 +1,15 @@
+#!/bin/bash
+
+set -euo pipefail
+
+CONTEXT="${CONTEXT:-${NP_ACTION_CONTEXT:-}}"
+
+RESULTS=$(echo "$CONTEXT" | jq \
+  --arg avp_policy_store_id "$AVP_POLICY_STORE_ID" \
+  '(.notification.parameters // .parameters // {}) + {
+    avp_policy_store_id: $avp_policy_store_id
+  }')
+
+echo "Storing service results: avp_policy_store_id=$AVP_POLICY_STORE_ID"
+np service action update --results "$RESULTS"
+echo "✅ Service results stored"

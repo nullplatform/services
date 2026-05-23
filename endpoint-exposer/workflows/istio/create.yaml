@@ -27,6 +27,12 @@ steps:
         type: environment
       - name: APPLICATION_ID
         type: environment
+  - name: "ensure avp policy store"
+    type: script
+    file: "$SERVICE_PATH/scripts/avp/ensure_policy_store"
+    output:
+      - name: AVP_POLICY_STORE_ID
+        type: environment
   - name: "build public httproute"
     type: script
     file: "$SERVICE_PATH/scripts/istio/build_httproute"
@@ -54,3 +60,6 @@ steps:
     configuration:
       ACTION: apply
       DRY_RUN: false
+  - name: "store service results"
+    type: script
+    file: "$SERVICE_PATH/scripts/np/update_service_results"

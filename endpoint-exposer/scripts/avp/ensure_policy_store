@@ -1,0 +1,26 @@
+#!/bin/bash
+
+set -euo pipefail
+
+source "$SERVICE_PATH/scripts/avp/config"
+
+CONTEXT="${CONTEXT:-${NP_ACTION_CONTEXT:-}}"
+
+# Check user-provided value first, then stored results from previous action
+CONFIGURED_ID=$(echo "$CONTEXT" | jq -r '
+  .parameters.avp_policy_store_id //
+  .notification.parameters.avp_policy_store_id //
+  ""')
+
+if [[ -n "$CONFIGURED_ID" ]]; then
+  echo "Using configured AVP policy store: $CONFIGURED_ID"
+  export AVP_POLICY_STORE_ID="$CONFIGURED_ID"
+else
+  echo "No AVP policy store configured, creating a new one..."
+  CREATED_ID=$(aws verifiedpermissions create-policy-store \
+    --validation-settings '{"mode": "OFF"}' \
+    --region "$AVP_AWS_REGION" \
+    --query 'policyStoreId' --output text)
+  echo "✅ Created new AVP policy store: $CREATED_ID"
+  export AVP_POLICY_STORE_ID="$CREATED_ID"
+fi
