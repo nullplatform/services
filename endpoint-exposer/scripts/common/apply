@@ -86,5 +86,4 @@ done
 # Cleanup temporary directory
 rm -rf "$TEMP_APPLY_DIR"
 
-# Note: DRY_RUN is for testing - we exit 0 even in dry run mode
-exit 0
+true
