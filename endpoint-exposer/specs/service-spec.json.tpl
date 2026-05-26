@@ -19,7 +19,7 @@
         "avp_policy_store_id": {
           "type": "string",
           "title": "AVP Policy Store ID",
-          "description": "ID del Policy Store de Amazon Verified Permissions asociado al Lambda authorizer de este cluster. Se obtiene del output 'policy_store_id' del módulo Terraform avp-smoke.",
+          "description": "Amazon Verified Permissions Policy Store ID associated with the Lambda authorizer for this cluster. Obtained from the 'policy_store_id' output of the security Terraform module.",
           "editableOn": ["create"]
         }
       }
