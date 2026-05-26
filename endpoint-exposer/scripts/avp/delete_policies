@@ -17,20 +17,19 @@ POLICY_IDS=$(aws verifiedpermissions list-policies \
 
 if [[ -z "$POLICY_IDS" ]]; then
   echo "No AVP policies found for service $SERVICE_ID"
-  exit 0
+else
+  while IFS= read -r POLICY_ID; do
+    echo "Deleting Cedar policy: $POLICY_ID"
+    aws verifiedpermissions delete-policy \
+      --policy-store-id "$AVP_POLICY_STORE_ID" \
+      --region "$AVP_AWS_REGION" \
+      --policy-id "$POLICY_ID"
+    echo "✅ Deleted Cedar policy $POLICY_ID"
+  done <<< "$POLICY_IDS"
+
+  echo "Cleaning up per-service AuthorizationPolicies for service $SERVICE_ID..."
+  kubectl delete authorizationpolicy \
+    -n "$GATEWAY_NAMESPACE" \
+    -l "nullplatform.com/service-id=$SERVICE_ID" \
+    --ignore-not-found 2>/dev/null && echo "✅ AuthorizationPolicies cleaned up"
 fi
-
-while IFS= read -r POLICY_ID; do
-  echo "Deleting Cedar policy: $POLICY_ID"
-  aws verifiedpermissions delete-policy \
-    --policy-store-id "$AVP_POLICY_STORE_ID" \
-    --region "$AVP_AWS_REGION" \
-    --policy-id "$POLICY_ID"
-  echo "✅ Deleted Cedar policy $POLICY_ID"
-done <<< "$POLICY_IDS"
-
-echo "Cleaning up per-service AuthorizationPolicies for service $SERVICE_ID..."
-kubectl delete authorizationpolicy \
-  -n "$GATEWAY_NAMESPACE" \
-  -l "nullplatform.com/service-id=$SERVICE_ID" \
-  --ignore-not-found 2>/dev/null && echo "✅ AuthorizationPolicies cleaned up"
