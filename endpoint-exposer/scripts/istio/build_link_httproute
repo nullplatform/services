@@ -55,6 +55,9 @@ spec:
   rules: []
 EOF
 
+# process_routes expects each route to have a {scope} field for backend lookup
+ROUTES_JSON=$(echo "$ROUTES_JSON" | jq -c --arg s "$SCOPE" '[.[] | . + {scope: $s}]')
+export ROUTES_JSON
 export HTTPROUTE_FILE
 source "$SERVICE_PATH/scripts/istio/process_routes"
 echo "✅ HTTPRoute ${HTTPROUTE_NAME}-${HTTPROUTE_SUFFIX} created ($(echo "$ROUTES_JSON" | jq 'length') rules)"

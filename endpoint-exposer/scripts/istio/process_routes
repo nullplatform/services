@@ -82,11 +82,11 @@ for ((i=0; i<NUM_ROUTES; i++)); do
     unset METHOD
   fi
 
-  # Get scope ID from scope slug using the cached scopes
-  SCOPE_ID=$(echo "$SCOPES_JSON" | jq -r ".[] | select(.slug == \"$SCOPE_SLUG\") | .id")
+  # Get scope ID from scope name using the cached scopes
+  SCOPE_ID=$(echo "$SCOPES_JSON" | jq -r ".[] | select(.name == \"$SCOPE_SLUG\") | .id")
 
   if [[ -z "$SCOPE_ID" || "$SCOPE_ID" == "null" ]]; then
-    echo "ERROR: Could not find scope with slug: $SCOPE_SLUG"
+    echo "ERROR: Could not find scope with name: $SCOPE_SLUG"
     exit 1
   fi
 
