@@ -32,7 +32,7 @@ if [[ -z "$SCOPE" ]]; then
 fi
 echo "Inferred scope: $SCOPE"
 
-AVP_POLICY_STORE_ID=$(echo "$CONTEXT" | jq -r '.service.parameters.avp_policy_store_id // .notification.parameters.avp_policy_store_id // ""')
+AVP_POLICY_STORE_ID=$(echo "$CONTEXT" | jq -r '.service.attributes.avp_policy_store_id // .notification.parameters.avp_policy_store_id // ""')
 
 K8S_NAMESPACE="${NAMESPACE_OVERRIDE:-nullplatform}"
 
