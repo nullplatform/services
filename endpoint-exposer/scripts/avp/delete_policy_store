@@ -1,0 +1,19 @@
+#!/bin/bash
+
+set -euo pipefail
+
+source "$SERVICE_PATH/scripts/avp/config"
+
+if [[ -z "${AVP_POLICY_STORE_ID:-}" ]]; then
+  echo "No AVP_POLICY_STORE_ID set, skipping policy store deletion"
+  exit 0
+fi
+
+echo "Deleting AVP policy store: $AVP_POLICY_STORE_ID"
+if aws verifiedpermissions delete-policy-store \
+  --policy-store-id "$AVP_POLICY_STORE_ID" \
+  --region "$AVP_AWS_REGION" 2>&1; then
+  echo "✅ AVP policy store $AVP_POLICY_STORE_ID deleted"
+else
+  echo "⚠️  AVP policy store $AVP_POLICY_STORE_ID not found or already deleted (skipping)"
+fi
