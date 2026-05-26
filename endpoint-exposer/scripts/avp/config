@@ -1,4 +1,5 @@
 #!/bin/bash
 
-export AVP_POLICY_STORE_ID="${AVP_POLICY_STORE_ID:-RPkfnZxHxnWktjL9KF2qz5}"
+export AVP_POLICY_STORE_ID="${AVP_POLICY_STORE_ID:-}"
 export AVP_AWS_REGION="${AVP_AWS_REGION:-us-east-1}"
+export AVP_POLICY_STORE_SSM_PATH="${AVP_POLICY_STORE_SSM_PATH:-/nullplatform/pae-smoke/avp/policy-store-id}"

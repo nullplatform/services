@@ -6,7 +6,7 @@ source "$SERVICE_PATH/scripts/avp/config"
 
 CONTEXT="${CONTEXT:-${NP_ACTION_CONTEXT:-}}"
 
-# Check user-provided value first, then stored results from previous action
+# Check service attributes first (cached from a previous run)
 CONFIGURED_ID=$(echo "$CONTEXT" | jq -r '
   .parameters.avp_policy_store_id //
   .notification.parameters.avp_policy_store_id //
@@ -14,20 +14,27 @@ CONFIGURED_ID=$(echo "$CONTEXT" | jq -r '
   ""')
 
 if [[ -n "$CONFIGURED_ID" ]]; then
-  echo "Using configured AVP policy store: $CONFIGURED_ID"
+  echo "Using cached AVP policy store from service attributes: $CONFIGURED_ID"
   export AVP_POLICY_STORE_ID="$CONFIGURED_ID"
 else
-  echo "No AVP policy store configured, creating a new one..."
-  CREATED_ID=$(aws verifiedpermissions create-policy-store \
-    --validation-settings '{"mode": "OFF"}' \
+  echo "No cached AVP policy store, reading from SSM: $AVP_POLICY_STORE_SSM_PATH"
+  SSM_ID=$(aws ssm get-parameter \
+    --name "$AVP_POLICY_STORE_SSM_PATH" \
     --region "$AVP_AWS_REGION" \
-    --query 'policyStoreId' --output text)
-  echo "✅ Created new AVP policy store: $CREATED_ID"
-  export AVP_POLICY_STORE_ID="$CREATED_ID"
+    --query 'Parameter.Value' \
+    --output text)
+
+  if [[ -z "$SSM_ID" || "$SSM_ID" == "None" ]]; then
+    echo "ERROR: AVP policy store ID not found in SSM at $AVP_POLICY_STORE_SSM_PATH" >&2
+    exit 1
+  fi
+
+  echo "✅ Found AVP policy store from SSM: $SSM_ID"
+  export AVP_POLICY_STORE_ID="$SSM_ID"
 
   if [[ -n "${SERVICE_ID:-}" ]]; then
     np service patch --id "$SERVICE_ID" \
-      --body "{\"attributes\": {\"avp_policy_store_id\": \"$CREATED_ID\"}}" || true
-    echo "✅ Persisted avp_policy_store_id to service attributes"
+      --body "{\"attributes\": {\"avp_policy_store_id\": \"$SSM_ID\"}}" || true
+    echo "✅ Cached avp_policy_store_id in service attributes"
   fi
 fi

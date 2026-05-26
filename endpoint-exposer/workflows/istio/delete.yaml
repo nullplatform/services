@@ -10,8 +10,3 @@ steps:
     configuration:
       ACTION: delete
       DRY_RUN: false
-  - name: "delete avp policy store"
-    type: script
-    file: "$SERVICE_PATH/scripts/avp/delete_policy_store"
-    configuration:
-      DELETE_POLICY_STORE: "true"

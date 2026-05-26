@@ -63,6 +63,3 @@ steps:
   - name: "store service results"
     type: script
     file: "$SERVICE_PATH/scripts/np/update_service_results"
-  - name: "delete avp policy store"
-    type: script
-    file: "$SERVICE_PATH/scripts/avp/delete_policy_store"
