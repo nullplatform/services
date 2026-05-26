@@ -4,12 +4,25 @@
     "schema": {
       "type": "object",
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "required": [],
+      "required": ["avp_policy_store_id"],
       "uiSchema": {
         "type": "VerticalLayout",
-        "elements": []
+        "elements": [
+          {
+            "type": "Control",
+            "label": "AVP Policy Store ID",
+            "scope": "#/properties/avp_policy_store_id"
+          }
+        ]
       },
-      "properties": {}
+      "properties": {
+        "avp_policy_store_id": {
+          "type": "string",
+          "title": "AVP Policy Store ID",
+          "description": "ID del Policy Store de Amazon Verified Permissions asociado al Lambda authorizer de este cluster. Se obtiene del output 'policy_store_id' del módulo Terraform avp-smoke.",
+          "editableOn": ["create"]
+        }
+      }
     },
     "values": {}
   },
