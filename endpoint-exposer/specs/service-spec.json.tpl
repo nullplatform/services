@@ -7,22 +7,9 @@
       "required": [],
       "uiSchema": {
         "type": "VerticalLayout",
-        "elements": [
-          {
-            "type": "Control",
-            "label": "AVP Policy Store ID",
-            "scope": "#/properties/avp_policy_store_id"
-          }
-        ]
+        "elements": []
       },
-      "properties": {
-        "avp_policy_store_id": {
-          "type": "string",
-          "title": "AVP Policy Store ID",
-          "description": "ID del Policy Store de Amazon Verified Permissions. Si se deja vacío, se creará un policy store de AVP por defecto.",
-          "editableOn": ["create"]
-        }
-      }
+      "properties": {}
     },
     "values": {}
   },
