@@ -12,4 +12,8 @@ RESULTS=$(echo "$CONTEXT" | jq \
 
 echo "Storing service results: avp_policy_store_id=$AVP_POLICY_STORE_ID"
 np service action update --results "$RESULTS"
+
+np service patch --id "$SERVICE_ID" \
+  --body "{\"attributes\": {\"avp_policy_store_id\": \"$AVP_POLICY_STORE_ID\"}}"
+
 echo "✅ Service results stored"
