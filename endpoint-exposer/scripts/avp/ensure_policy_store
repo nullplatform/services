@@ -10,6 +10,7 @@ CONTEXT="${CONTEXT:-${NP_ACTION_CONTEXT:-}}"
 CONFIGURED_ID=$(echo "$CONTEXT" | jq -r '
   .parameters.avp_policy_store_id //
   .notification.parameters.avp_policy_store_id //
+  .service.parameters.avp_policy_store_id //
   ""')
 
 if [[ -n "$CONFIGURED_ID" ]]; then

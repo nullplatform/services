@@ -27,6 +27,12 @@ steps:
         type: environment
       - name: AVP_POLICY_STORE_ID
         type: environment
+  - name: "ensure avp policy store"
+    type: script
+    file: "$SERVICE_PATH/scripts/avp/ensure_policy_store"
+    output:
+      - name: AVP_POLICY_STORE_ID
+        type: environment
   - name: "delete avp policies"
     type: script
     file: "$SERVICE_PATH/scripts/avp/delete_link_policies_by_name"
