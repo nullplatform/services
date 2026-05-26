@@ -4,6 +4,11 @@ set -euo pipefail
 
 source "$SERVICE_PATH/scripts/avp/config"
 
+if [[ "${DELETE_POLICY_STORE:-false}" != "true" ]]; then
+  echo "Skipping policy store deletion (not in delete context)"
+  exit 0
+fi
+
 if [[ -z "${AVP_POLICY_STORE_ID:-}" ]]; then
   echo "No AVP_POLICY_STORE_ID set, skipping policy store deletion"
   exit 0
