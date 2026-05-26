@@ -24,4 +24,10 @@ else
     --query 'policyStoreId' --output text)
   echo "✅ Created new AVP policy store: $CREATED_ID"
   export AVP_POLICY_STORE_ID="$CREATED_ID"
+
+  if [[ -n "${SERVICE_ID:-}" ]]; then
+    np service patch --id "$SERVICE_ID" \
+      --body "{\"attributes\": {\"avp_policy_store_id\": \"$CREATED_ID\"}}" || true
+    echo "✅ Persisted avp_policy_store_id to service attributes"
+  fi
 fi
