@@ -85,7 +85,7 @@ teardown() {
   run bash "$SERVICE_PATH/scripts/istio/build_httproute"
 
   assert_success
-  assert_file_exists "$OUTPUT_DIR/httproute-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-public.yaml"
+  assert_file_exists "$OUTPUT_DIR/httproute-00000000-0000-0000-0000-000000000001-public.yaml"
 }
 
 @test "build_httproute: generates private HTTPRoute with routes" {
@@ -97,7 +97,7 @@ teardown() {
   run bash "$SERVICE_PATH/scripts/istio/build_httproute"
 
   assert_success
-  assert_file_exists "$OUTPUT_DIR/httproute-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-private.yaml"
+  assert_file_exists "$OUTPUT_DIR/httproute-00000000-0000-0000-0000-000000000001-private.yaml"
 }
 
 @test "build_httproute: creates marker file when no public routes" {
@@ -109,7 +109,7 @@ teardown() {
   run bash "$SERVICE_PATH/scripts/istio/build_httproute"
 
   assert_success
-  assert_file_not_exists "$OUTPUT_DIR/httproute-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-public.yaml"
+  assert_file_not_exists "$OUTPUT_DIR/httproute-00000000-0000-0000-0000-000000000001-public.yaml"
   assert_file_exists "$OUTPUT_DIR/.httproute-public-deleted"
 }
 
@@ -139,7 +139,7 @@ teardown() {
   run bash "$SERVICE_PATH/scripts/istio/build_httproute"
 
   assert_success
-  assert_file_not_exists "$OUTPUT_DIR/httproute-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-private.yaml"
+  assert_file_not_exists "$OUTPUT_DIR/httproute-00000000-0000-0000-0000-000000000001-private.yaml"
   assert_file_exists "$OUTPUT_DIR/.httproute-private-deleted"
 }
 

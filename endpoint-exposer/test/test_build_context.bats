@@ -27,7 +27,7 @@ teardown() {
 
   source "$SERVICE_PATH/scripts/istio/build_context"
 
-  [[ "$SERVICE_ID" == "fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd" ]]
+  [[ "$SERVICE_ID" == "00000000-0000-0000-0000-000000000001" ]]
   [[ "$SERVICE_SLUG" == "api" ]]
 }
 
@@ -36,8 +36,8 @@ teardown() {
 
   source "$SERVICE_PATH/scripts/istio/build_context"
 
-  [[ "$PUBLIC_DOMAIN" == "api.edenred.nullimplementation.com" ]]
-  [[ "$PRIVATE_DOMAIN" == "api-private.edenred.nullimplementation.com" ]]
+  [[ "$PUBLIC_DOMAIN" == "api.example.nullimplementation.com" ]]
+  [[ "$PRIVATE_DOMAIN" == "api-private.example.nullimplementation.com" ]]
 }
 
 @test "build_context: splits routes by visibility" {
@@ -78,7 +78,7 @@ teardown() {
 
   source "$SERVICE_PATH/scripts/istio/build_context"
 
-  [[ "$PUBLIC_DOMAIN" == "api.edenred.nullimplementation.com" ]]
+  [[ "$PUBLIC_DOMAIN" == "api.example.nullimplementation.com" ]]
   [[ -z "$PRIVATE_DOMAIN" ]]
 }
 

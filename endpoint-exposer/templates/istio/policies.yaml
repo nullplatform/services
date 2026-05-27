@@ -1,11 +1,11 @@
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: birds-35f2062a-8cbf-447c-bc4e-d2d0b8577e75-authz
+  name: example-service-00000000-0000-0000-0000-000000000005-authz
   namespace: nullplatform
   labels:
-    app.kubernetes.io/name: birds
-    nullplatform.com/service-id: "35f2062a-8cbf-447c-bc4e-d2d0b8577e75"
+    app.kubernetes.io/name: example-service
+    nullplatform.com/service-id: "00000000-0000-0000-0000-000000000005"
     nullplatform.com/managed-by: endpoint-exposer
 spec:
   selector:
@@ -19,7 +19,7 @@ spec:
   - to:
     - operation:
         hosts:
-          - birds.edenred.nullimplementation.com
+          - api.example.nullimplementation.com
         methods:
           - GET
         paths:
@@ -28,10 +28,10 @@ spec:
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: birds-leaderboard-allow
+  name: example-service-leaderboard-allow
   namespace: nullplatform
   labels:
-    app.kubernetes.io/name: birds
+    app.kubernetes.io/name: example-service
     nullplatform.com/managed-by: endpoint-exposer
 spec:
   selector:
@@ -43,7 +43,7 @@ spec:
   - to:
     - operation:
         hosts:
-          - birds.edenred.nullimplementation.com
+          - api.example.nullimplementation.com
         methods:
           - GET
         paths:

@@ -129,13 +129,13 @@ teardown() {
   bash "$SERVICE_PATH/scripts/istio/build_httproute"
 
   # Verify outputs
-  assert_file_exists "$OUTPUT_DIR/httproute-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-public.yaml"
-  assert_file_not_exists "$OUTPUT_DIR/httproute-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-private.yaml"
+  assert_file_exists "$OUTPUT_DIR/httproute-00000000-0000-0000-0000-000000000001-public.yaml"
+  assert_file_not_exists "$OUTPUT_DIR/httproute-00000000-0000-0000-0000-000000000001-private.yaml"
   assert_file_exists "$OUTPUT_DIR/.httproute-private-deleted"
 
   # Verify public HTTPRoute content
-  assert_file_contains "$OUTPUT_DIR/httproute-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-public.yaml" "HTTPRoute"
-  assert_file_contains "$OUTPUT_DIR/httproute-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-public.yaml" "api.edenred.nullimplementation.com"
+  assert_file_contains "$OUTPUT_DIR/httproute-00000000-0000-0000-0000-000000000001-public.yaml" "HTTPRoute"
+  assert_file_contains "$OUTPUT_DIR/httproute-00000000-0000-0000-0000-000000000001-public.yaml" "api.example.nullimplementation.com"
 }
 
 @test "integration: complete workflow with public and private routes" {
@@ -152,16 +152,16 @@ teardown() {
   bash "$SERVICE_PATH/scripts/istio/build_httproute"
 
   # Verify all resources created
-  assert_file_exists "$OUTPUT_DIR/httproute-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-public.yaml"
-  assert_file_exists "$OUTPUT_DIR/httproute-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-private.yaml"
+  assert_file_exists "$OUTPUT_DIR/httproute-00000000-0000-0000-0000-000000000001-public.yaml"
+  assert_file_exists "$OUTPUT_DIR/httproute-00000000-0000-0000-0000-000000000001-private.yaml"
 
   # Verify no marker files (all resources should be created)
   assert_file_not_exists "$OUTPUT_DIR/.httproute-public-deleted"
   assert_file_not_exists "$OUTPUT_DIR/.httproute-private-deleted"
 
   # Verify content
-  assert_file_contains "$OUTPUT_DIR/httproute-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-public.yaml" "api.edenred.nullimplementation.com"
-  assert_file_contains "$OUTPUT_DIR/httproute-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-private.yaml" "api-private.edenred.nullimplementation.com"
+  assert_file_contains "$OUTPUT_DIR/httproute-00000000-0000-0000-0000-000000000001-public.yaml" "api.example.nullimplementation.com"
+  assert_file_contains "$OUTPUT_DIR/httproute-00000000-0000-0000-0000-000000000001-private.yaml" "api-private.example.nullimplementation.com"
 }
 
 @test "integration: workflow with authorization disabled creates cleanup markers" {
@@ -178,8 +178,8 @@ teardown() {
   bash "$SERVICE_PATH/scripts/istio/build_httproute"
 
   # Verify httproutes created
-  assert_file_exists "$OUTPUT_DIR/httproute-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-public.yaml"
-  assert_file_exists "$OUTPUT_DIR/httproute-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-private.yaml"
+  assert_file_exists "$OUTPUT_DIR/httproute-00000000-0000-0000-0000-000000000001-public.yaml"
+  assert_file_exists "$OUTPUT_DIR/httproute-00000000-0000-0000-0000-000000000001-private.yaml"
 }
 
 @test "integration: apply step handles markers and resources correctly" {
@@ -221,9 +221,9 @@ teardown() {
   bash "$SERVICE_PATH/scripts/istio/build_httproute"
 
   # Verify all resources have required labels
-  assert_file_contains "$OUTPUT_DIR/httproute-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-public.yaml" "nullplatform.com/managed-by: endpoint-exposer"
-  assert_file_contains "$OUTPUT_DIR/httproute-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-private.yaml" "nullplatform.com/managed-by: endpoint-exposer"
+  assert_file_contains "$OUTPUT_DIR/httproute-00000000-0000-0000-0000-000000000001-public.yaml" "nullplatform.com/managed-by: endpoint-exposer"
+  assert_file_contains "$OUTPUT_DIR/httproute-00000000-0000-0000-0000-000000000001-private.yaml" "nullplatform.com/managed-by: endpoint-exposer"
 
-  assert_file_contains "$OUTPUT_DIR/httproute-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-public.yaml" "nullplatform.com/service-id:"
-  assert_file_contains "$OUTPUT_DIR/httproute-fbcf7a60-8ca8-4bf2-b1b5-5c59bb5bc4fd-private.yaml" "nullplatform.com/service-id:"
+  assert_file_contains "$OUTPUT_DIR/httproute-00000000-0000-0000-0000-000000000001-public.yaml" "nullplatform.com/service-id:"
+  assert_file_contains "$OUTPUT_DIR/httproute-00000000-0000-0000-0000-000000000001-private.yaml" "nullplatform.com/service-id:"
 }
