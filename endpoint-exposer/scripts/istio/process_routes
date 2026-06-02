@@ -28,7 +28,7 @@ fi
 
 # Fetch all scopes once
 echo "Fetching scopes for application $APPLICATION_ID..."
-SCOPES_JSON=$(np scope list --application_id "$APPLICATION_ID" --format json | jq -rs ".[].results")
+SCOPES_JSON=$(np scope list --application_id "$APPLICATION_ID" --limit 200 --format json | jq -rs ".[].results")
 echo "Scopes fetched successfully"
 
 # Sort routes by path specificity (Exact > RegularExpression > PathPrefix)

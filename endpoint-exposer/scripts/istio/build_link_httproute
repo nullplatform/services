@@ -8,7 +8,7 @@ source "$SERVICE_PATH/scripts/avp/config"
 echo "=== Building HTTPRoute for link (scope: $SCOPE) ==="
 
 # Resolve scope → ID, domain and visibility
-SCOPES_JSON=$(np scope list --application_id "$APPLICATION_ID" --format json | jq '.results // []')
+SCOPES_JSON=$(np scope list --application_id "$APPLICATION_ID" --limit 200 --format json | jq '.results // []')
 SCOPE_ID=$(echo "$SCOPES_JSON" | jq -r --arg name "$SCOPE" '.[] | select(.name == $name) | .id')
 if [[ -z "$SCOPE_ID" || "$SCOPE_ID" == "null" ]]; then
   echo "ERROR: Could not resolve scope '$SCOPE'"
