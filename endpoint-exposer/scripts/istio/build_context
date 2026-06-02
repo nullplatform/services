@@ -29,9 +29,23 @@ fi
 
 mkdir -p "$OUTPUT_DIR"
 
-AUTH_TYPE=$(echo "$CONTEXT" | jq -r '.service.attributes.auth_type // "avp"')
-COGNITO_USER_POOL_ARN=$(echo "$CONTEXT" | jq -r '.service.attributes.cognito_user_pool_arn // ""')
-AVP_POLICY_STORE_ID=$(echo "$CONTEXT" | jq -r '.service.attributes.avp_policy_store_id // ""')
+AUTH_TYPE=$(echo "$CONTEXT" | jq -r '
+  .parameters.auth_type //
+  .notification.parameters.auth_type //
+  .service.attributes.auth_type //
+  "avp"')
+
+COGNITO_USER_POOL_ARN=$(echo "$CONTEXT" | jq -r '
+  .parameters.cognito_user_pool_arn //
+  .notification.parameters.cognito_user_pool_arn //
+  .service.attributes.cognito_user_pool_arn //
+  ""')
+
+AVP_POLICY_STORE_ID=$(echo "$CONTEXT" | jq -r '
+  .parameters.avp_policy_store_id //
+  .notification.parameters.avp_policy_store_id //
+  .service.attributes.avp_policy_store_id //
+  ""')
 
 export SERVICE_ID
 export SERVICE_SLUG
