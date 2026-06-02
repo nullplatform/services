@@ -19,7 +19,7 @@ if [[ -z "$APPLICATION_ID" ]] || [[ "$APPLICATION_ID" == "null" ]]; then
   exit 1
 fi
 
-SCOPES_JSON=$(np scope list --application_id "$APPLICATION_ID" --page_size 200 --format json | jq '.results // []')
+SCOPES_JSON=$(np scope list --application_id "$APPLICATION_ID" --limit 200 --format json | jq '.results // []')
 
 for i in $(seq 0 $((NUM_ROUTES - 1))); do
   ROUTE=$(echo "$ROUTES_JSON" | jq -c ".[$i]")

@@ -22,7 +22,7 @@ HTTPROUTE_NAME="ee-link-${LINK_ID}"
 # Infer scope from dimensions — available in both create and update contexts
 LINK_DIMENSIONS=$(echo "$CONTEXT" | jq -c '.service.dimensions // {}')
 echo "Inferring scope from dimensions: $LINK_DIMENSIONS"
-SCOPES_JSON=$(np scope list --application_id "$APPLICATION_ID" --page_size 200 --format json | jq '.results // []')
+SCOPES_JSON=$(np scope list --application_id "$APPLICATION_ID" --limit 200 --format json | jq '.results // []')
 SCOPE=$(echo "$SCOPES_JSON" | jq -r \
   --argjson dims "$LINK_DIMENSIONS" \
   '[.[] | select(.name | startswith("deleted-") | not) | select(.dimensions == $dims)] | .[0].name // empty')

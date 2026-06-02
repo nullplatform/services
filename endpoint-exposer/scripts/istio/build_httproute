@@ -36,7 +36,7 @@ if [[ "$NUM_ROUTES" -eq 0 ]]; then
   echo "No $VISIBILITY routes configured, creating empty resource for cleanup..."
 else
   source "$SERVICE_PATH/scripts/avp/config"
-  SCOPES_JSON=$(np scope list --application_id "$APPLICATION_ID" --page_size 200 --format json | jq '.results // []')
+  SCOPES_JSON=$(np scope list --application_id "$APPLICATION_ID" --limit 200 --format json | jq '.results // []')
 
   SCOPE_SLUGS=$(echo "$ROUTES_JSON" | jq -r '[.[].scope] | unique | .[]')
   while IFS= read -r SCOPE_SLUG; do
