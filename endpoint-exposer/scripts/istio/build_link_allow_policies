@@ -1,0 +1,74 @@
+#!/bin/bash
+
+set -euo pipefail
+
+source "$SERVICE_PATH/scripts/istio/config"
+
+echo "=== Building Istio ALLOW AuthorizationPolicies for link ==="
+
+# SCOPE_DOMAIN and gateway info are already set by build_link_httproute
+if [[ -z "${SCOPE_DOMAIN:-}" ]]; then
+  echo "ERROR: SCOPE_DOMAIN is not set (must run build_link_httproute first)"
+  exit 1
+fi
+
+NUM_ROUTES=$(echo "$ROUTES_JSON" | jq 'length')
+if [[ "$NUM_ROUTES" -eq 0 ]]; then
+  echo "No routes configured, skipping AuthorizationPolicy generation"
+  exit 0
+fi
+
+# Determine gateway from link visibility (same logic as build_link_httproute)
+VISIBILITY=$(np scope read --id "$SCOPE_ID" --format json | jq -r '.service.attributes.visibility // "public"' 2>/dev/null || echo "public")
+if [[ "$VISIBILITY" == "internal" ]]; then
+  GATEWAY_NAME="$PRIVATE_GATEWAY_NAME"
+  GATEWAY_SUFFIX="private"
+else
+  GATEWAY_NAME="$PUBLIC_GATEWAY_NAME"
+  GATEWAY_SUFFIX="public"
+fi
+
+for i in $(seq 0 $((NUM_ROUTES - 1))); do
+  ROUTE=$(echo "$ROUTES_JSON" | jq -c ".[$i]")
+  METHOD=$(echo "$ROUTE" | jq -r '.method // "GET"')
+  ROUTE_PATH=$(echo "$ROUTE" | jq -r '.path')
+
+  # groups: comma-separated string or JSON array
+  RAW_GROUPS=$(echo "$ROUTE" | jq -r '.groups // ""')
+  if echo "$RAW_GROUPS" | jq -e . >/dev/null 2>&1; then
+    GROUPS_JSON=$(echo "$RAW_GROUPS" | jq -c '.')
+  else
+    GROUPS_JSON=$(echo "$RAW_GROUPS" | tr ',' '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | grep -v '^$' | jq -R . | jq -sc '.')
+  fi
+
+  # Deterministic policy name using link HTTPROUTE_NAME
+  HTTPROUTE_HASH=$(echo "$HTTPROUTE_NAME" | md5 2>/dev/null || echo "$HTTPROUTE_NAME" | md5sum | cut -c1-8)
+  ROUTE_HASH=$(echo "${SCOPE_DOMAIN}${METHOD}${ROUTE_PATH}" | md5 2>/dev/null || echo "${SCOPE_DOMAIN}${METHOD}${ROUTE_PATH}" | md5sum | cut -c1-8)
+  POLICY_NAME="${HTTPROUTE_HASH:0:8}-${GATEWAY_SUFFIX}-${ROUTE_HASH:0:8}"
+
+  GROUPS_ARRAY=$(echo "$GROUPS_JSON" | jq -r '[.[] ]')
+
+  CONTEXT_FILE="$OUTPUT_DIR/authorizationpolicy-${POLICY_NAME}-ctx.json"
+  jq -n \
+    --arg name          "$POLICY_NAME" \
+    --arg gateway_name  "$GATEWAY_NAME" \
+    --arg gateway_namespace "$GATEWAY_NAMESPACE" \
+    --arg service_id    "$SERVICE_ID" \
+    --arg host          "$SCOPE_DOMAIN" \
+    --arg path          "$ROUTE_PATH" \
+    --arg method        "$METHOD" \
+    --argjson groups    "$GROUPS_ARRAY" \
+    '{name: $name, gateway_name: $gateway_name, gateway_namespace: $gateway_namespace,
+      service_id: $service_id, host: $host, path: $path, method: $method, groups: $groups}' \
+    > "$CONTEXT_FILE"
+
+  POLICY_FILE="$OUTPUT_DIR/authorizationpolicy-${POLICY_NAME}.yaml"
+  gomplate -c ".=$CONTEXT_FILE" \
+    -f "$SERVICE_PATH/templates/istio/authorizationpolicy.yaml.tpl" \
+    -o "$POLICY_FILE"
+  rm "$CONTEXT_FILE"
+
+  echo "✅ AuthorizationPolicy generated: ee-${POLICY_NAME} (${METHOD} ${ROUTE_PATH} on ${SCOPE_DOMAIN})"
+done
+
+echo "=== Link ALLOW AuthorizationPolicies generated successfully ==="

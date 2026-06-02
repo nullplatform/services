@@ -34,6 +34,18 @@ echo "Inferred scope: $SCOPE"
 
 AVP_POLICY_STORE_ID=$(echo "$CONTEXT" | jq -r '.service.attributes.avp_policy_store_id // .notification.parameters.avp_policy_store_id // ""')
 
+AUTH_TYPE=$(echo "$CONTEXT" | jq -r '
+  .service.attributes.auth_type //
+  .parameters.auth_type //
+  .notification.parameters.auth_type //
+  "avp"')
+
+COGNITO_USER_POOL_ARN=$(echo "$CONTEXT" | jq -r '
+  .service.attributes.cognito_user_pool_arn //
+  .parameters.cognito_user_pool_arn //
+  .notification.parameters.cognito_user_pool_arn //
+  ""')
+
 K8S_NAMESPACE="${NAMESPACE_OVERRIDE:-nullplatform}"
 
 if [[ -z "${OUTPUT_DIR:-}" ]]; then
@@ -50,3 +62,5 @@ export SCOPE
 export HTTPROUTE_NAME
 export K8S_NAMESPACE
 export AVP_POLICY_STORE_ID
+export AUTH_TYPE
+export COGNITO_USER_POOL_ARN

@@ -1,0 +1,48 @@
+#!/bin/bash
+
+set -euo pipefail
+
+ACTION="${ACTION:-apply}"
+AUTH_TYPE="${AUTH_TYPE:-avp}"
+
+echo "=== Managing link policies: auth_type=$AUTH_TYPE action=$ACTION ==="
+
+case "$AUTH_TYPE" in
+  avp)
+    case "$ACTION" in
+      apply)
+        source "$SERVICE_PATH/scripts/avp/ensure_policy_store"
+        source "$SERVICE_PATH/scripts/avp/create_link_policy"
+        ;;
+      delete)
+        source "$SERVICE_PATH/scripts/avp/delete_link_policies_by_name"
+        ;;
+      *)
+        echo "ERROR: Unknown ACTION='$ACTION'"
+        exit 1
+        ;;
+    esac
+    ;;
+
+  istio-jwt)
+    case "$ACTION" in
+      apply)
+        source "$SERVICE_PATH/scripts/istio/build_link_allow_policies"
+        ;;
+      delete)
+        source "$SERVICE_PATH/scripts/istio/delete_allow_policies"
+        ;;
+      *)
+        echo "ERROR: Unknown ACTION='$ACTION'"
+        exit 1
+        ;;
+    esac
+    ;;
+
+  *)
+    echo "ERROR: Unknown AUTH_TYPE='$AUTH_TYPE'"
+    exit 1
+    ;;
+esac
+
+echo "=== Link policy management complete ==="

@@ -25,9 +25,13 @@ steps:
         type: environment
       - name: K8S_NAMESPACE
         type: environment
-  - name: "delete avp policies"
+      - name: AUTH_TYPE
+        type: environment
+  - name: "manage link policies"
     type: script
-    file: "$SERVICE_PATH/scripts/avp/delete_link_policies_by_name"
+    file: "$SERVICE_PATH/scripts/common/manage_link_policies"
+    configuration:
+      ACTION: "delete"
   - name: "delete httproute"
     type: script
     file: "$SERVICE_PATH/scripts/istio/delete_link_httproute"
