@@ -1,0 +1,87 @@
+#!/bin/bash
+
+set -euo pipefail
+
+source "$SERVICE_PATH/scripts/istio/config"
+
+echo "=== Building Istio ALLOW AuthorizationPolicies ==="
+
+APPLICATION_ID=$(echo "$CONTEXT" | jq -r '.tags.application_id // ""')
+
+if [[ -z "$APPLICATION_ID" || "$APPLICATION_ID" == "null" ]]; then
+  echo "ERROR: APPLICATION_ID not found in context"
+  exit 1
+fi
+
+NUM_ROUTES=$(echo "$ROUTES_JSON" | jq 'length')
+if [[ "$NUM_ROUTES" -eq 0 ]]; then
+  echo "No routes configured, skipping AuthorizationPolicy generation"
+  exit 0
+fi
+
+SCOPES_JSON=$(np scope list --application_id "$APPLICATION_ID" --format json | jq '.results // []')
+
+for i in $(seq 0 $((NUM_ROUTES - 1))); do
+  ROUTE=$(echo "$ROUTES_JSON" | jq -c ".[$i]")
+  METHOD=$(echo "$ROUTE" | jq -r '.method // "GET"')
+  ROUTE_PATH=$(echo "$ROUTE" | jq -r '.path')
+  SCOPE_SLUG=$(echo "$ROUTE" | jq -r '.scope')
+  GROUPS_JSON=$(echo "$ROUTE" | jq -c '.groups // []')
+
+  # Resolve scope → domain
+  SCOPE_ID=$(echo "$SCOPES_JSON" | jq -r --arg name "$SCOPE_SLUG" '.[] | select(.name == $name) | .id')
+  if [[ -z "$SCOPE_ID" || "$SCOPE_ID" == "null" ]]; then
+    echo "WARNING: Could not resolve scope '$SCOPE_SLUG', skipping route $METHOD $ROUTE_PATH"
+    continue
+  fi
+
+  SCOPE_DOMAIN=$(np scope read --id "$SCOPE_ID" --format json | jq -r '.domain // ""')
+  if [[ -z "$SCOPE_DOMAIN" || "$SCOPE_DOMAIN" == "null" ]]; then
+    echo "WARNING: Scope '$SCOPE_SLUG' (id: $SCOPE_ID) has no domain, skipping"
+    continue
+  fi
+
+  # Determine gateway from route visibility
+  VISIBILITY=$(echo "$ROUTE" | jq -r '.visibility // "public"')
+  if [[ "$VISIBILITY" == "private" ]]; then
+    GATEWAY_NAME="$PRIVATE_GATEWAY_NAME"
+    GATEWAY_SUFFIX="private"
+  else
+    GATEWAY_NAME="$PUBLIC_GATEWAY_NAME"
+    GATEWAY_SUFFIX="public"
+  fi
+
+  # Deterministic policy name: ee-{service_id_short}-{hash of domain+method+path}
+  SERVICE_ID_SHORT="${SERVICE_ID:0:8}"
+  ROUTE_HASH=$(echo "${SCOPE_DOMAIN}${METHOD}${ROUTE_PATH}" | md5 2>/dev/null || echo "${SCOPE_DOMAIN}${METHOD}${ROUTE_PATH}" | md5sum | cut -c1-8)
+  ROUTE_HASH="${ROUTE_HASH:0:8}"
+  POLICY_NAME="${SERVICE_ID_SHORT}-${GATEWAY_SUFFIX}-${ROUTE_HASH}"
+
+  # Build groups array for template
+  GROUPS_ARRAY=$(echo "$GROUPS_JSON" | jq -r '[.[] ]')
+
+  # Build gomplate context
+  CONTEXT_FILE="$OUTPUT_DIR/authorizationpolicy-${POLICY_NAME}-ctx.json"
+  jq -n \
+    --arg name          "$POLICY_NAME" \
+    --arg gateway_name  "$GATEWAY_NAME" \
+    --arg gateway_namespace "$GATEWAY_NAMESPACE" \
+    --arg service_id    "$SERVICE_ID" \
+    --arg host          "$SCOPE_DOMAIN" \
+    --arg path          "$ROUTE_PATH" \
+    --arg method        "$METHOD" \
+    --argjson groups    "$GROUPS_ARRAY" \
+    '{name: $name, gateway_name: $gateway_name, gateway_namespace: $gateway_namespace,
+      service_id: $service_id, host: $host, path: $path, method: $method, groups: $groups}' \
+    > "$CONTEXT_FILE"
+
+  POLICY_FILE="$OUTPUT_DIR/authorizationpolicy-${POLICY_NAME}.yaml"
+  gomplate -c ".=$CONTEXT_FILE" \
+    -f "$SERVICE_PATH/templates/istio/authorizationpolicy.yaml.tpl" \
+    -o "$POLICY_FILE"
+  rm "$CONTEXT_FILE"
+
+  echo "✅ AuthorizationPolicy generated: ee-${POLICY_NAME} (${METHOD} ${ROUTE_PATH} on ${SCOPE_DOMAIN})"
+done
+
+echo "=== ALLOW AuthorizationPolicies generated successfully ==="

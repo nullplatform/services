@@ -3,17 +3,27 @@
 set -euo pipefail
 
 CONTEXT="${CONTEXT:-${NP_ACTION_CONTEXT:-}}"
+AUTH_TYPE="${AUTH_TYPE:-avp}"
 
-RESULTS=$(echo "$CONTEXT" | jq \
-  --arg avp_policy_store_id "$AVP_POLICY_STORE_ID" \
-  '(.notification.parameters // .parameters // {}) + {
-    avp_policy_store_id: $avp_policy_store_id
-  }')
+if [[ "$AUTH_TYPE" == "avp" ]]; then
+  RESULTS=$(echo "$CONTEXT" | jq \
+    --arg avp_policy_store_id "$AVP_POLICY_STORE_ID" \
+    '(.notification.parameters // .parameters // {}) + {
+      avp_policy_store_id: $avp_policy_store_id
+    }')
 
-echo "Storing service results: avp_policy_store_id=$AVP_POLICY_STORE_ID"
-np service action update --results "$RESULTS"
+  echo "Storing service results: avp_policy_store_id=$AVP_POLICY_STORE_ID"
+  np service action update --results "$RESULTS"
 
-np service patch --id "$SERVICE_ID" \
-  --body "{\"attributes\": {\"avp_policy_store_id\": \"$AVP_POLICY_STORE_ID\"}}"
+  np service patch --id "$SERVICE_ID" \
+    --body "{\"attributes\": {\"avp_policy_store_id\": \"$AVP_POLICY_STORE_ID\"}}"
+
+else
+  RESULTS=$(echo "$CONTEXT" | jq \
+    '(.notification.parameters // .parameters // {})')
+
+  echo "Storing service results (istio-jwt)"
+  np service action update --results "$RESULTS"
+fi
 
 echo "✅ Service results stored"

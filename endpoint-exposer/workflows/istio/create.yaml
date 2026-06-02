@@ -27,10 +27,10 @@ steps:
         type: environment
       - name: APPLICATION_ID
         type: environment
-  - name: "ensure avp policy store"
-    type: script
-    file: "$SERVICE_PATH/scripts/avp/ensure_policy_store"
-    output:
+      - name: AUTH_TYPE
+        type: environment
+      - name: COGNITO_USER_POOL_ARN
+        type: environment
       - name: AVP_POLICY_STORE_ID
         type: environment
   - name: "build public httproute"
@@ -51,9 +51,11 @@ steps:
       - name: HTTPROUTE_PRIVATE_FILE
         type: file
         file: "$OUTPUT_DIR/httproute-$SERVICE_ID-private.yaml"
-  - name: "manage avp policies"
+  - name: "manage policies"
     type: script
-    file: "$SERVICE_PATH/scripts/avp/create_policies"
+    file: "$SERVICE_PATH/scripts/common/manage_policies"
+    configuration:
+      ACTION: "apply"
   - name: apply
     type: script
     file: "$SERVICE_PATH/scripts/common/apply"
