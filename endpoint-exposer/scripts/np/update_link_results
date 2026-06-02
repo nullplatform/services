@@ -3,6 +3,8 @@
 set -euo pipefail
 
 CONTEXT="${CONTEXT:-${NP_ACTION_CONTEXT:-}}"
+AUTH_TYPE="${AUTH_TYPE:-avp}"
+POLICY_IDS="${POLICY_IDS:-}"
 
 RESULTS=$(echo "$CONTEXT" | jq \
   --arg httproute_name "$HTTPROUTE_NAME" \
@@ -14,6 +16,6 @@ RESULTS=$(echo "$CONTEXT" | jq \
     scope: $scope
   }')
 
-echo "Storing link results: httproute_name=$HTTPROUTE_NAME, scope=$SCOPE, policy_ids=$POLICY_IDS"
+echo "Storing link results: httproute_name=$HTTPROUTE_NAME, scope=$SCOPE, auth_type=$AUTH_TYPE"
 np link action update --results "$RESULTS"
 echo "✅ Link results stored"
