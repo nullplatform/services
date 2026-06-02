@@ -95,6 +95,6 @@
     "route"
   ],
   "visible_to": [
-    "{{ env.Getenv \"NRN\" }}"
+    "{{ env.Getenv `NRN` }}"
   ]
 }
