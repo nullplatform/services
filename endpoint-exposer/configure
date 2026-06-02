@@ -63,6 +63,23 @@ if [ -z "${REPO_PATH:-}" ]; then
 fi
 stop_spinner_success "REPO_PATH found and loaded successfully."
 
+start_spinner "Validating that AUTH_TYPE has been loaded into the environment."
+if [ -z "${AUTH_TYPE:-}" ]; then
+  stop_spinner_error "AUTH_TYPE is not set. Expected: avp | istio-jwt."
+fi
+if [[ "$AUTH_TYPE" != "avp" && "$AUTH_TYPE" != "istio-jwt" ]]; then
+  stop_spinner_error "AUTH_TYPE='$AUTH_TYPE' is not valid. Expected: avp | istio-jwt."
+fi
+stop_spinner_success "AUTH_TYPE='$AUTH_TYPE' found and loaded successfully."
+
+if [[ "$AUTH_TYPE" == "istio-jwt" ]]; then
+  start_spinner "Validating that COGNITO_USER_POOL_ARN has been loaded into the environment."
+  if [ -z "${COGNITO_USER_POOL_ARN:-}" ]; then
+    stop_spinner_error "COGNITO_USER_POOL_ARN is required when AUTH_TYPE=istio-jwt."
+  fi
+  stop_spinner_success "COGNITO_USER_POOL_ARN found and loaded successfully."
+fi
+
 # --- Step 2: Generate and Create Service Specification ---
 
 SERVICE_SPEC_PATH="specs/service-spec.json"
@@ -160,3 +177,17 @@ NOTIFICATION_CHANNEL_ID=$(echo "$NOTIFICATION_CHANNEL" | jq -r .id)
 
 rm "$NOTIFICATION_CHANNEL_PATH"
 stop_spinner_success "Notification channel created successfully (id=$NOTIFICATION_CHANNEL_ID)."
+
+# --- Step 6: Apply Authorization Scheme to Cluster ---
+
+export SERVICE_PATH="$REPO_PATH"
+export OUTPUT_DIR="${TMPDIR:-/tmp}/endpoint-exposer-configure-$$"
+mkdir -p "$OUTPUT_DIR"
+
+start_spinner "Applying authorization scheme '$AUTH_TYPE' to the cluster."
+{
+  source "$SERVICE_PATH/scripts/istio/apply_auth_scheme"
+} || stop_spinner_error "Failed to apply authorization scheme '$AUTH_TYPE' to the cluster."
+stop_spinner_success "Authorization scheme '$AUTH_TYPE' applied to the cluster."
+
+rm -rf "$OUTPUT_DIR"
