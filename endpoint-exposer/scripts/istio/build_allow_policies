@@ -26,7 +26,15 @@ for i in $(seq 0 $((NUM_ROUTES - 1))); do
   METHOD=$(echo "$ROUTE" | jq -r '.method // "GET"')
   ROUTE_PATH=$(echo "$ROUTE" | jq -r '.path')
   SCOPE_SLUG=$(echo "$ROUTE" | jq -r '.scope')
-  GROUPS_JSON=$(echo "$ROUTE" | jq -c '.groups // []')
+  # groups can be a comma-separated string or a JSON array (backwards compat)
+  RAW_GROUPS=$(echo "$ROUTE" | jq -r '.groups // ""')
+  if echo "$RAW_GROUPS" | jq -e . >/dev/null 2>&1; then
+    # Already a JSON array
+    GROUPS_JSON=$(echo "$RAW_GROUPS" | jq -c '.')
+  else
+    # Comma-separated string → JSON array
+    GROUPS_JSON=$(echo "$RAW_GROUPS" | tr ',' '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | grep -v '^$' | jq -R . | jq -sc '.')
+  fi
 
   # Resolve scope → domain
   SCOPE_ID=$(echo "$SCOPES_JSON" | jq -r --arg name "$SCOPE_SLUG" '.[] | select(.name == $name) | .id')

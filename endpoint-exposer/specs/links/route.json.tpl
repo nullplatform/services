@@ -29,8 +29,7 @@
                   {
                     "type": "Control",
                     "label": "Authorized Groups",
-                    "scope": "#/properties/groups",
-                    "options": {"orientation": "vertical"}
+                    "scope": "#/properties/groups"
                   }
                 ]
               }
@@ -58,20 +57,10 @@
                 "title": "Path"
               },
               "groups": {
-                "type": "array",
+                "type": "string",
                 "title": "Authorized Groups",
-                "uniqueItems": true,
-                "items": {
-                  "type": "string",
-                  "enum": [
-                    "AWS_PlataformaUpstream_Gestor_Desa",
-                    "AWS_PlataformaUpstream_Programador_Desa",
-                    "AWS_PlataformaUpstream_Pulling_Desa",
-                    "AWS_PlataformaUpstream_Workover_Desa",
-                    "AWS_PlataformaUpstream_Visita_Desa",
-                    "AWS_PlataformaUpstream_Administrador_Desa"
-                  ]
-                }
+                "description": "Comma-separated list of groups allowed to access this route (e.g. pae-test-admins, pae-test-users). Leave empty to allow any authenticated user.",
+                "editableOn": ["create", "update"]
               }
             }
           }
