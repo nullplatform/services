@@ -32,10 +32,10 @@
             "label": "AVP Policy Store ID",
             "scope": "#/properties/avp_policy_store_id",
             "rule": {
-              "effect": "SHOW",
+              "effect": "HIDE",
               "condition": {
                 "scope": "#/properties/auth_type",
-                "schema": { "const": "avp" }
+                "schema": { "not": { "const": "avp" } }
               }
             }
           },
@@ -44,10 +44,10 @@
             "label": "Cognito User Pool ARN",
             "scope": "#/properties/cognito_user_pool_arn",
             "rule": {
-              "effect": "SHOW",
+              "effect": "HIDE",
               "condition": {
                 "scope": "#/properties/auth_type",
-                "schema": { "const": "istio-jwt" }
+                "schema": { "not": { "const": "istio-jwt" } }
               }
             }
           }
@@ -59,6 +59,7 @@
           "title": "Authorization Scheme",
           "description": "Authorization scheme to use for endpoint protection.",
           "enum": ["avp", "istio-jwt"],
+          "default": "avp",
           "editableOn": ["create"]
         },
         "avp_policy_store_id": {
