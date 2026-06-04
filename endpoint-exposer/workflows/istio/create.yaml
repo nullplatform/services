@@ -33,6 +33,9 @@ steps:
         type: environment
       - name: AVP_POLICY_STORE_ID
         type: environment
+  - name: "apply auth scheme"
+    type: script
+    file: "$SERVICE_PATH/scripts/istio/apply_auth_scheme"
   - name: "build public httproute"
     type: script
     file: "$SERVICE_PATH/scripts/istio/build_httproute"
