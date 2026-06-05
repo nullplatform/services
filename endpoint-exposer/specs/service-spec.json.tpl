@@ -9,6 +9,20 @@
         {"properties": {"deny_public_traffic": {"const": true}}},
         {"properties": {"deny_private_traffic": {"const": true}}}
       ],
+      "if": {
+        "properties": { "auth_type": { "const": "aws-avp" } }
+      },
+      "then": {
+        "required": ["avp_policy_store_arn"]
+      },
+      "else": {
+        "if": {
+          "properties": { "auth_type": { "const": "aws-cognito" } }
+        },
+        "then": {
+          "required": ["cognito_user_pool_arn"]
+        }
+      },
       "uiSchema": {
         "type": "VerticalLayout",
         "elements": [
