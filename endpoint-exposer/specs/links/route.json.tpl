@@ -16,6 +16,7 @@
             "scope": "#/properties/routes",
             "options": {
               "showSortButtons": true,
+              "elementLabelProp": "summary",
               "detail": {
                 "type": "VerticalLayout",
                 "elements": [
@@ -66,6 +67,12 @@
                 "title": "Authorized Groups",
                 "description": "Comma-separated list of groups allowed to access this route (e.g. pae-test-admins, pae-test-users). Leave empty to allow any authenticated user.",
                 "editableOn": ["create", "update"]
+              },
+              "summary": {
+                "type": "string",
+                "title": "Summary",
+                "editableOn": [],
+                "visibleOn": ["read"]
               }
             }
           }

@@ -13,7 +13,16 @@ RESULTS=$(echo "$CONTEXT" | jq \
   '(.notification.parameters // .parameters // {}) + {
     httproute_name: $httproute_name,
     policy_ids: $policy_ids,
-    scope: $scope
+    scope: $scope,
+    routes: ((.notification.parameters // .parameters // {}).routes // [] | map(
+      . + {
+        summary: (
+          (.path // "") + " | " +
+          (if (.methods | type) == "array" then (.methods | join(", ")) else (.method // "") end) + " | " +
+          (.groups // "")
+        )
+      }
+    ))
   }')
 
 echo "Storing link results: httproute_name=$HTTPROUTE_NAME, scope=$SCOPE, auth_type=$AUTH_TYPE"
