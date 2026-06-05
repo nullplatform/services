@@ -20,7 +20,7 @@
               "detail": {
                 "type": "VerticalLayout",
                 "elements": [
-                  {"type": "Control", "label": "Scopes", "scope": "#/properties/scopes"},
+                  {"type": "Control", "label": "Scope", "scope": "#/properties/scopes"},
                   {"type": "Control", "label": "HTTP Methods", "scope": "#/properties/methods"},
                   {"type": "Control", "label": "Path", "scope": "#/properties/path"},
                   {
@@ -45,18 +45,12 @@
             "required": ["scopes", "methods", "path", "groups"],
             "properties": {
               "scopes": {
-                "type": "array",
-                "title": "Scopes",
-                "description": "Select the scopes this rule applies to.",
-                "uniqueItems": true,
-                "minItems": 1,
+                "type": "string",
+                "title": "Scope",
+                "description": "Select the scope this rule applies to. Add multiple rules for multiple scopes.",
                 "editableOn": ["create", "update"],
-                "items": {
-                  "type": "string",
-                  "enum": ["(no scopes available)"],
-                  "additionalKeywords": {
-                    "enum": "[.scopes[]?.slug]"
-                  }
+                "additionalKeywords": {
+                  "enum": "[.scopes[]?.slug]"
                 }
               },
               "methods": {
