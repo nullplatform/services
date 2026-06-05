@@ -73,9 +73,10 @@
               "summary": {
                 "type": "string",
                 "title": "Rule Summary",
+                "description": "Auto-generated on save.",
                 "default": "New Rule",
                 "editableOn": ["create", "update"],
-                "visibleOn": ["read"]
+                "visibleOn": ["create", "update", "read"]
               }
             }
           }
