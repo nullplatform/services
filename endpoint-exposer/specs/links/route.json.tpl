@@ -20,7 +20,6 @@
               "detail": {
                 "type": "VerticalLayout",
                 "elements": [
-                  {"type": "Control", "label": "Scope", "scope": "#/properties/scopes"},
                   {"type": "Control", "label": "HTTP Methods", "scope": "#/properties/methods"},
                   {"type": "Control", "label": "Path", "scope": "#/properties/path"},
                   {
@@ -42,14 +41,8 @@
           "editableOn": ["create", "update"],
           "items": {
             "type": "object",
-            "required": ["scopes", "methods", "path", "groups"],
+            "required": ["methods", "path", "groups"],
             "properties": {
-              "scopes": {
-                "type": "string",
-                "title": "Scope",
-                "description": "Scope name this rule applies to (e.g. develop, staging, prod). Add multiple rules for multiple scopes.",
-                "editableOn": ["create", "update"]
-              },
               "methods": {
                 "type": "array",
                 "title": "HTTP Methods",
