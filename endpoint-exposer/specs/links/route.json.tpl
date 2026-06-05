@@ -45,10 +45,19 @@
             "required": ["scopes", "methods", "path", "groups"],
             "properties": {
               "scopes": {
-                "type": "string",
+                "type": "array",
                 "title": "Scopes",
-                "description": "Comma-separated scope names this rule applies to (e.g. develop, staging). Leave empty to apply to all scopes.",
-                "editableOn": ["create", "update"]
+                "description": "Select the scopes this rule applies to.",
+                "uniqueItems": true,
+                "minItems": 1,
+                "editableOn": ["create", "update"],
+                "items": {
+                  "type": "string",
+                  "enum": ["(no scopes available)"],
+                  "additionalKeywords": {
+                    "enum": "[.scopes[]?.slug]"
+                  }
+                }
               },
               "methods": {
                 "type": "array",
