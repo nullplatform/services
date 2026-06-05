@@ -72,7 +72,7 @@
     "provider": "Istio",
     "sub_category": "Access Control"
   },
-  "slug": "endpoint-exposer",
+  "slug": "http-route-access-control",
   "type": "dependency",
   "use_default_actions": true,
   "available_actions": [],
