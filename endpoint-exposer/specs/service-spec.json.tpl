@@ -5,20 +5,6 @@
       "type": "object",
       "$schema": "http://json-schema.org/draft-07/schema#",
       "required": ["auth_type"],
-      "if": {
-        "properties": { "auth_type": { "const": "avp" } }
-      },
-      "then": {
-        "required": ["avp_policy_store_id"]
-      },
-      "else": {
-        "if": {
-          "properties": { "auth_type": { "const": "istio-jwt" } }
-        },
-        "then": {
-          "required": ["cognito_user_pool_arn"]
-        }
-      },
       "uiSchema": {
         "type": "VerticalLayout",
         "elements": [
