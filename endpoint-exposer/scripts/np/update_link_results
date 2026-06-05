@@ -14,12 +14,13 @@ RESULTS=$(echo "$CONTEXT" | jq \
     httproute_name: $httproute_name,
     policy_ids: $policy_ids,
     scope: $scope,
-    routes: ((.notification.parameters // .parameters // {}).routes // [] | map(
-      . + {
+    routes: ((.notification.parameters // .parameters // {}).routes // [] | to_entries | map(
+      .value + {
         summary: (
-          (.path // "") + " | " +
-          (if (.methods | type) == "array" then (.methods | join(", ")) else (.method // "") end) + " | " +
-          (.groups // "")
+          "Rule #" + ((.key + 1) | tostring) + " — " +
+          (.value.path // "") + " | " +
+          (if (.value.methods | type) == "array" then (.value.methods | join(", ")) else (.value.method // "") end) + " | " +
+          (.value.groups // "")
         )
       }
     ))

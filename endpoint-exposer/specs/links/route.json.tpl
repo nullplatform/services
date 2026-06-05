@@ -26,6 +26,11 @@
                     "type": "Control",
                     "label": "Authorized Groups",
                     "scope": "#/properties/groups"
+                  },
+                  {
+                    "type": "Control",
+                    "label": "Rule Summary",
+                    "scope": "#/properties/summary"
                   }
                 ]
               }
@@ -65,9 +70,10 @@
               },
               "summary": {
                 "type": "string",
-                "title": "Summary",
+                "title": "Rule Summary",
+                "description": "Auto-generated on save. Do not edit manually.",
                 "editableOn": ["create", "update"],
-                "visibleOn": []
+                "visibleOn": ["create", "update", "read"]
               }
             }
           }
