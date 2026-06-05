@@ -10,9 +10,15 @@ echo "=== Building HTTPRoute for link ==="
 # Fetch all scopes for this application once
 ALL_SCOPES_JSON=$(np scope list --application_id "$APPLICATION_ID" --limit 200 --format json | jq '.results // []')
 
-# Collect all unique scope slugs from routes (new: .scopes[], legacy: .scope or global $SCOPE)
+# Collect all unique scope slugs from routes (new: .scopes string/array, legacy: .scope or global $SCOPE)
 SCOPE_SLUGS=$(echo "$ROUTES_JSON" | jq -r --arg fallback "$SCOPE" '
-  [.[] | (.scopes // [.scope] // [$fallback]) | .[]?] | unique | .[]')
+  [.[] | (
+    if (.scopes | type) == "array" then .scopes[]
+    elif (.scopes != null and .scopes != "") then (.scopes | split(",") | .[] | ltrimstr(" ") | rtrimstr(" "))
+    elif (.scope != null and .scope != "") then .scope
+    else $fallback
+    end
+  )] | unique | .[]')
 
 if [[ -z "$SCOPE_SLUGS" ]]; then
   SCOPE_SLUGS="$SCOPE"
@@ -82,8 +88,11 @@ EOF
 # Expand routes: one entry per scope for process_routes (backwards compat: scope as string)
 EXPANDED_ROUTES=$(echo "$ROUTES_JSON" | jq -c --arg fallback "$SCOPE" '
   [.[] | . as $route |
-    ($route.scopes // (if $route.scope then [$route.scope] else [$fallback] end)) |
-    .[] | $route + {scope: .}]')
+    (if ($route.scopes | type) == "array" then $route.scopes[]
+     elif ($route.scopes != null and $route.scopes != "") then ($route.scopes | split(",") | .[] | ltrimstr(" ") | rtrimstr(" "))
+     elif ($route.scope != null and $route.scope != "") then $route.scope
+     else $fallback
+     end) | $route + {scope: .}]')
 export ROUTES_JSON="$EXPANDED_ROUTES"
 export HTTPROUTE_FILE
 source "$SERVICE_PATH/scripts/istio/process_routes"

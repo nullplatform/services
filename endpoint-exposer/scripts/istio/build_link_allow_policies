@@ -53,9 +53,15 @@ for i in $(seq 0 $((NUM_ROUTES - 1))); do
   fi
   GROUPS_ARRAY=$(echo "$GROUPS_JSON" | jq -r '[.[] ]')
 
-  # Backwards compat: support new array (.scopes[]) and legacy string (.scope / global $SCOPE_DOMAIN)
-  ROUTE_SCOPES=$(echo "$ROUTE" | jq -r --arg fallback_scope "${SCOPE:-}" '
-    (.scopes // (if .scope then [.scope] else (if $fallback_scope != "" then [$fallback_scope] else [] end) end)) | .[]?')
+  # Parse scopes: comma-separated string, array, single .scope, or global $SCOPE fallback
+  RAW_SCOPES=$(echo "$ROUTE" | jq -r '.scopes // .scope // ""')
+  if echo "$RAW_SCOPES" | jq -e 'type == "array"' >/dev/null 2>&1; then
+    ROUTE_SCOPES=$(echo "$RAW_SCOPES" | jq -r '.[]')
+  elif [[ -n "$RAW_SCOPES" && "$RAW_SCOPES" != "null" ]]; then
+    ROUTE_SCOPES=$(echo "$RAW_SCOPES" | tr ',' '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | grep -v '^$')
+  else
+    ROUTE_SCOPES="${SCOPE:-}"
+  fi
 
   if [[ -z "$ROUTE_SCOPES" ]]; then
     echo "WARNING: Route $ROUTE_PATH has no scopes, skipping"

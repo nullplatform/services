@@ -42,21 +42,13 @@
           "editableOn": ["create", "update"],
           "items": {
             "type": "object",
-            "required": ["scopes", "methods", "path", "groups"],
+            "required": ["methods", "path", "groups"],
             "properties": {
               "scopes": {
-                "type": "array",
+                "type": "string",
                 "title": "Scopes",
-                "description": "Select one or more scopes this rule applies to.",
-                "uniqueItems": true,
-                "minItems": 1,
-                "editableOn": ["create", "update"],
-                "additionalKeywords": {
-                  "enum": "([.scopes[]?.slug] | if length == 0 then [\"(no scopes available)\"] else . end)"
-                },
-                "items": {
-                  "type": "string"
-                }
+                "description": "Comma-separated scope names this rule applies to (e.g. develop, staging). Leave empty to apply to all scopes.",
+                "editableOn": ["create", "update"]
               },
               "methods": {
                 "type": "array",
