@@ -32,7 +32,8 @@ if [[ -z "$SCOPE" ]]; then
 fi
 echo "Inferred scope: $SCOPE"
 
-AVP_POLICY_STORE_ID=$(echo "$CONTEXT" | jq -r '.service.attributes.avp_policy_store_id // .notification.parameters.avp_policy_store_id // ""')
+AVP_POLICY_STORE_ARN=$(echo "$CONTEXT" | jq -r '.service.attributes.avp_policy_store_arn // .notification.parameters.avp_policy_store_arn // ""')
+AVP_POLICY_STORE_ID=$(echo "$AVP_POLICY_STORE_ARN" | cut -d'/' -f2)
 
 AUTH_TYPE=$(echo "$CONTEXT" | jq -r '
   .service.attributes.auth_type //

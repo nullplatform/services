@@ -6,16 +6,19 @@ source "$SERVICE_PATH/scripts/avp/config"
 
 CONTEXT="${CONTEXT:-${NP_ACTION_CONTEXT:-}}"
 
-CONFIGURED_ID=$(echo "$CONTEXT" | jq -r '
-  .parameters.avp_policy_store_id //
-  .notification.parameters.avp_policy_store_id //
-  .service.attributes.avp_policy_store_id //
+CONFIGURED_ARN=$(echo "$CONTEXT" | jq -r '
+  .parameters.avp_policy_store_arn //
+  .notification.parameters.avp_policy_store_arn //
+  .service.attributes.avp_policy_store_arn //
   ""')
 
-if [[ -z "$CONFIGURED_ID" ]]; then
-  echo "ERROR: avp_policy_store_id is required. Set it in the service attributes when creating the service." >&2
+if [[ -z "$CONFIGURED_ARN" ]]; then
+  echo "ERROR: avp_policy_store_arn is required. Set it in the service attributes when creating the service." >&2
   exit 1
 fi
 
-echo "Using AVP policy store: $CONFIGURED_ID"
+# Extract policy store ID from ARN (arn:aws:verifiedpermissions::account:policy-store/{id})
+CONFIGURED_ID=$(echo "$CONFIGURED_ARN" | cut -d'/' -f2)
+
+echo "Using AVP policy store ARN: $CONFIGURED_ARN (id: $CONFIGURED_ID)"
 export AVP_POLICY_STORE_ID="$CONFIGURED_ID"

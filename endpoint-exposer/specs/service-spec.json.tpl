@@ -16,7 +16,7 @@
           {
             "type": "Control",
             "label": "AVP Policy Store ID",
-            "scope": "#/properties/avp_policy_store_id",
+            "scope": "#/properties/avp_policy_store_arn",
             "rule": {
               "effect": "HIDE",
               "condition": {
@@ -47,10 +47,10 @@
           "enum": ["aws-avp", "aws-cognito"],
           "editableOn": ["create"]
         },
-        "avp_policy_store_id": {
+        "avp_policy_store_arn": {
           "type": "string",
-          "title": "AVP Policy Store ID",
-          "description": "Amazon Verified Permissions Policy Store ID. Obtained from the 'policy_store_id' output of the security Terraform module.",
+          "title": "AVP Policy Store ARN",
+          "description": "ARN of the Amazon Verified Permissions Policy Store (arn:aws:verifiedpermissions::account-id:policy-store/id).",
           "editableOn": ["create"]
         },
         "cognito_user_pool_arn": {
