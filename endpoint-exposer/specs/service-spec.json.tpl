@@ -21,7 +21,7 @@
               "effect": "HIDE",
               "condition": {
                 "scope": "#/properties/auth_type",
-                "schema": { "not": { "const": "avp" } }
+                "schema": { "not": { "const": "aws-avp" } }
               }
             }
           },
@@ -33,7 +33,7 @@
               "effect": "HIDE",
               "condition": {
                 "scope": "#/properties/auth_type",
-                "schema": { "not": { "const": "istio-jwt" } }
+                "schema": { "not": { "const": "aws-cognito" } }
               }
             }
           }
@@ -44,7 +44,7 @@
           "type": "string",
           "title": "Authorization Scheme",
           "description": "Authorization scheme to use for endpoint protection.",
-          "enum": ["avp", "istio-jwt"],
+          "enum": ["aws-avp", "aws-cognito"],
           "editableOn": ["create"]
         },
         "avp_policy_store_id": {

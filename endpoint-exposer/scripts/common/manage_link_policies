@@ -3,12 +3,12 @@
 set -euo pipefail
 
 ACTION="${ACTION:-apply}"
-AUTH_TYPE="${AUTH_TYPE:-avp}"
+AUTH_TYPE="${AUTH_TYPE:-aws-avp}"
 
 echo "=== Managing link policies: auth_type=$AUTH_TYPE action=$ACTION ==="
 
 case "$AUTH_TYPE" in
-  avp)
+  aws-avp)
     case "$ACTION" in
       apply)
         source "$SERVICE_PATH/scripts/avp/ensure_policy_store"
@@ -24,7 +24,7 @@ case "$AUTH_TYPE" in
     esac
     ;;
 
-  istio-jwt)
+  aws-cognito)
     case "$ACTION" in
       apply)
         source "$SERVICE_PATH/scripts/istio/build_link_allow_policies"

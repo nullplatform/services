@@ -3,9 +3,9 @@
 set -euo pipefail
 
 CONTEXT="${CONTEXT:-${NP_ACTION_CONTEXT:-}}"
-AUTH_TYPE="${AUTH_TYPE:-avp}"
+AUTH_TYPE="${AUTH_TYPE:-aws-avp}"
 
-if [[ "$AUTH_TYPE" == "avp" ]]; then
+if [[ "$AUTH_TYPE" == "aws-avp" ]]; then
   RESULTS=$(echo "$CONTEXT" | jq \
     --arg avp_policy_store_id "$AVP_POLICY_STORE_ID" \
     '(.notification.parameters // .parameters // {}) + {
@@ -22,7 +22,7 @@ else
   RESULTS=$(echo "$CONTEXT" | jq \
     '(.notification.parameters // .parameters // {})')
 
-  echo "Storing service results (istio-jwt)"
+  echo "Storing service results (aws-cognito)"
   np service action update --results "$RESULTS"
 fi
 

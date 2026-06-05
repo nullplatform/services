@@ -4,16 +4,16 @@ set -euo pipefail
 
 # Router: delegates to AVP or Istio-JWT policy management based on AUTH_TYPE.
 # Required env vars:
-#   AUTH_TYPE    - "avp" or "istio-jwt"
+#   AUTH_TYPE    - "aws-avp" or "aws-cognito"
 #   ACTION       - "apply" (create/update) or "delete"
 
 ACTION="${ACTION:-apply}"
-AUTH_TYPE="${AUTH_TYPE:-avp}"
+AUTH_TYPE="${AUTH_TYPE:-aws-avp}"
 
 echo "=== Managing policies: auth_type=$AUTH_TYPE action=$ACTION ==="
 
 case "$AUTH_TYPE" in
-  avp)
+  aws-avp)
     case "$ACTION" in
       apply)
         source "$SERVICE_PATH/scripts/avp/ensure_policy_store"
@@ -33,7 +33,7 @@ case "$AUTH_TYPE" in
     esac
     ;;
 
-  istio-jwt)
+  aws-cognito)
     case "$ACTION" in
       apply|sync)
         source "$SERVICE_PATH/scripts/istio/build_allow_policies"
@@ -49,7 +49,7 @@ case "$AUTH_TYPE" in
     ;;
 
   *)
-    echo "ERROR: Unknown AUTH_TYPE='$AUTH_TYPE' (expected: avp | istio-jwt)"
+    echo "ERROR: Unknown AUTH_TYPE='$AUTH_TYPE' (expected: aws-avp | aws-cognito)"
     exit 1
     ;;
 esac

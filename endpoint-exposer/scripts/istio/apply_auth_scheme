@@ -66,12 +66,12 @@ _render_request_authentication() {
 
 # Validate AUTH_TYPE
 if [[ -z "$AUTH_TYPE" ]]; then
-  echo "ERROR: AUTH_TYPE is not set (expected: avp | istio-jwt)"
+  echo "ERROR: AUTH_TYPE is not set (expected: aws-avp | aws-cognito)"
   exit 1
 fi
 
-if [[ "$AUTH_TYPE" != "avp" && "$AUTH_TYPE" != "istio-jwt" ]]; then
-  echo "ERROR: Unknown AUTH_TYPE='$AUTH_TYPE' (expected: avp | istio-jwt)"
+if [[ "$AUTH_TYPE" != "aws-avp" && "$AUTH_TYPE" != "aws-cognito" ]]; then
+  echo "ERROR: Unknown AUTH_TYPE='$AUTH_TYPE' (expected: aws-avp | aws-cognito)"
   exit 1
 fi
 
@@ -86,10 +86,10 @@ for gateway_name in "$PUBLIC_GATEWAY_NAME" "$PRIVATE_GATEWAY_NAME"; do
   echo "✅ deny-all-${suffix} applied"
 done
 
-# Apply RequestAuthentication only for istio-jwt
-if [[ "$AUTH_TYPE" == "istio-jwt" ]]; then
+# Apply RequestAuthentication only for aws-cognito
+if [[ "$AUTH_TYPE" == "aws-cognito" ]]; then
   if [[ -z "$COGNITO_USER_POOL_ARN" ]]; then
-    echo "ERROR: COGNITO_USER_POOL_ARN is required for auth_type=istio-jwt"
+    echo "ERROR: COGNITO_USER_POOL_ARN is required for auth_type=aws-cognito"
     exit 1
   fi
 

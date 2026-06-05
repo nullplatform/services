@@ -33,7 +33,7 @@ AUTH_TYPE=$(echo "$CONTEXT" | jq -r '
   .parameters.auth_type //
   .notification.parameters.auth_type //
   .service.attributes.auth_type //
-  "avp"')
+  "aws-avp"')
 
 COGNITO_USER_POOL_ARN=$(echo "$CONTEXT" | jq -r '
   .parameters.cognito_user_pool_arn //
