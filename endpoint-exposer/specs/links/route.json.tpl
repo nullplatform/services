@@ -12,10 +12,11 @@
         "type": "VerticalLayout",
         "elements": [
           {
-            "type": "ListWithDetail",
+            "type": "Control",
             "scope": "#/properties/routes",
             "options": {
               "elementLabelProp": "summary",
+              "showSortButtons": true,
               "detail": {
                 "type": "VerticalLayout",
                 "elements": [
@@ -30,6 +31,11 @@
                     "type": "Control",
                     "label": "Authorized Groups",
                     "scope": "#/properties/groups"
+                  },
+                  {
+                    "type": "Control",
+                    "label": "Summary",
+                    "scope": "#/properties/summary"
                   }
                 ]
               }
