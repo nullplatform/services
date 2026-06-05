@@ -28,4 +28,14 @@ RESULTS=$(echo "$CONTEXT" | jq \
 
 echo "Storing link results: httproute_name=$HTTPROUTE_NAME, scope=$SCOPE, auth_type=$AUTH_TYPE"
 np link action update --results "$RESULTS"
+
+# Sync computed summary back to parameters so NP edit form loads correct labels
+LINK_ID=$(echo "$CONTEXT" | jq -r '.link.id // empty')
+if [[ -n "$LINK_ID" && "$LINK_ID" != "null" ]]; then
+  UPDATED_ROUTES=$(echo "$RESULTS" | jq -c '.routes // []')
+  np link update --id "$LINK_ID" --attributes "{\"routes\": $UPDATED_ROUTES}" 2>/dev/null && \
+    echo "✅ Link parameters synced with computed summary" || \
+    echo "⚠️  Could not sync parameters (non-fatal)"
+fi
+
 echo "✅ Link results stored"
