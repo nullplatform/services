@@ -23,14 +23,20 @@ HTTPROUTE_NAME="ee-link-${LINK_ID}"
 LINK_DIMENSIONS=$(echo "$CONTEXT" | jq -c '.service.dimensions // {}')
 echo "Inferring scope from dimensions: $LINK_DIMENSIONS"
 SCOPES_JSON=$(np scope list --application_id "$APPLICATION_ID" --limit 200 --format json | jq '.results // []')
-SCOPE=$(echo "$SCOPES_JSON" | jq -r \
+
+# Get ALL scopes matching dimensions (not just the first)
+ALL_SCOPES=$(echo "$SCOPES_JSON" | jq -c \
   --argjson dims "$LINK_DIMENSIONS" \
-  '[.[] | select(.name | startswith("deleted-") | not) | select(.dimensions == $dims)] | .[0].name // empty')
-if [[ -z "$SCOPE" ]]; then
-  echo "ERROR: Could not infer scope from dimensions: $LINK_DIMENSIONS"
+  '[.[] | select(.name | startswith("deleted-") | not) | select(.dimensions == $dims) | .name]')
+
+if [[ "$ALL_SCOPES" == "[]" || -z "$ALL_SCOPES" ]]; then
+  echo "ERROR: Could not find any scope matching dimensions: $LINK_DIMENSIONS"
   exit 1
 fi
-echo "Inferred scope: $SCOPE"
+echo "Found scopes for dimensions $LINK_DIMENSIONS: $ALL_SCOPES"
+
+# Keep SCOPE as the first match for backwards compat with scripts that need a single value
+SCOPE=$(echo "$ALL_SCOPES" | jq -r '.[0]')
 
 AVP_POLICY_STORE_ARN=$(echo "$CONTEXT" | jq -r '.service.attributes.avp_policy_store_arn // .notification.parameters.avp_policy_store_arn // ""')
 AVP_POLICY_STORE_ID=$(echo "$AVP_POLICY_STORE_ARN" | cut -d'/' -f2)
@@ -60,6 +66,7 @@ export ACTION_ID
 export APPLICATION_ID
 export ROUTES_JSON
 export SCOPE
+export ALL_SCOPES
 export HTTPROUTE_NAME
 export K8S_NAMESPACE
 export AVP_POLICY_STORE_ID

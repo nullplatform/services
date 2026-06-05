@@ -21,6 +21,8 @@ steps:
         type: environment
       - name: SCOPE
         type: environment
+      - name: ALL_SCOPES
+        type: environment
       - name: HTTPROUTE_NAME
         type: environment
       - name: K8S_NAMESPACE

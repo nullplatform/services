@@ -5,20 +5,13 @@ set -euo pipefail
 source "$SERVICE_PATH/scripts/istio/config"
 source "$SERVICE_PATH/scripts/avp/config"
 
-echo "=== Building HTTPRoute for link ==="
+echo "=== Building HTTPRoute for link (scopes: $ALL_SCOPES) ==="
 
 # Fetch all scopes for this application once
 ALL_SCOPES_JSON=$(np scope list --application_id "$APPLICATION_ID" --limit 200 --format json | jq '.results // []')
 
-# Collect all unique scope slugs from routes (new: .scopes string/array, legacy: .scope or global $SCOPE)
-SCOPE_SLUGS=$(echo "$ROUTES_JSON" | jq -r --arg fallback "$SCOPE" '
-  [.[] | (
-    if (.scopes | type) == "array" then .scopes[]
-    elif (.scopes != null and .scopes != "") then (.scopes | split(",") | .[] | ltrimstr(" ") | rtrimstr(" "))
-    elif (.scope != null and .scope != "") then .scope
-    else $fallback
-    end
-  )] | unique | .[]')
+# Use ALL_SCOPES from context (all matching dimensions)
+SCOPE_SLUGS=$(echo "$ALL_SCOPES" | jq -r '.[]')
 
 if [[ -z "$SCOPE_SLUGS" ]]; then
   SCOPE_SLUGS="$SCOPE"
@@ -86,13 +79,9 @@ ${HOSTNAMES_YAML}  rules: []
 EOF
 
 # Expand routes: one entry per scope for process_routes (backwards compat: scope as string)
-EXPANDED_ROUTES=$(echo "$ROUTES_JSON" | jq -c --arg fallback "$SCOPE" '
-  [.[] | . as $route |
-    (if ($route.scopes | type) == "array" then $route.scopes[]
-     elif ($route.scopes != null and $route.scopes != "") then ($route.scopes | split(",") | .[] | ltrimstr(" ") | rtrimstr(" "))
-     elif ($route.scope != null and $route.scope != "") then $route.scope
-     else $fallback
-     end) | $route + {scope: .}]')
+# Expand routes: one entry per scope from ALL_SCOPES (all matching dimensions)
+EXPANDED_ROUTES=$(echo "$ROUTES_JSON" | jq -c --argjson all_scopes "$ALL_SCOPES" '
+  [.[] | . as $route | $all_scopes[] | $route + {scope: .}]')
 export ROUTES_JSON="$EXPANDED_ROUTES"
 export HTTPROUTE_FILE
 source "$SERVICE_PATH/scripts/istio/process_routes"
