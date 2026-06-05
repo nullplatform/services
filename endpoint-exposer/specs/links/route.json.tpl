@@ -47,8 +47,11 @@
               "target_scope": {
                 "type": "string",
                 "title": "Scope",
-                "description": "Scope this rule applies to (e.g. develop, staging). Add multiple rules for multiple scopes.",
-                "editableOn": ["create", "update"]
+                "description": "Select the scope this rule applies to. Add multiple rules for multiple scopes.",
+                "editableOn": ["create", "update"],
+                "additionalKeywords": {
+                  "enum": "[.scopes[]?.slug]"
+                }
               },
               "methods": {
                 "type": "array",
