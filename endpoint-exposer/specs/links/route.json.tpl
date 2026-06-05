@@ -15,7 +15,7 @@
             "type": "Control",
             "scope": "#/properties/routes",
             "options": {
-              "showArrayTableSortButtons": true,
+              "showSortButtons": true,
               "detail": {
                 "type": "VerticalLayout",
                 "elements": [
