@@ -51,11 +51,11 @@
                 "uniqueItems": true,
                 "minItems": 1,
                 "editableOn": ["create", "update"],
+                "additionalKeywords": {
+                  "enum": "([.scopes[]?.slug] | if length == 0 then [\"(no scopes available)\"] else . end)"
+                },
                 "items": {
-                  "type": "string",
-                  "additionalKeywords": {
-                    "enum": "[.scopes[]?.slug]"
-                  }
+                  "type": "string"
                 }
               },
               "methods": {
