@@ -66,7 +66,7 @@
               "summary": {
                 "type": "string",
                 "title": "Summary",
-                "editableOn": [],
+                "editableOn": ["create", "update"],
                 "visibleOn": []
               }
             }
