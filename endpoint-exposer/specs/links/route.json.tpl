@@ -75,7 +75,7 @@
                 "title": "Rule Summary",
                 "default": "New Rule",
                 "editableOn": ["create", "update"],
-                "visibleOn": []
+                "visibleOn": ["read"]
               }
             }
           }
