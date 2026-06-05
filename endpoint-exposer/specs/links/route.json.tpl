@@ -20,6 +20,7 @@
               "detail": {
                 "type": "VerticalLayout",
                 "elements": [
+                  {"type": "Control", "label": "Scope (optional)", "scope": "#/properties/target_scope"},
                   {"type": "Control", "label": "HTTP Methods", "scope": "#/properties/methods"},
                   {"type": "Control", "label": "Path", "scope": "#/properties/path"},
                   {
@@ -43,6 +44,12 @@
             "type": "object",
             "required": ["methods", "path", "groups"],
             "properties": {
+              "target_scope": {
+                "type": "string",
+                "title": "Scope",
+                "description": "Optional. Scope name to apply this rule to (e.g. develop). Leave empty to apply to ALL scopes matching the service dimension.",
+                "editableOn": ["create", "update"]
+              },
               "methods": {
                 "type": "array",
                 "title": "HTTP Methods",

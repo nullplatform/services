@@ -10,8 +10,9 @@ echo "=== Building HTTPRoute for link (scopes: $ALL_SCOPES) ==="
 # Fetch all scopes for this application once
 ALL_SCOPES_JSON=$(np scope list --application_id "$APPLICATION_ID" --limit 200 --format json | jq '.results // []')
 
-# Use ALL_SCOPES from context (all matching dimensions)
-SCOPE_SLUGS=$(echo "$ALL_SCOPES" | jq -r '.[]')
+# Collect unique scopes: target_scope per route if set, otherwise ALL_SCOPES
+SCOPE_SLUGS=$(echo "$ROUTES_JSON" | jq -r --argjson all_scopes "$ALL_SCOPES" '
+  [.[] | if (.target_scope != null and .target_scope != "") then .target_scope else $all_scopes[] end] | unique | .[]')
 
 if [[ -z "$SCOPE_SLUGS" ]]; then
   SCOPE_SLUGS="$SCOPE"
@@ -79,9 +80,14 @@ ${HOSTNAMES_YAML}  rules: []
 EOF
 
 # Expand routes: one entry per scope for process_routes (backwards compat: scope as string)
-# Expand routes: one entry per scope from ALL_SCOPES (all matching dimensions)
+# Expand routes: if target_scope is set use it, otherwise expand across ALL_SCOPES
 EXPANDED_ROUTES=$(echo "$ROUTES_JSON" | jq -c --argjson all_scopes "$ALL_SCOPES" '
-  [.[] | . as $route | $all_scopes[] | $route + {scope: .}]')
+  [.[] | . as $route |
+    if ($route.target_scope != null and $route.target_scope != "") then
+      [$route.target_scope]
+    else
+      $all_scopes
+    end | .[] | $route + {scope: .}]')
 export ROUTES_JSON="$EXPANDED_ROUTES"
 export HTTPROUTE_FILE
 source "$SERVICE_PATH/scripts/istio/process_routes"

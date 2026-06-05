@@ -53,8 +53,13 @@ for i in $(seq 0 $((NUM_ROUTES - 1))); do
   fi
   GROUPS_ARRAY=$(echo "$GROUPS_JSON" | jq -r '[.[] ]')
 
-  # Use ALL_SCOPES (all scopes matching dimensions) for policy generation
-  ROUTE_SCOPES=$(echo "$ALL_SCOPES" | jq -r '.[]')
+  # If target_scope is set, use only that scope; otherwise use ALL_SCOPES
+  ROUTE_TARGET=$(echo "$ROUTE" | jq -r '.target_scope // ""')
+  if [[ -n "$ROUTE_TARGET" && "$ROUTE_TARGET" != "null" ]]; then
+    ROUTE_SCOPES="$ROUTE_TARGET"
+  else
+    ROUTE_SCOPES=$(echo "$ALL_SCOPES" | jq -r '.[]')
+  fi
 
   if [[ -z "$ROUTE_SCOPES" ]]; then
     echo "WARNING: Route $ROUTE_PATH has no scopes, skipping"
