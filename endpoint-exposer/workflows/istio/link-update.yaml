@@ -27,18 +27,15 @@ steps:
         type: environment
       - name: AVP_POLICY_STORE_ID
         type: environment
-  - name: "ensure avp policy store"
-    type: script
-    file: "$SERVICE_PATH/scripts/avp/ensure_policy_store"
-    output:
-      - name: AVP_POLICY_STORE_ID
+      - name: AUTH_TYPE
         type: environment
-  - name: "delete avp policies"
-    type: script
-    file: "$SERVICE_PATH/scripts/avp/delete_link_policies_by_name"
-    output:
-      - name: POLICIES_DELETED
+      - name: COGNITO_USER_POOL_ARN
         type: environment
+  - name: "delete old policies"
+    type: script
+    file: "$SERVICE_PATH/scripts/common/manage_link_policies"
+    configuration:
+      ACTION: "delete"
   - name: "build httproute"
     type: script
     file: "$SERVICE_PATH/scripts/istio/build_link_httproute"
@@ -49,12 +46,11 @@ steps:
         type: environment
       - name: HTTPROUTE_NAME
         type: environment
-  - name: "create avp policy"
+  - name: "manage link policies"
     type: script
-    file: "$SERVICE_PATH/scripts/avp/create_link_policy"
-    output:
-      - name: POLICY_IDS
-        type: environment
+    file: "$SERVICE_PATH/scripts/common/manage_link_policies"
+    configuration:
+      ACTION: "apply"
   - name: "apply"
     type: script
     file: "$SERVICE_PATH/scripts/common/apply"
