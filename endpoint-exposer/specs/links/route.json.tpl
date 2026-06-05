@@ -20,22 +20,12 @@
               "detail": {
                 "type": "VerticalLayout",
                 "elements": [
-                  {
-                    "type": "HorizontalLayout",
-                    "elements": [
-                      {"type": "Control", "label": "HTTP Methods", "scope": "#/properties/methods"}
-                    ]
-                  },
+                  {"type": "Control", "label": "HTTP Methods", "scope": "#/properties/methods"},
                   {"type": "Control", "label": "Path", "scope": "#/properties/path"},
                   {
                     "type": "Control",
                     "label": "Authorized Groups",
                     "scope": "#/properties/groups"
-                  },
-                  {
-                    "type": "Control",
-                    "label": "Summary",
-                    "scope": "#/properties/summary"
                   }
                 ]
               }
@@ -46,8 +36,8 @@
       "properties": {
         "routes": {
           "type": "array",
-          "title": "Routes",
-          "description": "HTTP routes to expose",
+          "title": "Expose Rules",
+          "description": "Configure which HTTP paths and methods are exposed, and who can access them.",
           "editableOn": ["create", "update"],
           "items": {
             "type": "object",
@@ -77,7 +67,7 @@
                 "type": "string",
                 "title": "Summary",
                 "editableOn": [],
-                "visibleOn": ["read"]
+                "visibleOn": []
               }
             }
           }
