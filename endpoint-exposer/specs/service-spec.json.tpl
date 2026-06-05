@@ -19,7 +19,7 @@
           },
           {
             "type": "Control",
-            "label": "AVP Policy Store ID",
+            "label": "AVP Policy Store ARN",
             "scope": "#/properties/avp_policy_store_arn",
             "rule": {
               "effect": "HIDE",
