@@ -12,7 +12,7 @@
         "visibility": "private",
         "path": "/api/admin",
         "scope": "admin:read",
-        "method": "GET"
+        "methods": ["GET"]
       }
     ],
     "public_domain": "",
@@ -36,7 +36,7 @@
           "visibility": "private",
           "path": "/api/admin",
           "scope": "admin:read",
-          "method": "GET"
+          "methods": ["GET"]
         }
       ],
       "public_domain": "",

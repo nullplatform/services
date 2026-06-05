@@ -22,7 +22,7 @@
                   {
                     "type": "HorizontalLayout",
                     "elements": [
-                      {"type": "Control", "label": "HTTP Method", "scope": "#/properties/method"}
+                      {"type": "Control", "label": "HTTP Methods", "scope": "#/properties/methods"}
                     ]
                   },
                   {"type": "Control", "label": "Path", "scope": "#/properties/path"},
@@ -45,12 +45,17 @@
           "editableOn": ["create", "update"],
           "items": {
             "type": "object",
-            "required": ["method", "path"],
+            "required": ["methods", "path"],
             "properties": {
-              "method": {
-                "type": "string",
-                "title": "HTTP Method",
-                "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
+              "methods": {
+                "type": "array",
+                "title": "HTTP Methods",
+                "items": {
+                  "type": "string",
+                  "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
+                },
+                "uniqueItems": true,
+                "minItems": 1
               },
               "path": {
                 "type": "string",

@@ -23,28 +23,41 @@ SCOPES_JSON=$(np scope list --application_id "$APPLICATION_ID" --limit 200 --for
 
 for i in $(seq 0 $((NUM_ROUTES - 1))); do
   ROUTE=$(echo "$ROUTES_JSON" | jq -c ".[$i]")
-  METHOD=$(echo "$ROUTE" | jq -r '.method')
   ROUTE_PATH=$(echo "$ROUTE" | jq -r '.path')
   SCOPE_SLUG=$(echo "$ROUTE" | jq -r '.scope')
   GROUPS_JSON=$(echo "$ROUTE" | jq -c '.groups // []')
   NUM_GROUPS=$(echo "$GROUPS_JSON" | jq 'length')
 
+  # Backwards compat: support new array format (.methods) and legacy string (.method)
+  RAW_METHODS=$(echo "$ROUTE" | jq -c '.methods // (.method // null)')
+  if echo "$RAW_METHODS" | jq -e 'type == "array"' >/dev/null 2>&1; then
+    METHODS_JSON="$RAW_METHODS"
+  elif [[ -n "$RAW_METHODS" && "$RAW_METHODS" != "null" ]]; then
+    METHODS_JSON=$(echo "$RAW_METHODS" | jq -R '[.]')
+  else
+    METHODS_JSON='[]'
+  fi
+
   SCOPE_ID=$(echo "$SCOPES_JSON" | jq -r --arg name "$SCOPE_SLUG" '.[] | select(.name == $name) | .id')
   if [[ -z "$SCOPE_ID" ]] || [[ "$SCOPE_ID" == "null" ]]; then
-    echo "WARNING: Could not resolve scope '$SCOPE_SLUG', skipping route $METHOD $ROUTE_PATH"
+    echo "WARNING: Could not resolve scope '$SCOPE_SLUG', skipping route $ROUTE_PATH"
     continue
   fi
 
   SCOPE_DOMAIN=$(np scope read --id "$SCOPE_ID" --format json | jq -r '.domain // ""')
   if [[ -z "$SCOPE_DOMAIN" ]] || [[ "$SCOPE_DOMAIN" == "null" ]]; then
-    echo "WARNING: Scope '$SCOPE_SLUG' (id: $SCOPE_ID) has no domain, skipping route $METHOD $ROUTE_PATH"
+    echo "WARNING: Scope '$SCOPE_SLUG' (id: $SCOPE_ID) has no domain, skipping route $ROUTE_PATH"
     continue
   fi
 
-  if [[ "$NUM_GROUPS" -gt 0 ]]; then
-    GROUP_CONDITIONS=$(echo "$GROUPS_JSON" | jq -r \
-      'map("principal in ApiAccess::Group::\"" + . + "\"") | join(" ||\n        ")')
-    CEDAR_STATEMENT="permit (
+  NUM_METHODS=$(echo "$METHODS_JSON" | jq 'length')
+  for ((j=0; j<NUM_METHODS; j++)); do
+    METHOD=$(echo "$METHODS_JSON" | jq -r ".[$j]")
+
+    if [[ "$NUM_GROUPS" -gt 0 ]]; then
+      GROUP_CONDITIONS=$(echo "$GROUPS_JSON" | jq -r \
+        'map("principal in ApiAccess::Group::\"" + . + "\"") | join(" ||\n        ")')
+      CEDAR_STATEMENT="permit (
     principal,
     action == ApiAccess::Action::\"$METHOD\",
     resource
@@ -55,8 +68,8 @@ when {
     resource.host == \"$SCOPE_DOMAIN\" &&
     resource.path == \"$ROUTE_PATH\"
 };"
-  else
-    CEDAR_STATEMENT="permit (
+    else
+      CEDAR_STATEMENT="permit (
     principal,
     action == ApiAccess::Action::\"$METHOD\",
     resource
@@ -66,26 +79,27 @@ when {
     resource.host == \"$SCOPE_DOMAIN\" &&
     resource.path == \"$ROUTE_PATH\"
 };"
-  fi
+    fi
 
-  DESCRIPTION="endpoint-exposer|service-id=$SERVICE_ID|route=$METHOD:$ROUTE_PATH|scope=$SCOPE_ID"
+    DESCRIPTION="endpoint-exposer|service-id=$SERVICE_ID|route=$METHOD:$ROUTE_PATH|scope=$SCOPE_ID"
 
-  DEFINITION=$(jq -n \
-    --arg desc "$DESCRIPTION" \
-    --arg stmt "$CEDAR_STATEMENT" \
-    '{"static": {"description": $desc, "statement": $stmt}}')
+    DEFINITION=$(jq -n \
+      --arg desc "$DESCRIPTION" \
+      --arg stmt "$CEDAR_STATEMENT" \
+      '{"static": {"description": $desc, "statement": $stmt}}')
 
-  POLICY_ID=$(aws verifiedpermissions create-policy \
-    --policy-store-id "$AVP_POLICY_STORE_ID" \
-    --region "$AVP_AWS_REGION" \
-    --definition "$DEFINITION" \
-    --query 'policyId' --output text) || { echo "ERROR: Failed to create Cedar policy for $METHOD $ROUTE_PATH"; exit 1; }
+    POLICY_ID=$(aws verifiedpermissions create-policy \
+      --policy-store-id "$AVP_POLICY_STORE_ID" \
+      --region "$AVP_AWS_REGION" \
+      --definition "$DEFINITION" \
+      --query 'policyId' --output text) || { echo "ERROR: Failed to create Cedar policy for $METHOD $ROUTE_PATH"; exit 1; }
 
-  if [[ -z "$POLICY_ID" ]] || [[ "$POLICY_ID" == "None" ]]; then
-    echo "ERROR: Policy creation returned no policyId for $METHOD $ROUTE_PATH"
-    exit 1
-  fi
+    if [[ -z "$POLICY_ID" ]] || [[ "$POLICY_ID" == "None" ]]; then
+      echo "ERROR: Policy creation returned no policyId for $METHOD $ROUTE_PATH"
+      exit 1
+    fi
 
-  echo "✅ Cedar policy created: $METHOD $ROUTE_PATH @ $SCOPE_DOMAIN (groups: $NUM_GROUPS, policy-id: $POLICY_ID)"
+    echo "✅ Cedar policy created: $METHOD $ROUTE_PATH @ $SCOPE_DOMAIN (groups: $NUM_GROUPS, policy-id: $POLICY_ID)"
+  done
 done
 fi

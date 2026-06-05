@@ -68,19 +68,22 @@ for ((i=0; i<NUM_ROUTES; i++)); do
 
   # Extract route details
   ROUTE=$(echo "$ROUTES_JSON" | jq ".[$i]")
-  METHOD=$(echo "$ROUTE" | jq -r '.method')
   ROUTE_PATH=$(echo "$ROUTE" | jq -r '.path')
   SCOPE_SLUG=$(echo "$ROUTE" | jq -r '.scope')
 
-  echo "Method: $METHOD"
+  # Backwards compat: support new array format (.methods) and legacy string (.method)
+  RAW_METHODS=$(echo "$ROUTE" | jq -c '.methods // (.method // null)')
+  if echo "$RAW_METHODS" | jq -e 'type == "array"' >/dev/null 2>&1; then
+    METHODS_JSON="$RAW_METHODS"
+  elif [[ -n "$RAW_METHODS" && "$RAW_METHODS" != "null" ]]; then
+    METHODS_JSON=$(echo "$RAW_METHODS" | jq -R '[.]')
+  else
+    METHODS_JSON='[]'
+  fi
+
+  echo "Methods: $METHODS_JSON"
   echo "Path: $ROUTE_PATH"
   echo "Scope: $SCOPE_SLUG"
-
-  # If method is empty, null, or "*", don't set it (allow all methods)
-  if [[ -z "$METHOD" || "$METHOD" == "null" || "$METHOD" == "*" ]]; then
-    echo "INFO: Method is empty/null/*, will match all HTTP methods"
-    unset METHOD
-  fi
 
   # Get scope ID from scope name using the cached scopes
   SCOPE_ID=$(echo "$SCOPES_JSON" | jq -r ".[] | select(.name == \"$SCOPE_SLUG\") | .id")
@@ -92,18 +95,27 @@ for ((i=0; i<NUM_ROUTES; i++)); do
 
   echo "Scope ID: $SCOPE_ID"
 
-  # Export variables needed by build_rule
-  export SCOPE_ID
-  export RULE_PATH="$ROUTE_PATH"
-  export METHOD
+  NUM_METHODS=$(echo "$METHODS_JSON" | jq 'length')
 
-  # Build rule for this scope
-  echo "Building rule for scope $SCOPE_ID..."
-  source "$SERVICE_PATH/scripts/istio/build_rule"
-
-  # Update HTTPRoute with new rule using build_ingress_with_rule
-  echo "Updating HTTPRoute with rule..."
-  source "$SERVICE_PATH/scripts/istio/build_ingress_with_rule"
+  if [[ "$NUM_METHODS" -eq 0 ]]; then
+    # No methods: match all HTTP methods
+    echo "INFO: No methods specified, will match all HTTP methods"
+    export SCOPE_ID
+    export RULE_PATH="$ROUTE_PATH"
+    unset METHOD
+    source "$SERVICE_PATH/scripts/istio/build_rule"
+    source "$SERVICE_PATH/scripts/istio/build_ingress_with_rule"
+  else
+    for ((j=0; j<NUM_METHODS; j++)); do
+      METHOD=$(echo "$METHODS_JSON" | jq -r ".[$j]")
+      echo "Building rule for method $METHOD..."
+      export SCOPE_ID
+      export RULE_PATH="$ROUTE_PATH"
+      export METHOD
+      source "$SERVICE_PATH/scripts/istio/build_rule"
+      source "$SERVICE_PATH/scripts/istio/build_ingress_with_rule"
+    done
+  fi
 
   echo "Route $((i+1)) processed successfully"
 done

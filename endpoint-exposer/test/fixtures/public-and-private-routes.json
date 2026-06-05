@@ -12,19 +12,19 @@
         "visibility": "public",
         "path": "/api/users",
         "scope": "users:read",
-        "method": "GET"
+        "methods": ["GET"]
       },
       {
         "visibility": "private",
         "path": "/api/admin",
         "scope": "admin:read",
-        "method": "GET"
+        "methods": ["GET"]
       },
       {
         "visibility": "private",
         "path": "/api/admin/users",
         "scope": "admin:users:write",
-        "method": "POST"
+        "methods": ["POST"]
       }
     ],
     "public_domain": "api.example.nullimplementation.com",
@@ -48,19 +48,19 @@
           "visibility": "public",
           "path": "/api/users",
           "scope": "users:read",
-          "method": "GET"
+          "methods": ["GET"]
         },
         {
           "visibility": "private",
           "path": "/api/admin",
           "scope": "admin:read",
-          "method": "GET"
+          "methods": ["GET"]
         },
         {
           "visibility": "private",
           "path": "/api/admin/users",
           "scope": "admin:users:write",
-          "method": "POST"
+          "methods": ["POST"]
         }
       ],
       "public_domain": "api.example.nullimplementation.com",

@@ -12,13 +12,13 @@
         "visibility": "public",
         "path": "/api/users",
         "scope": "users:read",
-        "method": "GET"
+        "methods": ["GET"]
       },
       {
         "visibility": "public",
         "path": "/api/users",
         "scope": "users:write",
-        "method": "POST"
+        "methods": ["POST"]
       }
     ],
     "public_domain": "api.example.nullimplementation.com",
@@ -42,13 +42,13 @@
           "visibility": "public",
           "path": "/api/users",
           "scope": "users:read",
-          "method": "GET"
+          "methods": ["GET"]
         },
         {
           "visibility": "public",
           "path": "/api/users",
           "scope": "users:write",
-          "method": "POST"
+          "methods": ["POST"]
         }
       ],
       "public_domain": "api.example.nullimplementation.com",
