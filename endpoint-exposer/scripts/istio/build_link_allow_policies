@@ -28,6 +28,10 @@ else
   GATEWAY_SUFFIX="public"
 fi
 
+# Fetch all scopes once for domain resolution
+ALL_SCOPES_JSON=$(np scope list --application_id "$APPLICATION_ID" --limit 200 --format json | jq '.results // []')
+HTTPROUTE_HASH=$(echo "$HTTPROUTE_NAME" | md5 2>/dev/null || echo "$HTTPROUTE_NAME" | md5sum | cut -c1-8)
+
 for i in $(seq 0 $((NUM_ROUTES - 1))); do
   ROUTE=$(echo "$ROUTES_JSON" | jq -c ".[$i]")
   ROUTE_PATH=$(echo "$ROUTE" | jq -r '.path')
@@ -47,40 +51,61 @@ for i in $(seq 0 $((NUM_ROUTES - 1))); do
   else
     GROUPS_JSON=$(echo "$RAW_GROUPS" | tr ',' '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | grep -v '^$' | jq -R . | jq -sc '.')
   fi
-
   GROUPS_ARRAY=$(echo "$GROUPS_JSON" | jq -r '[.[] ]')
-  HTTPROUTE_HASH=$(echo "$HTTPROUTE_NAME" | md5 2>/dev/null || echo "$HTTPROUTE_NAME" | md5sum | cut -c1-8)
 
-  # One AuthorizationPolicy per method
-  NUM_METHODS=$(echo "$METHODS_JSON" | jq 'length')
-  for ((j=0; j<NUM_METHODS; j++)); do
-    METHOD=$(echo "$METHODS_JSON" | jq -r ".[$j]")
+  # Backwards compat: support new array (.scopes[]) and legacy string (.scope / global $SCOPE_DOMAIN)
+  ROUTE_SCOPES=$(echo "$ROUTE" | jq -r --arg fallback_scope "${SCOPE:-}" '
+    (.scopes // (if .scope then [.scope] else (if $fallback_scope != "" then [$fallback_scope] else [] end) end)) | .[]?')
 
-    ROUTE_HASH=$(echo "${SCOPE_DOMAIN}${METHOD}${ROUTE_PATH}" | md5 2>/dev/null || echo "${SCOPE_DOMAIN}${METHOD}${ROUTE_PATH}" | md5sum | cut -c1-8)
-    POLICY_NAME="${HTTPROUTE_HASH:0:8}-${GATEWAY_SUFFIX}-${ROUTE_HASH:0:8}"
+  if [[ -z "$ROUTE_SCOPES" ]]; then
+    echo "WARNING: Route $ROUTE_PATH has no scopes, skipping"
+    continue
+  fi
 
-    CONTEXT_FILE="$OUTPUT_DIR/authorizationpolicy-${POLICY_NAME}-ctx.json"
-    jq -n \
-      --arg name          "$POLICY_NAME" \
-      --arg gateway_name  "$GATEWAY_NAME" \
-      --arg gateway_namespace "$GATEWAY_NAMESPACE" \
-      --arg service_id    "$SERVICE_ID" \
-      --arg host          "$SCOPE_DOMAIN" \
-      --arg path          "$ROUTE_PATH" \
-      --arg method        "$METHOD" \
-      --argjson groups    "$GROUPS_ARRAY" \
-      '{name: $name, gateway_name: $gateway_name, gateway_namespace: $gateway_namespace,
-        service_id: $service_id, host: $host, path: $path, method: $method, groups: $groups}' \
-      > "$CONTEXT_FILE"
+  while IFS= read -r ROUTE_SCOPE_SLUG; do
+    # Resolve scope domain
+    SID=$(echo "$ALL_SCOPES_JSON" | jq -r --arg name "$ROUTE_SCOPE_SLUG" '.[] | select(.name == $name) | .id')
+    if [[ -z "$SID" || "$SID" == "null" ]]; then
+      echo "WARNING: Could not resolve scope '$ROUTE_SCOPE_SLUG', skipping"
+      continue
+    fi
+    SDOMAIN=$(np scope read --id "$SID" --format json | jq -r '.domain // ""')
+    if [[ -z "$SDOMAIN" || "$SDOMAIN" == "null" ]]; then
+      echo "WARNING: Scope '$ROUTE_SCOPE_SLUG' has no domain, skipping"
+      continue
+    fi
 
-    POLICY_FILE="$OUTPUT_DIR/authorizationpolicy-${POLICY_NAME}.yaml"
-    gomplate -c ".=$CONTEXT_FILE" \
-      -f "$SERVICE_PATH/templates/istio/authorizationpolicy.yaml.tpl" \
-      -o "$POLICY_FILE"
-    rm "$CONTEXT_FILE"
+    # One AuthorizationPolicy per scope × method
+    NUM_METHODS=$(echo "$METHODS_JSON" | jq 'length')
+    for ((j=0; j<NUM_METHODS; j++)); do
+      METHOD=$(echo "$METHODS_JSON" | jq -r ".[$j]")
 
-    echo "✅ AuthorizationPolicy generated: ee-${POLICY_NAME} (${METHOD} ${ROUTE_PATH} on ${SCOPE_DOMAIN})"
-  done
+      ROUTE_HASH=$(echo "${SDOMAIN}${METHOD}${ROUTE_PATH}" | md5 2>/dev/null || echo "${SDOMAIN}${METHOD}${ROUTE_PATH}" | md5sum | cut -c1-8)
+      POLICY_NAME="${HTTPROUTE_HASH:0:8}-${GATEWAY_SUFFIX}-${ROUTE_HASH:0:8}"
+
+      CONTEXT_FILE="$OUTPUT_DIR/authorizationpolicy-${POLICY_NAME}-ctx.json"
+      jq -n \
+        --arg name          "$POLICY_NAME" \
+        --arg gateway_name  "$GATEWAY_NAME" \
+        --arg gateway_namespace "$GATEWAY_NAMESPACE" \
+        --arg service_id    "$SERVICE_ID" \
+        --arg host          "$SDOMAIN" \
+        --arg path          "$ROUTE_PATH" \
+        --arg method        "$METHOD" \
+        --argjson groups    "$GROUPS_ARRAY" \
+        '{name: $name, gateway_name: $gateway_name, gateway_namespace: $gateway_namespace,
+          service_id: $service_id, host: $host, path: $path, method: $method, groups: $groups}' \
+        > "$CONTEXT_FILE"
+
+      POLICY_FILE="$OUTPUT_DIR/authorizationpolicy-${POLICY_NAME}.yaml"
+      gomplate -c ".=$CONTEXT_FILE" \
+        -f "$SERVICE_PATH/templates/istio/authorizationpolicy.yaml.tpl" \
+        -o "$POLICY_FILE"
+      rm "$CONTEXT_FILE"
+
+      echo "✅ AuthorizationPolicy generated: ee-${POLICY_NAME} (${METHOD} ${ROUTE_PATH} on ${SDOMAIN})"
+    done
+  done <<< "$ROUTE_SCOPES"
 done
 
 echo "=== Link ALLOW AuthorizationPolicies generated successfully ==="

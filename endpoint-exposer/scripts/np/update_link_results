@@ -20,6 +20,7 @@ RESULTS=$(echo "$CONTEXT" | jq \
           "Rule #" + ((.key + 1) | tostring) + " — " +
           (.value.path // "") + " | " +
           (if (.value.methods | type) == "array" then (.value.methods | join(", ")) else (.value.method // "") end) + " | " +
+          (if (.value.scopes | type) == "array" then (.value.scopes | join(", ")) elif (.value.scope != null) then .value.scope else "" end) + " | " +
           (.value.groups // "")
         )
       }
