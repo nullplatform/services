@@ -65,12 +65,12 @@
   },
   "dimensions": {},
   "scopes": {},
-  "name": "Endpoint exposer",
+  "name": "HTTP Route Access Control",
   "selectors": {
-    "category": "any",
+    "category": "Security",
     "imported": false,
-    "provider": "any",
-    "sub_category": "any"
+    "provider": "Istio",
+    "sub_category": "Access Control"
   },
   "slug": "endpoint-exposer",
   "type": "dependency",
