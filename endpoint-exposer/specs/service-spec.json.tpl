@@ -4,7 +4,11 @@
     "schema": {
       "type": "object",
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "required": ["auth_type"],
+      "required": ["auth_type", "deny_public_traffic", "deny_private_traffic"],
+      "anyOf": [
+        {"properties": {"deny_public_traffic": {"const": true}}},
+        {"properties": {"deny_private_traffic": {"const": true}}}
+      ],
       "uiSchema": {
         "type": "VerticalLayout",
         "elements": [
@@ -36,6 +40,16 @@
                 "schema": { "not": { "const": "aws-cognito" } }
               }
             }
+          },
+          {
+            "type": "Control",
+            "label": "Deny Public Traffic",
+            "scope": "#/properties/deny_public_traffic"
+          },
+          {
+            "type": "Control",
+            "label": "Deny Private Traffic",
+            "scope": "#/properties/deny_private_traffic"
           }
         ]
       },
@@ -57,6 +71,20 @@
           "type": "string",
           "title": "Cognito User Pool ARN",
           "description": "ARN of the Cognito User Pool for JWT validation (arn:aws:cognito-idp:region:account-id:userpool/pool-id).",
+          "editableOn": ["create", "update"]
+        },
+        "deny_public_traffic": {
+          "type": "boolean",
+          "title": "Deny Public Traffic",
+          "description": "Block all unauthenticated traffic on the public gateway. At least one gateway must be protected.",
+          "default": true,
+          "editableOn": ["create", "update"]
+        },
+        "deny_private_traffic": {
+          "type": "boolean",
+          "title": "Deny Private Traffic",
+          "description": "Block all unauthenticated traffic on the private gateway. At least one gateway must be protected.",
+          "default": true,
           "editableOn": ["create", "update"]
         }
       }

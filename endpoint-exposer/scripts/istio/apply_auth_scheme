@@ -75,10 +75,24 @@ if [[ "$AUTH_TYPE" != "aws-avp" && "$AUTH_TYPE" != "aws-cognito" ]]; then
   exit 1
 fi
 
-echo "=== Applying auth scheme: $AUTH_TYPE ==="
+DENY_PUBLIC_TRAFFIC="${DENY_PUBLIC_TRAFFIC:-true}"
+DENY_PRIVATE_TRAFFIC="${DENY_PRIVATE_TRAFFIC:-true}"
 
-# Apply deny-all on both gateways (both schemes)
-for gateway_name in "$PUBLIC_GATEWAY_NAME" "$PRIVATE_GATEWAY_NAME"; do
+# Validate at least one gateway is protected
+if [[ "$DENY_PUBLIC_TRAFFIC" != "true" && "$DENY_PRIVATE_TRAFFIC" != "true" ]]; then
+  echo "ERROR: At least one of deny_public_traffic or deny_private_traffic must be enabled."
+  exit 1
+fi
+
+echo "=== Applying auth scheme: $AUTH_TYPE (deny_public=$DENY_PUBLIC_TRAFFIC, deny_private=$DENY_PRIVATE_TRAFFIC) ==="
+
+# Build list of active gateways
+ACTIVE_GATEWAYS=()
+[[ "$DENY_PUBLIC_TRAFFIC" == "true" ]] && ACTIVE_GATEWAYS+=("$PUBLIC_GATEWAY_NAME")
+[[ "$DENY_PRIVATE_TRAFFIC" == "true" ]] && ACTIVE_GATEWAYS+=("$PRIVATE_GATEWAY_NAME")
+
+# Apply deny-all on selected gateways
+for gateway_name in "${ACTIVE_GATEWAYS[@]}"; do
   suffix="${gateway_name##gateway-}"
   echo "Generating deny-all for $gateway_name..."
   deny_all_file=$(_render_deny_all "$gateway_name" "$suffix")
@@ -86,7 +100,7 @@ for gateway_name in "$PUBLIC_GATEWAY_NAME" "$PRIVATE_GATEWAY_NAME"; do
   echo "✅ deny-all-${suffix} applied"
 done
 
-# Apply RequestAuthentication only for aws-cognito
+# Apply RequestAuthentication only for aws-cognito on selected gateways
 if [[ "$AUTH_TYPE" == "aws-cognito" ]]; then
   if [[ -z "$COGNITO_USER_POOL_ARN" ]]; then
     echo "ERROR: COGNITO_USER_POOL_ARN is required for auth_type=aws-cognito"
@@ -96,7 +110,7 @@ if [[ "$AUTH_TYPE" == "aws-cognito" ]]; then
   _parse_cognito_arn "$COGNITO_USER_POOL_ARN"
   echo "Cognito pool: $COGNITO_POOL_ID (region: $COGNITO_REGION)"
 
-  for gateway_name in "$PUBLIC_GATEWAY_NAME" "$PRIVATE_GATEWAY_NAME"; do
+  for gateway_name in "${ACTIVE_GATEWAYS[@]}"; do
     suffix="${gateway_name##gateway-}"
     echo "Generating RequestAuthentication for $gateway_name..."
     ra_file=$(_render_request_authentication "$gateway_name" "$suffix")

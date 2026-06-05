@@ -59,3 +59,16 @@ export PRIVATE_ROUTES_JSON
 export AUTH_TYPE
 export COGNITO_USER_POOL_ARN
 export AVP_POLICY_STORE_ID
+
+DENY_PUBLIC_TRAFFIC=$(echo "$CONTEXT" | jq -r '
+  .service.attributes.deny_public_traffic //
+  .parameters.deny_public_traffic //
+  .notification.parameters.deny_public_traffic //
+  true')
+DENY_PRIVATE_TRAFFIC=$(echo "$CONTEXT" | jq -r '
+  .service.attributes.deny_private_traffic //
+  .parameters.deny_private_traffic //
+  .notification.parameters.deny_private_traffic //
+  true')
+export DENY_PUBLIC_TRAFFIC
+export DENY_PRIVATE_TRAFFIC
