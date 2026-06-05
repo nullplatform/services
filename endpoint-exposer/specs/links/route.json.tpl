@@ -42,7 +42,7 @@
           "editableOn": ["create", "update"],
           "items": {
             "type": "object",
-            "required": ["methods", "path", "groups"],
+            "required": ["scopes", "methods", "path", "groups"],
             "properties": {
               "scopes": {
                 "type": "string",
