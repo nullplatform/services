@@ -63,12 +63,14 @@ export AVP_POLICY_STORE_ID
 DENY_PUBLIC_TRAFFIC=$(echo "$CONTEXT" | jq -r '
   [.notification.parameters.deny_public_traffic,
    .parameters.deny_public_traffic,
-   .service.attributes.deny_public_traffic]
-  | map(select(. != null)) | first // true')
+   .service.attributes.deny_public_traffic,
+   true]
+  | map(select(. != null)) | first')
 DENY_PRIVATE_TRAFFIC=$(echo "$CONTEXT" | jq -r '
   [.notification.parameters.deny_private_traffic,
    .parameters.deny_private_traffic,
-   .service.attributes.deny_private_traffic]
-  | map(select(. != null)) | first // true')
+   .service.attributes.deny_private_traffic,
+   true]
+  | map(select(. != null)) | first')
 export DENY_PUBLIC_TRAFFIC
 export DENY_PRIVATE_TRAFFIC
