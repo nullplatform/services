@@ -1,0 +1,35 @@
+#!/bin/bash
+
+set -euo pipefail
+
+source "$SERVICE_PATH/scripts/istio/config"
+
+AUTH_TYPE="${AUTH_TYPE:-aws-avp}"
+DENY_PUBLIC_TRAFFIC="${DENY_PUBLIC_TRAFFIC:-true}"
+DENY_PRIVATE_TRAFFIC="${DENY_PRIVATE_TRAFFIC:-true}"
+
+echo "=== Deleting auth scheme: $AUTH_TYPE (deny_public=$DENY_PUBLIC_TRAFFIC, deny_private=$DENY_PRIVATE_TRAFFIC) ==="
+
+delete_if_exists() {
+  local kind="$1"
+  local name="$2"
+  local ns="$3"
+  if kubectl get "$kind" "$name" -n "$ns" &>/dev/null; then
+    kubectl delete "$kind" "$name" -n "$ns"
+    echo "✅ $name deleted"
+  else
+    echo "⚠️  $name not found, skipping"
+  fi
+}
+
+# Delete deny-all for active gateways
+[[ "$DENY_PUBLIC_TRAFFIC" == "true" ]] && delete_if_exists authorizationpolicy "deny-all-public" "$GATEWAY_NAMESPACE"
+[[ "$DENY_PRIVATE_TRAFFIC" == "true" ]] && delete_if_exists authorizationpolicy "deny-all-private" "$GATEWAY_NAMESPACE"
+
+# Delete RequestAuthentication for aws-cognito
+if [[ "$AUTH_TYPE" == "aws-cognito" ]]; then
+  [[ "$DENY_PUBLIC_TRAFFIC" == "true" ]] && delete_if_exists requestauthentication "cognito-jwt-public" "$GATEWAY_NAMESPACE"
+  [[ "$DENY_PRIVATE_TRAFFIC" == "true" ]] && delete_if_exists requestauthentication "cognito-jwt-private" "$GATEWAY_NAMESPACE"
+fi
+
+echo "=== Auth scheme '$AUTH_TYPE' deleted successfully ==="

@@ -1,6 +1,33 @@
-include:
-  - "$SERVICE_PATH/workflows/istio/create.yaml"
 steps:
+  - name: "find k8s namespace"
+    type: script
+    file: "$SERVICE_PATH/scripts/istio/fetch_provider_data"
+    output:
+      - name: K8S_NAMESPACE
+        type: environment
+  - name: "build context"
+    type: script
+    file: "$SERVICE_PATH/scripts/istio/build_context"
+    output:
+      - name: SERVICE_ID
+        type: environment
+      - name: SERVICE_SLUG
+        type: environment
+      - name: ACTION_ID
+        type: environment
+      - name: AUTH_TYPE
+        type: environment
+      - name: COGNITO_USER_POOL_ARN
+        type: environment
+      - name: AVP_POLICY_STORE_ID
+        type: environment
+      - name: DENY_PUBLIC_TRAFFIC
+        type: environment
+      - name: DENY_PRIVATE_TRAFFIC
+        type: environment
+  - name: "delete auth scheme"
+    type: script
+    file: "$SERVICE_PATH/scripts/istio/delete_auth_scheme"
   - name: "manage policies"
     type: script
     file: "$SERVICE_PATH/scripts/common/manage_policies"
