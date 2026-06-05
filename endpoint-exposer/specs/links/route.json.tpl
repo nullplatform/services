@@ -12,10 +12,9 @@
         "type": "VerticalLayout",
         "elements": [
           {
-            "type": "Control",
+            "type": "ListWithDetail",
             "scope": "#/properties/routes",
             "options": {
-              "showSortButtons": true,
               "elementLabelProp": "summary",
               "detail": {
                 "type": "VerticalLayout",
