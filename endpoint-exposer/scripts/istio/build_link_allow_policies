@@ -54,7 +54,7 @@ for i in $(seq 0 $((NUM_ROUTES - 1))); do
   GROUPS_ARRAY=$(echo "$GROUPS_JSON" | jq -r '[.[] ]')
 
   # Parse scopes: comma-separated string, array, single .scope, or global $SCOPE fallback
-  RAW_SCOPES=$(echo "$ROUTE" | jq -r '.scopes // .scope // ""')
+  RAW_SCOPES=$(echo "$ROUTE" | jq -r '.target_scope // .scopes // .scope // ""')
   if echo "$RAW_SCOPES" | jq -e 'type == "array"' >/dev/null 2>&1; then
     ROUTE_SCOPES=$(echo "$RAW_SCOPES" | jq -r '.[]')
   elif [[ -n "$RAW_SCOPES" && "$RAW_SCOPES" != "null" ]]; then
