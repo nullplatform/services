@@ -72,7 +72,7 @@
           "type": "string",
           "title": "Cognito User Pool ARN",
           "description": "ARN of the Cognito User Pool for JWT validation (arn:aws:cognito-idp:region:account-id:userpool/pool-id).",
-          "editableOn": ["create"]
+          "editableOn": ["create", "update"]
         }
       }
     },

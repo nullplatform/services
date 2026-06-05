@@ -41,7 +41,7 @@
           "editableOn": ["create", "update"],
           "items": {
             "type": "object",
-            "required": ["methods", "path"],
+            "required": ["methods", "path", "groups"],
             "properties": {
               "methods": {
                 "type": "array",
