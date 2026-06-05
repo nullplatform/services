@@ -45,7 +45,6 @@
           "title": "Authorization Scheme",
           "description": "Authorization scheme to use for endpoint protection.",
           "enum": ["avp", "istio-jwt"],
-          "default": "avp",
           "editableOn": ["create"]
         },
         "avp_policy_store_id": {
