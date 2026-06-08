@@ -18,6 +18,18 @@ ROUTES_JSON=$(echo "$CONTEXT" | jq -c '
   .service.attributes.routes //
   []')
 
+# Resolve scope → visibility for each route (public/external → "public", internal → "internal")
+if [[ "$(echo "$ROUTES_JSON" | jq 'length')" -gt 0 && -n "$APPLICATION_ID" ]]; then
+  SCOPES_LIST=$(np scope list --application_id "$APPLICATION_ID" --limit 200 --format json | jq '.results // []')
+  ROUTES_JSON=$(echo "$ROUTES_JSON" | jq -c --argjson scopes "$SCOPES_LIST" '
+    map(. as $route |
+      if .visibility == null or .visibility == "" then
+        ($scopes[] | select(.name == $route.scope) | .service.attributes.visibility // "external") as $vis |
+        $route + {visibility: (if $vis == "internal" then "internal" else "public" end)}
+      else . end
+    )')
+fi
+
 # Split routes by visibility
 PUBLIC_ROUTES_JSON=$(echo "$ROUTES_JSON" | jq -c '[.[] | select(.visibility == "public" or .visibility == null or .visibility == "")]')
 PRIVATE_ROUTES_JSON=$(echo "$ROUTES_JSON" | jq -c '[.[] | select(.visibility == "internal")]')

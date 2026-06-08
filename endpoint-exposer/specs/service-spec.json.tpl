@@ -60,13 +60,7 @@
               "detail": {
                 "type": "VerticalLayout",
                 "elements": [
-                  {
-                    "type": "HorizontalLayout",
-                    "elements": [
-                      {"type": "Control", "label": "Verbs", "scope": "#/properties/methods"},
-                      {"type": "Control", "label": "Visibility", "scope": "#/properties/visibility"}
-                    ]
-                  },
+                  {"type": "Control", "label": "Verbs", "scope": "#/properties/methods"},
                   {"type": "Control", "label": "Path", "scope": "#/properties/path"},
                   {"type": "Control", "label": "Scope", "scope": "#/properties/scope"},
                   {"type": "Control", "label": "Authorized Groups", "scope": "#/properties/groups"}
@@ -103,7 +97,7 @@
           "editableOn": ["create", "update"],
           "items": {
             "type": "object",
-            "required": ["methods", "path", "visibility", "scope"],
+            "required": ["methods", "path", "scope"],
             "properties": {
               "methods": {
                 "type": "array",
@@ -118,12 +112,6 @@
               "path": {
                 "type": "string",
                 "title": "Path"
-              },
-              "visibility": {
-                "type": "string",
-                "title": "Visibility",
-                "enum": ["public", "internal"],
-                "default": "public"
               },
               "scope": {
                 "type": "string",
