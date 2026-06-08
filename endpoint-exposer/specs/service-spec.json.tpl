@@ -63,7 +63,7 @@
                   {
                     "type": "HorizontalLayout",
                     "elements": [
-                      {"type": "Control", "label": "Verb", "scope": "#/properties/method"},
+                      {"type": "Control", "label": "Verbs", "scope": "#/properties/methods"},
                       {"type": "Control", "label": "Visibility", "scope": "#/properties/visibility"}
                     ]
                   },
@@ -103,12 +103,17 @@
           "editableOn": ["create", "update"],
           "items": {
             "type": "object",
-            "required": ["method", "path", "visibility", "scope"],
+            "required": ["methods", "path", "visibility", "scope"],
             "properties": {
-              "method": {
-                "type": "string",
-                "title": "Verb",
-                "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
+              "methods": {
+                "type": "array",
+                "title": "Verbs",
+                "items": {
+                  "type": "string",
+                  "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
+                },
+                "uniqueItems": true,
+                "minItems": 1
               },
               "path": {
                 "type": "string",
