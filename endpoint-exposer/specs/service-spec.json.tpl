@@ -128,9 +128,9 @@
               "scope": {
                 "type": "string",
                 "title": "Scope",
-                "description": "The scope this rule applies to (filtered by selected dimension).",
+                "description": "The scope this rule applies to.",
                 "additionalKeywords": {
-                  "enum": "[.scopes[] | select(.dimensions == (.dimensions // {})) | .slug]"
+                  "enum": "[.scopes[]?.slug]"
                 }
               },
               "groups": {
