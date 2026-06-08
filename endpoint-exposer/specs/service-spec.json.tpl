@@ -4,7 +4,7 @@
     "schema": {
       "type": "object",
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "required": ["auth_type", "routes"],
+      "required": ["environment", "auth_type", "routes"],
       "if": {
         "properties": { "auth_type": { "const": "aws-avp" } }
       },
@@ -22,6 +22,11 @@
       "uiSchema": {
         "type": "VerticalLayout",
         "elements": [
+          {
+            "type": "Control",
+            "label": "Environment",
+            "scope": "#/properties/environment"
+          },
           {
             "type": "Control",
             "label": "Authorization Scheme",
@@ -71,6 +76,15 @@
         ]
       },
       "properties": {
+        "environment": {
+          "type": "string",
+          "title": "Environment",
+          "description": "Select the environment dimension for this service.",
+          "editableOn": ["create"],
+          "additionalKeywords": {
+            "enum": "[.dimensions[\"Environment\"]?.values[]?.name // .dimensions[]?.values[]?.name // .dimension_values[]?.name]"
+          }
+        },
         "auth_type": {
           "type": "string",
           "title": "Authorization Scheme",
