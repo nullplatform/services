@@ -11,16 +11,16 @@ ACTION_NAME=$(echo "$CONTEXT" | jq -r .slug)
 K8S_NAMESPACE="${NAMESPACE_OVERRIDE:-nullplatform}"
 APPLICATION_ID=$(echo "$CONTEXT" | jq -r '.tags.application_id // ""')
 
-# Extract routes array from parameters
-ROUTES_JSON=$(echo "$CONTEXT" | jq -c '.parameters.routes // []')
+# Routes come from parameters (service form submission) or stored service attributes
+ROUTES_JSON=$(echo "$CONTEXT" | jq -c '
+  .parameters.routes //
+  .notification.parameters.routes //
+  .service.attributes.routes //
+  []')
 
 # Split routes by visibility
-PUBLIC_ROUTES_JSON=$(echo "$ROUTES_JSON" | jq -c '[.[] | select(.visibility == "public" or .visibility == null)]')
-PRIVATE_ROUTES_JSON=$(echo "$ROUTES_JSON" | jq -c '[.[] | select(.visibility == "private")]')
-
-CONTEXT=$(echo "$CONTEXT" | jq \
-          --arg k8s_namespace "$K8S_NAMESPACE" \
-          '. + {k8s_namespace: $k8s_namespace}')
+PUBLIC_ROUTES_JSON=$(echo "$ROUTES_JSON" | jq -c '[.[] | select(.visibility == "public" or .visibility == null or .visibility == "")]')
+PRIVATE_ROUTES_JSON=$(echo "$ROUTES_JSON" | jq -c '[.[] | select(.visibility == "internal")]')
 
 # Only set OUTPUT_DIR if not already set (allows tests to override)
 if [[ -z "${OUTPUT_DIR:-}" ]]; then
@@ -30,22 +30,25 @@ fi
 mkdir -p "$OUTPUT_DIR"
 
 AUTH_TYPE=$(echo "$CONTEXT" | jq -r '
-  .parameters.auth_type //
-  .notification.parameters.auth_type //
-  .service.attributes.auth_type //
-  "aws-avp"')
+  [.notification.parameters.auth_type,
+   .parameters.auth_type,
+   .service.attributes.auth_type,
+   "aws-avp"]
+  | map(select(. != null)) | first')
 
 COGNITO_USER_POOL_ARN=$(echo "$CONTEXT" | jq -r '
-  .parameters.cognito_user_pool_arn //
-  .notification.parameters.cognito_user_pool_arn //
-  .service.attributes.cognito_user_pool_arn //
-  ""')
+  [.notification.parameters.cognito_user_pool_arn,
+   .parameters.cognito_user_pool_arn,
+   .service.attributes.cognito_user_pool_arn,
+   ""]
+  | map(select(. != null)) | first')
 
 AVP_POLICY_STORE_ARN=$(echo "$CONTEXT" | jq -r '
-  .parameters.avp_policy_store_arn //
-  .notification.parameters.avp_policy_store_arn //
-  .service.attributes.avp_policy_store_arn //
-  ""')
+  [.notification.parameters.avp_policy_store_arn,
+   .parameters.avp_policy_store_arn,
+   .service.attributes.avp_policy_store_arn,
+   ""]
+  | map(select(. != null)) | first')
 AVP_POLICY_STORE_ID=$(echo "$AVP_POLICY_STORE_ARN" | cut -d'/' -f2)
 
 export SERVICE_ID
@@ -59,18 +62,3 @@ export PRIVATE_ROUTES_JSON
 export AUTH_TYPE
 export COGNITO_USER_POOL_ARN
 export AVP_POLICY_STORE_ID
-
-DENY_PUBLIC_TRAFFIC=$(echo "$CONTEXT" | jq -r '
-  [.notification.parameters.deny_public_traffic,
-   .parameters.deny_public_traffic,
-   .service.attributes.deny_public_traffic,
-   true]
-  | map(select(. != null)) | first')
-DENY_PRIVATE_TRAFFIC=$(echo "$CONTEXT" | jq -r '
-  [.notification.parameters.deny_private_traffic,
-   .parameters.deny_private_traffic,
-   .service.attributes.deny_private_traffic,
-   true]
-  | map(select(. != null)) | first')
-export DENY_PUBLIC_TRAFFIC
-export DENY_PRIVATE_TRAFFIC

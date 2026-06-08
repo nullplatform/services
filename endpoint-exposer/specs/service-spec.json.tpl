@@ -4,11 +4,7 @@
     "schema": {
       "type": "object",
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "required": ["auth_type", "deny_public_traffic", "deny_private_traffic"],
-      "anyOf": [
-        {"properties": {"deny_public_traffic": {"const": true}}},
-        {"properties": {"deny_private_traffic": {"const": true}}}
-      ],
+      "required": ["auth_type", "routes"],
       "if": {
         "properties": { "auth_type": { "const": "aws-avp" } }
       },
@@ -57,13 +53,26 @@
           },
           {
             "type": "Control",
-            "label": "Deny Public Traffic",
-            "scope": "#/properties/deny_public_traffic"
-          },
-          {
-            "type": "Control",
-            "label": "Deny Private Traffic",
-            "scope": "#/properties/deny_private_traffic"
+            "label": "Routes",
+            "scope": "#/properties/routes",
+            "options": {
+              "showSortButtons": true,
+              "detail": {
+                "type": "VerticalLayout",
+                "elements": [
+                  {
+                    "type": "HorizontalLayout",
+                    "elements": [
+                      {"type": "Control", "label": "Verb", "scope": "#/properties/method"},
+                      {"type": "Control", "label": "Visibility", "scope": "#/properties/visibility"}
+                    ]
+                  },
+                  {"type": "Control", "label": "Path", "scope": "#/properties/path"},
+                  {"type": "Control", "label": "Scope", "scope": "#/properties/scope"},
+                  {"type": "Control", "label": "Authorized Groups", "scope": "#/properties/groups"}
+                ]
+              }
+            }
           }
         ]
       },
@@ -87,19 +96,46 @@
           "description": "ARN of the Cognito User Pool for JWT validation (arn:aws:cognito-idp:region:account-id:userpool/pool-id).",
           "editableOn": ["create", "update"]
         },
-        "deny_public_traffic": {
-          "type": "boolean",
-          "title": "Deny Public Traffic",
-          "description": "Block all unauthenticated traffic on the public gateway. At least one gateway must be protected.",
-          "default": true,
-          "editableOn": ["create", "update"]
-        },
-        "deny_private_traffic": {
-          "type": "boolean",
-          "title": "Deny Private Traffic",
-          "description": "Block all unauthenticated traffic on the private gateway. At least one gateway must be protected.",
-          "default": true,
-          "editableOn": ["create", "update"]
+        "routes": {
+          "type": "array",
+          "title": "Routes",
+          "description": "HTTP routes to protect. Each rule defines a path, method, scope and authorized groups.",
+          "editableOn": ["create", "update"],
+          "items": {
+            "type": "object",
+            "required": ["method", "path", "visibility", "scope"],
+            "properties": {
+              "method": {
+                "type": "string",
+                "title": "Verb",
+                "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
+              },
+              "path": {
+                "type": "string",
+                "title": "Path"
+              },
+              "visibility": {
+                "type": "string",
+                "title": "Visibility",
+                "enum": ["public", "internal"],
+                "default": "public"
+              },
+              "scope": {
+                "type": "string",
+                "title": "Scope",
+                "description": "The scope this rule applies to.",
+                "additionalKeywords": {
+                  "enum": "[.scopes[]?.slug]"
+                }
+              },
+              "groups": {
+                "type": "string",
+                "title": "Authorized Groups",
+                "description": "Comma-separated list of groups allowed to access this route. Leave empty to allow any authenticated user.",
+                "editableOn": ["create", "update"]
+              }
+            }
+          }
         }
       }
     },
@@ -118,9 +154,7 @@
   "type": "dependency",
   "use_default_actions": true,
   "available_actions": [],
-  "available_links": [
-    "route"
-  ],
+  "available_links": [],
   "visible_to": [
     "{{ env.Getenv `NRN` }}"
   ]
