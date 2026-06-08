@@ -79,11 +79,9 @@
         "environment": {
           "type": "string",
           "title": "Environment",
-          "description": "Select the environment dimension for this service.",
+          "description": "Select the environment this service applies to.",
           "editableOn": ["create"],
-          "additionalKeywords": {
-            "enum": "[.dimensions[\"Environment\"]?.values[]?.name // .dimensions[]?.values[]?.name // .dimension_values[]?.name]"
-          }
+          "enum": ["dev", "test", "prod"]
         },
         "auth_type": {
           "type": "string",
