@@ -116,9 +116,9 @@
               "scope": {
                 "type": "string",
                 "title": "Scope",
-                "description": "The scope this rule applies to.",
+                "description": "The scope this rule applies to (filtered by selected dimension).",
                 "additionalKeywords": {
-                  "enum": "[.scopes[]?.slug]"
+                  "enum": "[.scopes[] | select(.dimensions == (.dimensions // {})) | .slug]"
                 }
               },
               "groups": {
