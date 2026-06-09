@@ -1,7 +1,7 @@
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: ee-{{ .name }}
+  name: hrac-{{ .name }}
   namespace: {{ .gateway_namespace }}
   labels:
     nullplatform.com/managed-by: endpoint-exposer
