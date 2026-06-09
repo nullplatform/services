@@ -17,10 +17,10 @@ ISSUER="https://cognito-idp.${REGION}.amazonaws.com/${POOL_ID}"
 
 echo "Issuer to remove: $ISSUER"
 
-# Check if other endpoint-exposer services still have active AuthorizationPolicies
+# Check if other http-route-access-control services still have active AuthorizationPolicies
 # (excluding this service's own policies, which were already deleted)
 OTHER_ACTIVE_SERVICES=$(kubectl get authorizationpolicy -n "$GATEWAY_NAMESPACE" \
-  -l "nullplatform.com/managed-by=endpoint-exposer" \
+  -l "nullplatform.com/managed-by=http-route-access-control" \
   -o json 2>/dev/null | \
   jq -r --arg sid "$SERVICE_ID" \
   '[.items[] | select(.metadata.labels["nullplatform.com/service-id"] != $sid)] | length')

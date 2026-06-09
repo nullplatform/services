@@ -1,5 +1,5 @@
 {
-    "name": "Endpoint Exposer",
+    "name": "HTTP Route Access Control",
     "type": "dependency",
     "visible_to": [],
     "dimensions": {},

@@ -1,8 +1,8 @@
-# Endpoint Exposer Service
+# HTTP Route Access Control Service
 
 ## Overview
 
-The **endpoint-exposer** service is a infrastructure component of Nnullplatform that manages dynamic exposure of application endpoints through public and private domains. It functions as a route orchestrator that translates high-level specifications into native Kubernetes configurations using HttpRoutes.
+The **http-route-access-control** service is a infrastructure component of Nnullplatform that manages dynamic exposure of application endpoints through public and private domains. It functions as a route orchestrator that translates high-level specifications into native Kubernetes configurations using HttpRoutes.
 
 ## Core Responsibilities
 
@@ -91,7 +91,7 @@ routes:
 ## File Structure
 
 ```
-/endpoint-exposer
+/http-route-access-control
 ├── configure                      # Service configuration script
 ├── entrypoint/                   # Entry points for actions
 │   ├── service-action            # Service action handler

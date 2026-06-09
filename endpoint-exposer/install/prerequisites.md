@@ -1,4 +1,4 @@
-# Endpoint Exposer — Agent Prerequisites
+# HTTP Route Access Control — Agent Prerequisites
 
 ## Repositories
 
@@ -6,7 +6,7 @@ The agent pod must have the following repository cloned at the expected path:
 
 | Repository | Default path on agent |
 |---|---|
-| [nullplatform/services](https://github.com/nullplatform/services) | `/root/.np/nullplatform/services/endpoint-exposer` |
+| [nullplatform/services](https://github.com/nullplatform/services) | `/root/.np/nullplatform/services/http-route-access-control` |
 
 Override the default path via the `repository_org` / `repository_name` / `agent_service_path` variables in `terraform.tfvars`.
 
@@ -29,7 +29,7 @@ The agent runs in a Kubernetes pod and must have `kubectl` access to the cluster
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: endpoint-exposer-agent
+  name: http-route-access-control-agent
   namespace: nullplatform   # or the namespace defined in values.yaml K8S_NAMESPACE
 rules:
   - apiGroups: ["gateway.networking.k8s.io"]

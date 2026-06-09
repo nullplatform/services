@@ -4,7 +4,7 @@ metadata:
   name: cognito-jwt-{{ .suffix }}
   namespace: {{ .gateway_namespace }}
   labels:
-    nullplatform.com/managed-by: endpoint-exposer
+    nullplatform.com/managed-by: http-route-access-control
 spec:
   selector:
     matchLabels:

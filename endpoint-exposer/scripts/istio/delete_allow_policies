@@ -7,7 +7,7 @@ source "$SERVICE_PATH/scripts/istio/config"
 echo "=== Deleting Istio ALLOW AuthorizationPolicies for service $SERVICE_ID ==="
 
 POLICIES=$(kubectl get authorizationpolicy -n "$GATEWAY_NAMESPACE" \
-  -l "nullplatform.com/service-id=${SERVICE_ID},nullplatform.com/managed-by=endpoint-exposer" \
+  -l "nullplatform.com/service-id=${SERVICE_ID},nullplatform.com/managed-by=http-route-access-control" \
   -o jsonpath='{.items[*].metadata.name}' 2>/dev/null || echo "")
 
 if [[ -z "$POLICIES" ]]; then

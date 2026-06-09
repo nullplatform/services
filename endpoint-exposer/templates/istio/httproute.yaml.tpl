@@ -4,7 +4,7 @@ metadata:
   name: {{ .service_slug }}-{{ .service_id }}-{{ .suffix }}
   namespace: {{ .k8s_namespace }}
   labels:
-    nullplatform.com/managed-by: endpoint-exposer
+    nullplatform.com/managed-by: http-route-access-control
     nullplatform.com/service-id: "{{ .service_id }}"
     app.kubernetes.io/name: {{ .service_slug }}
 spec:

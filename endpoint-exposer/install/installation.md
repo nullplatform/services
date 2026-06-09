@@ -1,6 +1,6 @@
-# Endpoint Exposer — Installation Guide
+# HTTP Route Access Control — Installation Guide
 
-This guide walks through registering the Endpoint Exposer service in nullplatform using OpenTofu.
+This guide walks through registering the HTTP Route Access Control service in nullplatform using OpenTofu.
 
 ## Overview
 
@@ -22,7 +22,7 @@ git clone https://github.com/nullplatform/services /root/.np/nullplatform/servic
 git clone https://github.com/nullplatform/tofu-modules /root/.np/nullplatform/tofu-modules
 ```
 
-> The agent cmdline resolves to `<base_clone_path>/<repository_org>/<repository_name>/<agent_service_path>/entrypoint/entrypoint`, which defaults to `/root/.np/nullplatform/services/endpoint-exposer/entrypoint/entrypoint`. Adjust the variables if you clone elsewhere.
+> The agent cmdline resolves to `<base_clone_path>/<repository_org>/<repository_name>/<agent_service_path>/entrypoint/entrypoint`, which defaults to `/root/.np/nullplatform/services/http-route-access-control/entrypoint/entrypoint`. Adjust the variables if you clone elsewhere.
 
 ### 2. Configure variables
 
@@ -42,9 +42,9 @@ Edit `terraform.tfvars` with your values:
 | `repository_org` | — | Org that owns the spec repository (default: `nullplatform`) |
 | `repository_name` | — | Spec repository name (default: `services`) |
 | `repository_branch` | — | Branch to fetch specs from (default: `main`) |
-| `spec_path` | — | In-repo path to `specs/service-spec.json.tpl` (default: `endpoint-exposer/install`) |
-| `agent_service_path` | — | In-repo path where the agent runtime lives (default: `endpoint-exposer`) |
-| `service_name` | — | Display name in nullplatform (default: `Endpoint Exposer`) |
+| `spec_path` | — | In-repo path to `specs/service-spec.json.tpl` (default: `http-route-access-control/install`) |
+| `agent_service_path` | — | In-repo path where the agent runtime lives (default: `http-route-access-control`) |
+| `service_name` | — | Display name in nullplatform (default: `HTTP Route Access Control`) |
 | `overrides_enabled` | — | Set `true` to pass `--overrides-path` to the agent |
 | `overrides_repo_path` | — | Absolute path to the overrides directory on the agent (required when `overrides_enabled = true`) |
 
@@ -84,13 +84,13 @@ If the account requires local configuration overrides (e.g. from a networking re
 
 ```hcl
 overrides_enabled   = true
-overrides_repo_path = "/root/.np/nullplatform/scopes-networking/endpoint-exposer"
+overrides_repo_path = "/root/.np/nullplatform/scopes-networking/http-route-access-control"
 ```
 
 The agent cmdline becomes:
 ```
-/root/.np/nullplatform/services/endpoint-exposer/entrypoint/entrypoint \
-  --overrides-path=/root/.np/nullplatform/scopes-networking/endpoint-exposer
+/root/.np/nullplatform/services/http-route-access-control/entrypoint/entrypoint \
+  --overrides-path=/root/.np/nullplatform/scopes-networking/http-route-access-control
 ```
 
 ## Updating specs

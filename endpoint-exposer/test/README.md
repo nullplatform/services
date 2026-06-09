@@ -1,6 +1,6 @@
-# Endpoint Exposer Tests
+# HTTP Route Access Control Tests
 
-This directory contains tests for the endpoint-exposer service using BATS (Bash Automated Testing System).
+This directory contains tests for the http-route-access-control service using BATS (Bash Automated Testing System).
 
 ## Prerequisites
 

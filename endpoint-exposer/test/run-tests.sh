@@ -9,7 +9,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 echo "================================================"
-echo "  Endpoint Exposer Test Suite"
+echo "  HTTP Route Access Control Test Suite"
 echo "================================================"
 echo ""
 

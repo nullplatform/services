@@ -4,7 +4,7 @@ metadata:
   name: hrac-{{ .name }}
   namespace: {{ .gateway_namespace }}
   labels:
-    nullplatform.com/managed-by: endpoint-exposer
+    nullplatform.com/managed-by: http-route-access-control
     nullplatform.com/service-id: "{{ .service_id }}"
 spec:
   selector:
