@@ -11,11 +11,49 @@
             "type": "object",
             "$schema": "http://json-schema.org/draft-07/schema#",
             "required": [
+                "auth_type",
                 "routes"
             ],
             "uiSchema": {
                 "type": "VerticalLayout",
                 "elements": [
+                    {
+                        "type": "Control",
+                        "label": "Authorization Scheme",
+                        "scope": "#/properties/auth_type"
+                    },
+                    {
+                        "type": "Control",
+                        "label": "AVP Policy Store ARN",
+                        "scope": "#/properties/avp_policy_store_arn",
+                        "rule": {
+                            "effect": "HIDE",
+                            "condition": {
+                                "scope": "#/properties/auth_type",
+                                "schema": {
+                                    "not": {
+                                        "const": "aws-avp"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "type": "Control",
+                        "label": "Cognito User Pool ARN",
+                        "scope": "#/properties/cognito_user_pool_arn",
+                        "rule": {
+                            "effect": "HIDE",
+                            "condition": {
+                                "scope": "#/properties/auth_type",
+                                "schema": {
+                                    "not": {
+                                        "const": "aws-cognito"
+                                    }
+                                }
+                            }
+                        }
+                    },
                     {
                         "type": "Control",
                         "scope": "#/properties/environment"
@@ -124,6 +162,61 @@
                     "additionalKeywords": {
                         "enum": "[.scopes[]?.dimensions?.environment] | unique | if length == 0 then [\"No environments available\"] else . end"
                     }
+                },
+                "auth_type": {
+                    "type": "string",
+                    "title": "Authorization Scheme",
+                    "description": "Authorization scheme to use for endpoint protection.",
+                    "enum": [
+                        "aws-avp",
+                        "aws-cognito"
+                    ],
+                    "editableOn": [
+                        "create"
+                    ]
+                },
+                "avp_policy_store_arn": {
+                    "type": "string",
+                    "title": "AVP Policy Store ARN",
+                    "description": "ARN of the Amazon Verified Permissions Policy Store (arn:aws:verifiedpermissions::account-id:policy-store/id).",
+                    "editableOn": [
+                        "create"
+                    ]
+                },
+                "cognito_user_pool_arn": {
+                    "type": "string",
+                    "title": "Cognito User Pool ARN",
+                    "description": "ARN of the Cognito User Pool for JWT validation (arn:aws:cognito-idp:region:account-id:userpool/pool-id).",
+                    "editableOn": [
+                        "create",
+                        "update"
+                    ]
+                }
+            },
+            "if": {
+                "properties": {
+                    "auth_type": {
+                        "const": "aws-avp"
+                    }
+                }
+            },
+            "then": {
+                "required": [
+                    "avp_policy_store_arn"
+                ]
+            },
+            "else": {
+                "if": {
+                    "properties": {
+                        "auth_type": {
+                            "const": "aws-cognito"
+                        }
+                    }
+                },
+                "then": {
+                    "required": [
+                        "cognito_user_pool_arn"
+                    ]
                 }
             }
         },
