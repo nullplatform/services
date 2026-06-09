@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Build Context: Extracts service metadata, domains, and routes from service action parameters.
-# Splits routes by visibility (public/private) and prepares environment variables for workflow execution.
-
 set -euo pipefail
 
 SERVICE_ID=$(echo "$CONTEXT" | jq -r .service.id)
@@ -11,22 +8,31 @@ SERVICE_SLUG=$(echo "$CONTEXT" | jq -r .service.slug)
 ACTION_ID=$(echo "$CONTEXT" | jq -r .id)
 ACTION_NAME=$(echo "$CONTEXT" | jq -r .slug)
 
-# Extract domains from parameters
-PUBLIC_DOMAIN=$(echo "$CONTEXT" | jq -r '.parameters.publicDomain // .parameters.public_domain // ""')
-PRIVATE_DOMAIN=$(echo "$CONTEXT" | jq -r '.parameters.privateDomain // .parameters.private_domain // ""')
-
 K8S_NAMESPACE="${NAMESPACE_OVERRIDE:-nullplatform}"
+APPLICATION_ID=$(echo "$CONTEXT" | jq -r '.tags.application_id // ""')
 
-# Extract routes array from parameters
-ROUTES_JSON=$(echo "$CONTEXT" | jq -c '.parameters.routes // []')
+# Routes come from parameters (form submission) or stored service attributes
+ROUTES_JSON=$(echo "$CONTEXT" | jq -c '
+  .parameters.routes //
+  .notification.parameters.routes //
+  .service.attributes.routes //
+  []')
+
+# Resolve scope → visibility for each route (external → "public", internal → "internal")
+if [[ "$(echo "$ROUTES_JSON" | jq 'length')" -gt 0 && -n "$APPLICATION_ID" ]]; then
+  SCOPES_LIST=$(np scope list --application_id "$APPLICATION_ID" --limit 200 --format json | jq '.results // []')
+  ROUTES_JSON=$(echo "$ROUTES_JSON" | jq -c --argjson scopes "$SCOPES_LIST" '
+    map(. as $route |
+      if .visibility == null or .visibility == "" then
+        (($scopes[] | select(.slug == $route.scope) | .service.attributes.visibility // "external") // "external") as $vis |
+        $route + {visibility: (if $vis == "internal" then "internal" else "public" end)}
+      else . end
+    )')
+fi
 
 # Split routes by visibility
-PUBLIC_ROUTES_JSON=$(echo "$ROUTES_JSON" | jq -c '[.[] | select(.visibility == "public" or .visibility == null)]')
-PRIVATE_ROUTES_JSON=$(echo "$ROUTES_JSON" | jq -c '[.[] | select(.visibility == "private")]')
-
-CONTEXT=$(echo "$CONTEXT" | jq \
-          --arg k8s_namespace "$K8S_NAMESPACE" \
-          '. + {k8s_namespace: $k8s_namespace}')
+PUBLIC_ROUTES_JSON=$(echo "$ROUTES_JSON" | jq -c '[.[] | select(.visibility == "public" or .visibility == null or .visibility == "")]')
+PRIVATE_ROUTES_JSON=$(echo "$ROUTES_JSON" | jq -c '[.[] | select(.visibility == "internal")]')
 
 # Only set OUTPUT_DIR if not already set (allows tests to override)
 if [[ -z "${OUTPUT_DIR:-}" ]]; then
@@ -35,12 +41,36 @@ fi
 
 mkdir -p "$OUTPUT_DIR"
 
+AUTH_TYPE=$(echo "$CONTEXT" | jq -r '
+  [.notification.parameters.auth_type,
+   .parameters.auth_type,
+   .service.attributes.auth_type,
+   "aws-avp"]
+  | map(select(. != null)) | first')
+
+COGNITO_USER_POOL_ARN=$(echo "$CONTEXT" | jq -r '
+  [.notification.parameters.cognito_user_pool_arn,
+   .parameters.cognito_user_pool_arn,
+   .service.attributes.cognito_user_pool_arn,
+   ""]
+  | map(select(. != null)) | first')
+
+AVP_POLICY_STORE_ARN=$(echo "$CONTEXT" | jq -r '
+  [.notification.parameters.avp_policy_store_arn,
+   .parameters.avp_policy_store_arn,
+   .service.attributes.avp_policy_store_arn,
+   ""]
+  | map(select(. != null)) | first')
+AVP_POLICY_STORE_ID=$(echo "$AVP_POLICY_STORE_ARN" | cut -d'/' -f2)
+
 export SERVICE_ID
 export SERVICE_SLUG
 export ACTION_ID
 export ACTION_NAME
-export PUBLIC_DOMAIN
-export PRIVATE_DOMAIN
+export APPLICATION_ID
 export ROUTES_JSON
 export PUBLIC_ROUTES_JSON
 export PRIVATE_ROUTES_JSON
+export AUTH_TYPE
+export COGNITO_USER_POOL_ARN
+export AVP_POLICY_STORE_ID

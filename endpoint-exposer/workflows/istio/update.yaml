@@ -1,6 +1,11 @@
 include:
   - "$SERVICE_PATH/workflows/istio/create.yaml"
 steps:
+  - name: "manage policies"
+    type: script
+    file: "$SERVICE_PATH/scripts/common/manage_policies"
+    configuration:
+      ACTION: "sync"
   - name: apply
     configuration:
       ACTION: apply

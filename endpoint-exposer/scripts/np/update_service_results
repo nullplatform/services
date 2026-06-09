@@ -1,0 +1,29 @@
+#!/bin/bash
+
+set -euo pipefail
+
+CONTEXT="${CONTEXT:-${NP_ACTION_CONTEXT:-}}"
+AUTH_TYPE="${AUTH_TYPE:-aws-avp}"
+
+if [[ "$AUTH_TYPE" == "aws-avp" ]]; then
+  AVP_POLICY_STORE_ARN="${AVP_POLICY_STORE_ARN:-}"
+  RESULTS=$(echo "$CONTEXT" | jq \
+    --arg avp_policy_store_arn "$AVP_POLICY_STORE_ARN" \
+    '(.notification.parameters // .parameters // {}) + {
+      avp_policy_store_arn: $avp_policy_store_arn
+    }')
+
+  echo "Storing service results: avp_policy_store_arn=$AVP_POLICY_STORE_ARN"
+  np service action update --results "$RESULTS"
+
+  np service patch --id "$SERVICE_ID" \
+    --body "{\"attributes\": {\"avp_policy_store_arn\": \"$AVP_POLICY_STORE_ARN\"}}"
+else
+  RESULTS=$(echo "$CONTEXT" | jq \
+    '(.notification.parameters // .parameters // {})')
+
+  echo "Storing service results (aws-cognito)"
+  np service action update --results "$RESULTS"
+fi
+
+echo "✅ Service results stored"

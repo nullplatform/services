@@ -17,15 +17,21 @@ steps:
         type: environment
       - name: ACTION_NAME
         type: environment
-      - name: PUBLIC_DOMAIN
-        type: environment
-      - name: PRIVATE_DOMAIN
-        type: environment
       - name: ROUTES_JSON
         type: environment
       - name: PUBLIC_ROUTES_JSON
         type: environment
       - name: PRIVATE_ROUTES_JSON
+        type: environment
+      - name: K8S_NAMESPACE
+        type: environment
+      - name: APPLICATION_ID
+        type: environment
+      - name: AUTH_TYPE
+        type: environment
+      - name: COGNITO_USER_POOL_ARN
+        type: environment
+      - name: AVP_POLICY_STORE_ID
         type: environment
   - name: "build public httproute"
     type: script
@@ -45,9 +51,17 @@ steps:
       - name: HTTPROUTE_PRIVATE_FILE
         type: file
         file: "$OUTPUT_DIR/httproute-$SERVICE_ID-private.yaml"
+  - name: "manage policies"
+    type: script
+    file: "$SERVICE_PATH/scripts/common/manage_policies"
+    configuration:
+      ACTION: "apply"
   - name: apply
     type: script
     file: "$SERVICE_PATH/scripts/common/apply"
     configuration:
       ACTION: apply
       DRY_RUN: false
+  - name: "store service results"
+    type: script
+    file: "$SERVICE_PATH/scripts/np/update_service_results"
