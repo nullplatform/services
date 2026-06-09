@@ -55,10 +55,6 @@
                         }
                     },
                     {
-                        "type": "Control",
-                        "scope": "#/properties/environment"
-                    },
-                    {
                         "type": "Group",
                         "label": "Routes",
                         "elements": [
@@ -155,13 +151,6 @@
                         }
                     },
                     "title": "Routes"
-                },
-                "environment": {
-                    "type": "string",
-                    "title": "Environment",
-                    "additionalKeywords": {
-                        "enum": "[.scopes[]?.dimensions?.environment] | unique | if length == 0 then [\"No environments available\"] else . end"
-                    }
                 },
                 "auth_type": {
                     "type": "string",
