@@ -10,6 +10,9 @@ VISIBILITY="${VISIBILITY:-public}"  # "public" or "private"
 
 echo "=== Building ${VISIBILITY} HTTPRoute ==="
 
+# Save original ROUTES_JSON so manage_policies receives all routes after this step
+_ALL_ROUTES_JSON="$ROUTES_JSON"
+
 # Set variables based on visibility
 if [[ "$VISIBILITY" == "public" ]]; then
   ROUTES_JSON="$PUBLIC_ROUTES_JSON"
@@ -101,6 +104,9 @@ else
 
   echo "✅ $VISIBILITY HTTPRoute created: $HTTPROUTE_FILE"
 fi
+
+# Restore ROUTES_JSON to all routes so subsequent steps (manage_policies) have full context
+export ROUTES_JSON="$_ALL_ROUTES_JSON"
 
 if [[ "$VISIBILITY" == "public" ]]; then
   export HTTPROUTE_PUBLIC_FILE="$HTTPROUTE_FILE"
