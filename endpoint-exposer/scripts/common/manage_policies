@@ -48,6 +48,7 @@ case "$AUTH_TYPE" in
         ;;
       delete)
         source "$SERVICE_PATH/scripts/istio/delete_allow_policies"
+        source "$SERVICE_PATH/scripts/istio/delete_request_authentication"
         ;;
       *)
         echo "ERROR: Unknown ACTION='$ACTION'"
