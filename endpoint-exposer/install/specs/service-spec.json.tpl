@@ -108,7 +108,7 @@
                             "groups": {
                                 "type": "string",
                                 "title": "Authorized Groups",
-                                "description": "Comma-separated list of groups allowed to access this route (e.g. pae-smoke-admin, pae-smoke-user). Leave empty to allow any authenticated user.",
+                                "description": "Comma-separated list of groups allowed to access this route. Leave empty to allow any authenticated user.",
                                 "editableOn": [
                                     "create",
                                     "update"
