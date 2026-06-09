@@ -36,11 +36,14 @@ case "$AUTH_TYPE" in
   aws-cognito)
     case "$ACTION" in
       apply)
+        source "$SERVICE_PATH/scripts/istio/build_request_authentication"
         source "$SERVICE_PATH/scripts/istio/build_allow_policies"
         ;;
       sync)
-        # Delete existing policies first so removed/changed routes don't leave orphans
+        # Delete existing AuthorizationPolicies first so removed/changed routes don't leave orphans
+        # RequestAuthentication is cluster-wide and intentionally not deleted on sync
         source "$SERVICE_PATH/scripts/istio/delete_allow_policies"
+        source "$SERVICE_PATH/scripts/istio/build_request_authentication"
         source "$SERVICE_PATH/scripts/istio/build_allow_policies"
         ;;
       delete)
