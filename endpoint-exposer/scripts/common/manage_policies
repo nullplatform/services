@@ -35,7 +35,12 @@ case "$AUTH_TYPE" in
 
   aws-cognito)
     case "$ACTION" in
-      apply|sync)
+      apply)
+        source "$SERVICE_PATH/scripts/istio/build_allow_policies"
+        ;;
+      sync)
+        # Delete existing policies first so removed/changed routes don't leave orphans
+        source "$SERVICE_PATH/scripts/istio/delete_allow_policies"
         source "$SERVICE_PATH/scripts/istio/build_allow_policies"
         ;;
       delete)
