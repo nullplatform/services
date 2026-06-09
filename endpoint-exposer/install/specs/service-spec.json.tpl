@@ -12,6 +12,7 @@
             "$schema": "http://json-schema.org/draft-07/schema#",
             "required": [
                 "auth_type",
+                "environment",
                 "routes"
             ],
             "uiSchema": {
@@ -53,6 +54,11 @@
                                 }
                             }
                         }
+                    },
+                    {
+                        "type": "Control",
+                        "label": "Environment",
+                        "scope": "#/properties/environment"
                     },
                     {
                         "type": "Group",
@@ -179,6 +185,19 @@
                     "editableOn": [
                         "create",
                         "update"
+                    ]
+                },
+                "environment": {
+                    "type": "string",
+                    "title": "Environment",
+                    "description": "Target environment for agent routing (e.g. dev, test, prod).",
+                    "enum": [
+                        "dev",
+                        "test",
+                        "prod"
+                    ],
+                    "editableOn": [
+                        "create"
                     ]
                 }
             },
