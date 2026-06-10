@@ -1,6 +1,8 @@
 {
     "name": "HTTP Route Access Control",
+    "slug": "http-route-access-control",
     "type": "dependency",
+    "visible_to": ["{{ env.Getenv `NRN` }}"],
     "dimensions": {},
     "scopes": {},
     "assignable_to": "any",
