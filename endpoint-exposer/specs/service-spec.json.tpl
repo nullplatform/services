@@ -13,8 +13,7 @@
             "$schema": "http://json-schema.org/draft-07/schema#",
             "required": [
                 "auth_type",
-                "environment",
-                "routes"
+                "environment"
             ],
             "uiSchema": {
                 "type": "VerticalLayout",
