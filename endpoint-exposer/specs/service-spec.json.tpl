@@ -119,7 +119,9 @@
                         "properties": {
                             "path": {
                                 "type": "string",
-                                "title": "Path"
+                                "title": "Path",
+                                "pattern": "^/([a-zA-Z0-9_\\-\\.:\\*{}/]*)?$",
+                                "description": "Must start with /. Examples: /, /api, /api/v1/users, /items/:id, /files/*"
                             },
                             "scope": {
                                 "type": "string",
