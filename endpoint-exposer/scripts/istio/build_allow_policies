@@ -113,7 +113,7 @@ for i in $(seq 0 $((NUM_TUPLES - 1))); do
     -o "$POLICY_FILE"
   rm "$CONTEXT_FILE"
 
-  GROUPS_DISPLAY=$(echo "$GROUPS_ARRAY" | jq -r 'if length == 0 then "any authenticated user" else join(", ") end')
+  GROUPS_DISPLAY=$(echo "$GROUPS_ARRAY" | jq -r 'join(", ")')
   echo "✅ AuthorizationPolicy generated: hrac-${POLICY_NAME} (${METHOD} ${ROUTE_PATH} on ${SCOPE_DOMAIN} → [${GROUPS_DISPLAY}])"
 done
 

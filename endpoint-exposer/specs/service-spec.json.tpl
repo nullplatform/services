@@ -114,7 +114,8 @@
                         "required": [
                             "methods",
                             "path",
-                            "scope"
+                            "scope",
+                            "groups"
                         ],
                         "properties": {
                             "path": {
@@ -152,7 +153,7 @@
                                 "type": "string",
                                 "title": "Authorized Groups",
                                 "pattern": "^([a-zA-Z0-9-]+(\\s*,\\s*[a-zA-Z0-9-]+)*)?$",
-                                "description": "Comma-separated list of groups (letters, numbers and hyphens only). Leave empty to allow any authenticated user.",
+                                "description": "Comma-separated list of groups allowed to access this route (letters, numbers and hyphens only).",
                                 "editableOn": [
                                     "create",
                                     "update"
