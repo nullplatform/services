@@ -160,7 +160,6 @@
                             }
                         }
                     },
-                    "title": "Routes"
                 },
                 "auth_type": {
                     "type": "string",
