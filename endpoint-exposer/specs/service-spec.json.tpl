@@ -1,7 +1,6 @@
 {
     "name": "HTTP Route Access Control",
     "type": "dependency",
-    "visible_to": [],
     "dimensions": {},
     "scopes": {},
     "assignable_to": "any",
