@@ -62,6 +62,7 @@
                                 "type": "Control",
                                 "scope": "#/properties/routes",
                                 "options": {
+                                    "elementLabelProp": "summary",
                                     "detail": {
                                         "type": "VerticalLayout",
                                         "elements": [
@@ -151,6 +152,14 @@
                                 "editableOn": [
                                     "create",
                                     "update"
+                                ]
+                            },
+                            "summary": {
+                                "type": "string",
+                                "title": "Summary",
+                                "editableOn": [],
+                                "visibleOn": [
+                                    "read"
                                 ]
                             }
                         }
