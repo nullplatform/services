@@ -159,7 +159,7 @@
                                 ]
                             }
                         }
-                    },
+                    }
                 },
                 "auth_type": {
                     "type": "string",
