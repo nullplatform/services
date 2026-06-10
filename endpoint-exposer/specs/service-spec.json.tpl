@@ -151,7 +151,8 @@
                             "groups": {
                                 "type": "string",
                                 "title": "Authorized Groups",
-                                "description": "Comma-separated list of groups allowed to access this route. Leave empty to allow any authenticated user.",
+                                "pattern": "^([a-zA-Z0-9-]+(\\s*,\\s*[a-zA-Z0-9-]+)*)?$",
+                                "description": "Comma-separated list of groups (letters, numbers and hyphens only). Leave empty to allow any authenticated user.",
                                 "editableOn": [
                                     "create",
                                     "update"
