@@ -157,10 +157,8 @@
                             "summary": {
                                 "type": "string",
                                 "title": "Summary",
-                                "editableOn": [],
-                                "visibleOn": [
-                                    "read"
-                                ]
+                                "editableOn": ["create", "update"],
+                                "visibleOn": []
                             }
                         }
                     }
