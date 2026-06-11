@@ -38,6 +38,7 @@ case "$AUTH_TYPE" in
       apply)
         source "$SERVICE_PATH/scripts/istio/build_request_authentication"
         source "$SERVICE_PATH/scripts/istio/build_allow_policies"
+        source "$SERVICE_PATH/scripts/np/update_service_results"
         ;;
       sync)
         # Delete existing AuthorizationPolicies first so removed/changed routes don't leave orphans
@@ -45,6 +46,7 @@ case "$AUTH_TYPE" in
         source "$SERVICE_PATH/scripts/istio/delete_allow_policies"
         source "$SERVICE_PATH/scripts/istio/build_request_authentication"
         source "$SERVICE_PATH/scripts/istio/build_allow_policies"
+        source "$SERVICE_PATH/scripts/np/update_service_results"
         ;;
       delete)
         source "$SERVICE_PATH/scripts/istio/delete_allow_policies"
