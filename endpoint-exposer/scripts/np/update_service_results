@@ -5,13 +5,15 @@ set -euo pipefail
 CONTEXT="${CONTEXT:-${NP_ACTION_CONTEXT:-}}"
 AUTH_TYPE="${AUTH_TYPE:-aws-avp}"
 
-# Compute summary for each route: "METHOD1, METHOD2 /path"
+# Compute summary for each route: "METHOD1, METHOD2 | /path | group1, group2"
 ROUTES_WITH_SUMMARY=$(echo "${ROUTES_JSON:-[]}" | jq -c '
   map(. + {
     summary: (
       (if (.methods | type) == "array" then .methods | join(", ")
        else (.method // "GET")
-       end) + " " + .path
+       end)
+      + " | " + .path
+      + (if (.groups // "" | length) > 0 then " | " + .groups else "" end)
     )
   })
 ')
