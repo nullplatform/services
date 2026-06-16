@@ -8,7 +8,6 @@ set -euo pipefail
 #   ACTION     - "apply" (create/update) or "delete"
 
 ACTION="${ACTION:-apply}"
-AUTH_TYPE="${AUTH_TYPE:-aws-avp}"
 
 echo "=== Managing policies: auth_type=$AUTH_TYPE action=$ACTION ==="
 

@@ -41,26 +41,30 @@ fi
 
 mkdir -p "$OUTPUT_DIR"
 
-AUTH_TYPE=$(echo "$CONTEXT" | jq -r '
-  [.notification.parameters.auth_type,
-   .parameters.auth_type,
-   .service.attributes.auth_type,
-   "aws-avp"]
-  | map(select(. != null)) | first')
+: "${AUTH_TYPE:?AUTH_TYPE is required}"
 
-COGNITO_USER_POOL_ARN=$(echo "$CONTEXT" | jq -r '
-  [.notification.parameters.cognito_user_pool_arn,
-   .parameters.cognito_user_pool_arn,
-   .service.attributes.cognito_user_pool_arn,
-   ""]
-  | map(select(. != null)) | first')
+ENV_DIMENSION=$(echo "$CONTEXT" | jq -r '.service.dimensions.environment // ""')
+ENV_SUFFIX=$(echo "$ENV_DIMENSION" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
+: "${ENV_SUFFIX:?service.dimensions.environment is required}"
 
-AVP_POLICY_STORE_ARN=$(echo "$CONTEXT" | jq -r '
-  [.notification.parameters.avp_policy_store_arn,
-   .parameters.avp_policy_store_arn,
-   .service.attributes.avp_policy_store_arn,
-   ""]
-  | map(select(. != null)) | first')
+case "$AUTH_TYPE" in
+  aws-avp)
+    AVP_VAR="AVP_POLICY_STORE_ARN_${ENV_SUFFIX}"
+    : "${!AVP_VAR:?${AVP_VAR} is required when AUTH_TYPE=aws-avp}"
+    AVP_POLICY_STORE_ARN="${!AVP_VAR}"
+    COGNITO_USER_POOL_ARN=""
+    ;;
+  aws-cognito)
+    COGNITO_VAR="COGNITO_USER_POOL_ARN_${ENV_SUFFIX}"
+    : "${!COGNITO_VAR:?${COGNITO_VAR} is required when AUTH_TYPE=aws-cognito}"
+    COGNITO_USER_POOL_ARN="${!COGNITO_VAR}"
+    AVP_POLICY_STORE_ARN=""
+    ;;
+  *)
+    echo "ERROR: AUTH_TYPE must be 'aws-avp' or 'aws-cognito', got: '$AUTH_TYPE'" >&2
+    exit 1
+    ;;
+esac
 AVP_POLICY_STORE_ID=$(echo "$AVP_POLICY_STORE_ARN" | cut -d'/' -f2)
 
 export SERVICE_ID
