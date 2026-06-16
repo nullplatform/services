@@ -49,6 +49,7 @@ ENV_SUFFIX=$(echo "$ENV_DIMENSION" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
 
 case "$AUTH_TYPE" in
   aws-avp)
+    : "${OPA_PROVIDER_NAME:?OPA_PROVIDER_NAME is required when AUTH_TYPE=aws-avp}"
     AVP_VAR="AVP_POLICY_STORE_ARN_${ENV_SUFFIX}"
     : "${!AVP_VAR:?${AVP_VAR} is required when AUTH_TYPE=aws-avp}"
     AVP_POLICY_STORE_ARN="${!AVP_VAR}"

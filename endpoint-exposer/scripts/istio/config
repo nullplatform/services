@@ -10,5 +10,4 @@ export PRIVATE_GATEWAY_NAME="${PRIVATE_GATEWAY_NAME:-gateway-private}"
 export GATEWAY_NAMESPACE="${GATEWAY_NAMESPACE:-gateways}"
 
 # OPA configuration
-: "${OPA_PROVIDER_NAME:?OPA_PROVIDER_NAME is required}"
-export OPA_PROVIDER_NAME
+export OPA_PROVIDER_NAME="${OPA_PROVIDER_NAME:-}"
