@@ -26,6 +26,12 @@ resource "aws_iam_role_policy_attachment" "rds_s3" {
   policy_arn = aws_iam_policy.nullplatform_rds_s3_policy.arn
 }
 
+resource "aws_iam_role_policy_attachment" "rds_kms" {
+  count      = var.role_name != null ? 1 : 0
+  role       = var.role_name
+  policy_arn = aws_iam_policy.nullplatform_rds_kms_policy.arn
+}
+
 ################################################################################
 # RDS IAM policy
 ################################################################################
@@ -130,6 +136,41 @@ resource "aws_iam_policy" "nullplatform_rds_s3_policy" {
           "arn:aws:s3:::np-service-*",
           "arn:aws:s3:::np-service-*/*"
         ]
+      }
+    ]
+  })
+}
+
+################################################################################
+# KMS IAM policy
+################################################################################
+
+# Grant permissions to create and manage the CMK used for RDS encryption
+resource "aws_iam_policy" "nullplatform_rds_kms_policy" {
+  name        = "nullplatform_${var.name}_rds_kms_policy"
+  description = "Policy for managing the CMK used for RDS storage and secrets encryption"
+
+  policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Action" : [
+          "kms:CreateKey",
+          "kms:DescribeKey",
+          "kms:GetKeyPolicy",
+          "kms:GetKeyRotationStatus",
+          "kms:ListResourceTags",
+          "kms:PutKeyPolicy",
+          "kms:EnableKeyRotation",
+          "kms:ScheduleKeyDeletion",
+          "kms:CreateAlias",
+          "kms:DeleteAlias",
+          "kms:ListAliases",
+          "kms:TagResource",
+          "kms:UntagResource"
+        ],
+        "Resource" : "*"
       }
     ]
   })

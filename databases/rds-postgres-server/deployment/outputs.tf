@@ -17,3 +17,8 @@ output "master_secret_arn" {
   value       = aws_secretsmanager_secret.master.arn
   description = "ARN of the Secrets Manager secret for master credentials"
 }
+
+output "kms_key_arn" {
+  value       = aws_kms_key.rds.arn
+  description = "ARN of the CMK used for RDS storage and secrets encryption"
+}

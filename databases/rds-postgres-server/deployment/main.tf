@@ -1,4 +1,66 @@
 # ---------------------------------------------------------------------------
+# Customer Managed KMS Key for RDS storage and Secrets Manager encryption
+# ---------------------------------------------------------------------------
+
+resource "aws_kms_key" "rds" {
+  description             = "CMK for RDS instance ${var.instance_name} storage and secrets"
+  deletion_window_in_days = 7
+  enable_key_rotation     = true
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "RootFullAccess"
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        }
+        Action   = "kms:*"
+        Resource = "*"
+      },
+      {
+        Sid    = "RDSServiceAccess"
+        Effect = "Allow"
+        Principal = {
+          Service = "rds.amazonaws.com"
+        }
+        Action = [
+          "kms:GenerateDataKey*",
+          "kms:Decrypt",
+          "kms:CreateGrant",
+          "kms:DescribeKey"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "SecretsManagerServiceAccess"
+        Effect = "Allow"
+        Principal = {
+          Service = "secretsmanager.amazonaws.com"
+        }
+        Action = [
+          "kms:GenerateDataKey*",
+          "kms:Decrypt",
+          "kms:DescribeKey"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+
+  tags = {
+    "managed-by" = "nullplatform"
+    "service-id" = var.service_id
+  }
+}
+
+resource "aws_kms_alias" "rds" {
+  name          = "alias/nullplatform/rds/${var.instance_name}"
+  target_key_id = aws_kms_key.rds.key_id
+}
+
+# ---------------------------------------------------------------------------
 # Security group for RDS (allows PostgreSQL traffic from within the VPC)
 # ---------------------------------------------------------------------------
 
@@ -39,6 +101,7 @@ resource "random_password" "master" {
 resource "aws_secretsmanager_secret" "master" {
   name                    = "nullplatform/rds/${var.instance_name}/master"
   recovery_window_in_days = 0
+  kms_key_id              = aws_kms_key.rds.arn
 
   tags = {
     "managed-by"   = "nullplatform"
@@ -77,6 +140,7 @@ resource "aws_db_instance" "main" {
   allocated_storage = var.allocated_storage
   storage_type      = "gp3"
   storage_encrypted = true
+  kms_key_id        = aws_kms_key.rds.arn
 
   db_name  = "postgres"
   username = "master"
