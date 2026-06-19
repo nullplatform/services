@@ -1,0 +1,13 @@
+# Azure Service Bus Service — Static Configuration
+# These values are not exposed in the NP UI. They configure the execution
+# environment for the agent running this service.
+
+# Resource group where the Service Bus namespace lives
+resource_group_name: "rg-nullplatform-demos-shared"
+
+# Name of the existing Service Bus namespace
+servicebus_namespace_name: "np-servicebus"
+
+# Resource group where the Azure App Services (scopes) live
+# Used during link/unlink to look up the app's managed identity
+app_resource_group: "rg-azureimplementations-poc"

@@ -1,0 +1,21 @@
+#!/bin/bash
+set -euo pipefail
+
+SCOPE_ID=$(echo "$CONTEXT" | jq -r .tags.scope_id)
+SCOPE_SLUG=$(echo "$CONTEXT" | jq -r .tags.scope)
+NS_SLUG=$(echo "$CONTEXT" | jq -r .tags.namespace)
+APP_SLUG=$(echo "$CONTEXT" | jq -r .tags.application)
+
+if [ -z "${SCOPE_ID:-}" ]; then
+  echo "Error: Missing required parameter: scope_id" >&2
+  exit 1
+fi
+
+if [ -z "${SCOPE_SLUG:-}" ] || [ -z "${NS_SLUG:-}" ] || [ -z "${APP_SLUG:-}" ]; then
+  echo "Error: Could not extract slugs from context" >&2
+  exit 1
+fi
+
+RESOURCE_NAME_MAX_LENGTH=60
+APP_NAME=$("$SERVICE_PATH/scripts/azure/generate_resource_name" "$RESOURCE_NAME_MAX_LENGTH" "$NS_SLUG" "$APP_SLUG" "$SCOPE_SLUG" "$SCOPE_ID")
+export APP_NAME
