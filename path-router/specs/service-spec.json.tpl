@@ -11,7 +11,7 @@
         "schema": {
             "type": "object",
             "$schema": "http://json-schema.org/draft-07/schema#",
-            "required": ["base_domain", "routes"],
+            "required": ["base_domain", "path_prefix", "scope"],
             "uiSchema": {
                 "type": "VerticalLayout",
                 "elements": [
@@ -37,30 +37,17 @@
                         ]
                     },
                     {
-                        "type": "Group",
-                        "label": "Routes",
+                        "type": "HorizontalLayout",
                         "elements": [
                             {
                                 "type": "Control",
-                                "scope": "#/properties/routes",
-                                "options": {
-                                    "elementLabelProp": "path_prefix",
-                                    "detail": {
-                                        "type": "HorizontalLayout",
-                                        "elements": [
-                                            {
-                                                "type": "Control",
-                                                "label": "Path Prefix",
-                                                "scope": "#/properties/path_prefix"
-                                            },
-                                            {
-                                                "type": "Control",
-                                                "label": "Scope",
-                                                "scope": "#/properties/scope"
-                                            }
-                                        ]
-                                    }
-                                }
+                                "label": "Path Prefix",
+                                "scope": "#/properties/path_prefix"
+                            },
+                            {
+                                "type": "Control",
+                                "label": "Scope",
+                                "scope": "#/properties/scope"
                             }
                         ]
                     }
@@ -70,7 +57,7 @@
                 "base_domain": {
                     "type": "string",
                     "title": "Base Domain",
-                    "description": "Shared domain for all path-based routes. Example: svc.dev.galiciaseguro.com.ar"
+                    "description": "Shared domain for path-based routing. Example: svc.dev.galiciaseguro.com.ar"
                 },
                 "gateway": {
                     "type": "string",
@@ -87,29 +74,18 @@
                     "description": "Remove the path prefix before forwarding to the backend. When enabled, /APP1/health is forwarded as /health.",
                     "default": true
                 },
-                "routes": {
-                    "type": "array",
-                    "title": "Routes",
-                    "minItems": 1,
-                    "items": {
-                        "type": "object",
-                        "required": ["path_prefix", "scope"],
-                        "properties": {
-                            "path_prefix": {
-                                "type": "string",
-                                "title": "Path Prefix",
-                                "pattern": "^/[a-zA-Z0-9_\\-]+$",
-                                "description": "Path prefix to route. Example: /APP1, /api-gateway"
-                            },
-                            "scope": {
-                                "type": "string",
-                                "title": "Scope",
-                                "description": "Target scope to route traffic to.",
-                                "additionalKeywords": {
-                                    "enum": "[.scopes[]?.slug] | if length == 0 then [\"No scopes available for selected environment\"] else . end"
-                                }
-                            }
-                        }
+                "path_prefix": {
+                    "type": "string",
+                    "title": "Path Prefix",
+                    "pattern": "^/[a-zA-Z0-9_\\-]+$",
+                    "description": "Path prefix to route to this application. Example: /APP1, /api-gateway"
+                },
+                "scope": {
+                    "type": "string",
+                    "title": "Scope",
+                    "description": "Target scope to route traffic to.",
+                    "additionalKeywords": {
+                        "enum": "[.scopes[]?.slug] | if length == 0 then [\"No scopes available for selected environment\"] else . end"
                     }
                 }
             }

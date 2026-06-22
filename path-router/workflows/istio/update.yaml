@@ -25,12 +25,14 @@ steps:
         type: environment
       - name: STRIP_PREFIX
         type: environment
-      - name: ROUTES_JSON
+      - name: PATH_PREFIX
         type: environment
-  - name: "delete existing httproutes"
+      - name: SCOPE_SLUG
+        type: environment
+  - name: "delete existing httproute"
     type: script
     file: "$SERVICE_PATH/scripts/istio/delete_httproutes"
-  - name: "build httproutes"
+  - name: "build httproute"
     type: script
     file: "$SERVICE_PATH/scripts/istio/build_httproute"
   - name: apply

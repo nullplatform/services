@@ -4,15 +4,10 @@ set -euo pipefail
 
 source "$SERVICE_PATH/scripts/istio/config"
 
-ROUTE_COUNT=$(echo "$ROUTES_JSON" | jq 'length')
-
-if [[ "$ROUTE_COUNT" -eq 0 ]]; then
-    echo "No routes configured — skipping HTTPRoute generation"
-    exit 0
-fi
-
-echo "=== Building path-router HTTPRoutes ($ROUTE_COUNT routes) ==="
+echo "=== Building path-router HTTPRoute ==="
 echo "BASE_DOMAIN:  $BASE_DOMAIN"
+echo "PATH_PREFIX:  $PATH_PREFIX"
+echo "SCOPE_SLUG:   $SCOPE_SLUG"
 echo "GATEWAY:      $GATEWAY"
 echo "STRIP_PREFIX: $STRIP_PREFIX"
 
@@ -24,94 +19,88 @@ fi
 
 echo "Gateway: $GATEWAY_NAME (namespace: $GATEWAY_NAMESPACE)"
 
-# Resolve all scope IDs upfront with a single API call
-echo "Fetching scopes for application $APPLICATION_ID..."
+echo "Resolving scope '$SCOPE_SLUG' for application $APPLICATION_ID..."
 SCOPES_JSON=$(np scope list --application_id "$APPLICATION_ID" --limit 200 --format json | jq '.results // []')
+SCOPE_ID=$(echo "$SCOPES_JSON" | jq -r --arg s "$SCOPE_SLUG" '.[] | select(.slug == $s) | .id // empty')
 
+if [[ -z "$SCOPE_ID" ]]; then
+    echo "ERROR: scope '$SCOPE_SLUG' not found for application $APPLICATION_ID"
+    exit 1
+fi
+
+echo "Resolved: $SCOPE_SLUG → $SCOPE_ID"
+
+export SCOPE_ID
+source "$SERVICE_PATH/scripts/istio/build_rule"
+
+SERVICE_NAME=$(echo "$SCOPE_RULE" | jq -r '.service.name')
+SERVICE_PORT=$(echo "$SCOPE_RULE" | jq -r '.service.port.number')
+BLUE_GREEN=$(echo "$SCOPE_RULE" | jq -r '.blue_green_annotation // "null"')
+
+if [[ "$BLUE_GREEN" != "null" && -n "$BLUE_GREEN" ]]; then
+    BLUE_SERVICE_NAME=$(echo "$BLUE_GREEN" | jq -r '.forward.targetGroups[0].serviceName')
+    GREEN_SERVICE_NAME=$(echo "$BLUE_GREEN" | jq -r '.forward.targetGroups[1].serviceName')
+    BLUE_WEIGHT=$(echo "$BLUE_GREEN" | jq -r '.forward.targetGroups[0].weight')
+    GREEN_WEIGHT=$(echo "$BLUE_GREEN" | jq -r '.forward.targetGroups[1].weight')
+
+    CONTEXT_JSON=$(jq -n \
+        --arg   service_id        "$SERVICE_ID" \
+        --arg   scope_id          "$SCOPE_ID" \
+        --arg   k8s_namespace     "$K8S_NAMESPACE" \
+        --arg   base_domain       "$BASE_DOMAIN" \
+        --arg   path_prefix       "$PATH_PREFIX" \
+        --arg   gateway_name      "$GATEWAY_NAME" \
+        --arg   gateway_namespace "$GATEWAY_NAMESPACE" \
+        --argjson strip_prefix    "$STRIP_PREFIX" \
+        --arg   service_name      "$SERVICE_NAME" \
+        --argjson service_port    "$SERVICE_PORT" \
+        --argjson blue_green      "true" \
+        --arg   blue_service_name  "$BLUE_SERVICE_NAME" \
+        --arg   green_service_name "$GREEN_SERVICE_NAME" \
+        --argjson blue_weight      "$BLUE_WEIGHT" \
+        --argjson green_weight     "$GREEN_WEIGHT" \
+        '{
+          service_id: $service_id, scope_id: $scope_id,
+          k8s_namespace: $k8s_namespace, base_domain: $base_domain,
+          path_prefix: $path_prefix, gateway_name: $gateway_name,
+          gateway_namespace: $gateway_namespace, strip_prefix: $strip_prefix,
+          service_name: $service_name, service_port: $service_port,
+          blue_green: $blue_green,
+          blue_service_name: $blue_service_name, green_service_name: $green_service_name,
+          blue_weight: $blue_weight, green_weight: $green_weight
+        }')
+else
+    CONTEXT_JSON=$(jq -n \
+        --arg   service_id        "$SERVICE_ID" \
+        --arg   scope_id          "$SCOPE_ID" \
+        --arg   k8s_namespace     "$K8S_NAMESPACE" \
+        --arg   base_domain       "$BASE_DOMAIN" \
+        --arg   path_prefix       "$PATH_PREFIX" \
+        --arg   gateway_name      "$GATEWAY_NAME" \
+        --arg   gateway_namespace "$GATEWAY_NAMESPACE" \
+        --argjson strip_prefix    "$STRIP_PREFIX" \
+        --arg   service_name      "$SERVICE_NAME" \
+        --argjson service_port    "$SERVICE_PORT" \
+        --argjson blue_green      "false" \
+        '{
+          service_id: $service_id, scope_id: $scope_id,
+          k8s_namespace: $k8s_namespace, base_domain: $base_domain,
+          path_prefix: $path_prefix, gateway_name: $gateway_name,
+          gateway_namespace: $gateway_namespace, strip_prefix: $strip_prefix,
+          service_name: $service_name, service_port: $service_port,
+          blue_green: $blue_green
+        }')
+fi
+
+CONTEXT_PATH="$OUTPUT_DIR/httproute-context-$SCOPE_ID.json"
+echo "$CONTEXT_JSON" > "$CONTEXT_PATH"
+
+HTTPROUTE_FILE="$OUTPUT_DIR/httproute-path-router-$SERVICE_ID-$SCOPE_ID.yaml"
 TEMPLATE="$SERVICE_PATH/templates/istio/httproute.yaml.tpl"
 
-for i in $(seq 0 $((ROUTE_COUNT - 1))); do
-    ROUTE=$(echo "$ROUTES_JSON" | jq ".[$i]")
-    PATH_PREFIX=$(echo "$ROUTE" | jq -r '.path_prefix')
-    SCOPE_SLUG=$(echo "$ROUTE" | jq -r '.scope')
+echo "Rendering: $TEMPLATE → $HTTPROUTE_FILE"
+gomplate -c .="$CONTEXT_PATH" --file "$TEMPLATE" --out "$HTTPROUTE_FILE"
+rm "$CONTEXT_PATH"
 
-    SCOPE_ID=$(echo "$SCOPES_JSON" | jq -r --arg s "$SCOPE_SLUG" '.[] | select(.slug == $s) | .id // empty')
-
-    if [[ -z "$SCOPE_ID" ]]; then
-        echo "WARNING: scope '$SCOPE_SLUG' not found for application $APPLICATION_ID — skipping route $PATH_PREFIX"
-        continue
-    fi
-
-    echo "Route [$i]: $PATH_PREFIX → scope $SCOPE_SLUG ($SCOPE_ID)"
-
-    export SCOPE_ID PATH_PREFIX SCOPE_SLUG
-    source "$SERVICE_PATH/scripts/istio/build_rule"
-
-    SERVICE_NAME=$(echo "$SCOPE_RULE" | jq -r '.service.name')
-    SERVICE_PORT=$(echo "$SCOPE_RULE" | jq -r '.service.port.number')
-    BLUE_GREEN=$(echo "$SCOPE_RULE" | jq -r '.blue_green_annotation // "null"')
-
-    if [[ "$BLUE_GREEN" != "null" && -n "$BLUE_GREEN" ]]; then
-        BLUE_SERVICE_NAME=$(echo "$BLUE_GREEN" | jq -r '.forward.targetGroups[0].serviceName')
-        GREEN_SERVICE_NAME=$(echo "$BLUE_GREEN" | jq -r '.forward.targetGroups[1].serviceName')
-        BLUE_WEIGHT=$(echo "$BLUE_GREEN" | jq -r '.forward.targetGroups[0].weight')
-        GREEN_WEIGHT=$(echo "$BLUE_GREEN" | jq -r '.forward.targetGroups[1].weight')
-
-        CONTEXT_JSON=$(jq -n \
-            --arg   service_id        "$SERVICE_ID" \
-            --arg   scope_id          "$SCOPE_ID" \
-            --arg   k8s_namespace     "$K8S_NAMESPACE" \
-            --arg   base_domain       "$BASE_DOMAIN" \
-            --arg   path_prefix       "$PATH_PREFIX" \
-            --arg   gateway_name      "$GATEWAY_NAME" \
-            --arg   gateway_namespace "$GATEWAY_NAMESPACE" \
-            --argjson strip_prefix    "$STRIP_PREFIX" \
-            --arg   service_name      "$SERVICE_NAME" \
-            --argjson service_port    "$SERVICE_PORT" \
-            --argjson blue_green      "true" \
-            --arg   blue_service_name  "$BLUE_SERVICE_NAME" \
-            --arg   green_service_name "$GREEN_SERVICE_NAME" \
-            --argjson blue_weight      "$BLUE_WEIGHT" \
-            --argjson green_weight     "$GREEN_WEIGHT" \
-            '{
-              service_id: $service_id, scope_id: $scope_id,
-              k8s_namespace: $k8s_namespace, base_domain: $base_domain,
-              path_prefix: $path_prefix, gateway_name: $gateway_name,
-              gateway_namespace: $gateway_namespace, strip_prefix: $strip_prefix,
-              service_name: $service_name, service_port: $service_port,
-              blue_green: $blue_green,
-              blue_service_name: $blue_service_name, green_service_name: $green_service_name,
-              blue_weight: $blue_weight, green_weight: $green_weight
-            }')
-    else
-        CONTEXT_JSON=$(jq -n \
-            --arg   service_id        "$SERVICE_ID" \
-            --arg   scope_id          "$SCOPE_ID" \
-            --arg   k8s_namespace     "$K8S_NAMESPACE" \
-            --arg   base_domain       "$BASE_DOMAIN" \
-            --arg   path_prefix       "$PATH_PREFIX" \
-            --arg   gateway_name      "$GATEWAY_NAME" \
-            --arg   gateway_namespace "$GATEWAY_NAMESPACE" \
-            --argjson strip_prefix    "$STRIP_PREFIX" \
-            --arg   service_name      "$SERVICE_NAME" \
-            --argjson service_port    "$SERVICE_PORT" \
-            --argjson blue_green      "false" \
-            '{
-              service_id: $service_id, scope_id: $scope_id,
-              k8s_namespace: $k8s_namespace, base_domain: $base_domain,
-              path_prefix: $path_prefix, gateway_name: $gateway_name,
-              gateway_namespace: $gateway_namespace, strip_prefix: $strip_prefix,
-              service_name: $service_name, service_port: $service_port,
-              blue_green: $blue_green
-            }')
-    fi
-
-    CONTEXT_PATH="$OUTPUT_DIR/httproute-context-$SCOPE_ID.json"
-    echo "$CONTEXT_JSON" > "$CONTEXT_PATH"
-
-    HTTPROUTE_FILE="$OUTPUT_DIR/httproute-path-router-$SERVICE_ID-$SCOPE_ID.yaml"
-    echo "Rendering: $TEMPLATE → $HTTPROUTE_FILE"
-    gomplate -c .="$CONTEXT_PATH" --file "$TEMPLATE" --out "$HTTPROUTE_FILE"
-    rm "$CONTEXT_PATH"
-    echo "Done: $HTTPROUTE_FILE"
-done
+echo "Done: $HTTPROUTE_FILE"
+export HTTPROUTE_FILE
