@@ -7,10 +7,10 @@ ACTION_ID=$(echo "$CONTEXT" | jq -r '.id')
 ACTION_NAME=$(echo "$CONTEXT" | jq -r '.slug')
 APPLICATION_ID=$(echo "$CONTEXT" | jq -r '.tags.application_id // ""')
 
-BASE_DOMAIN=$(echo "$CONTEXT" | jq -r '.service.attributes.base_domain // ""')
-GATEWAY=$(echo "$CONTEXT" | jq -r '.service.attributes.gateway // "public"')
-STRIP_PREFIX=$(echo "$CONTEXT" | jq -r '.service.attributes.strip_prefix // "true"')
-ROUTES_JSON=$(echo "$CONTEXT" | jq -c '.service.attributes.routes // []')
+BASE_DOMAIN=$(echo "$CONTEXT" | jq -r '.service.attributes.base_domain // .parameters.base_domain // ""')
+GATEWAY=$(echo "$CONTEXT" | jq -r '.service.attributes.gateway // .parameters.gateway // "public"')
+STRIP_PREFIX=$(echo "$CONTEXT" | jq -r '.service.attributes.strip_prefix // .parameters.strip_prefix // "true"')
+ROUTES_JSON=$(echo "$CONTEXT" | jq -c '.service.attributes.routes // .parameters.routes // []')
 
 [[ -z "$BASE_DOMAIN" ]] && { echo "ERROR: base_domain is required in service attributes"; exit 1; }
 
