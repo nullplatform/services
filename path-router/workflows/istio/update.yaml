@@ -1,0 +1,7 @@
+include:
+  - "$SERVICE_PATH/workflows/istio/create.yaml"
+steps:
+  - name: apply
+    configuration:
+      ACTION: apply
+      DRY_RUN: false

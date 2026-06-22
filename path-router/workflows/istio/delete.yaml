@@ -1,0 +1,46 @@
+steps:
+  - name: "find k8s namespace"
+    type: script
+    file: "$SERVICE_PATH/scripts/istio/fetch_provider_data"
+    output:
+      - name: K8S_NAMESPACE
+        type: environment
+  - name: "build context"
+    type: script
+    file: "$SERVICE_PATH/scripts/istio/build_context"
+    output:
+      - name: SERVICE_ID
+        type: environment
+      - name: SERVICE_SLUG
+        type: environment
+      - name: ACTION_ID
+        type: environment
+      - name: ACTION_NAME
+        type: environment
+      - name: APPLICATION_ID
+        type: environment
+      - name: PATH_PREFIX
+        type: environment
+      - name: SCOPE_SLUG
+        type: environment
+      - name: SCOPE_ID
+        type: environment
+      - name: BASE_DOMAIN
+        type: environment
+      - name: GATEWAY
+        type: environment
+      - name: STRIP_PREFIX
+        type: environment
+  - name: "build httproute"
+    type: script
+    file: "$SERVICE_PATH/scripts/istio/build_httproute"
+    output:
+      - name: HTTPROUTE_FILE
+        type: file
+        file: "$OUTPUT_DIR/httproute-path-router-$SERVICE_ID-$SCOPE_ID.yaml"
+  - name: delete
+    type: script
+    file: "$SERVICE_PATH/scripts/common/apply"
+    configuration:
+      ACTION: delete
+      DRY_RUN: false
