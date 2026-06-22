@@ -11,7 +11,7 @@
         "schema": {
             "type": "object",
             "$schema": "http://json-schema.org/draft-07/schema#",
-            "required": ["base_domain"],
+            "required": ["base_domain", "routes"],
             "uiSchema": {
                 "type": "VerticalLayout",
                 "elements": [
@@ -21,15 +21,48 @@
                         "scope": "#/properties/base_domain"
                     },
                     {
-                        "type": "Control",
-                        "label": "Gateway",
-                        "scope": "#/properties/gateway",
-                        "options": { "format": "radio" }
+                        "type": "HorizontalLayout",
+                        "elements": [
+                            {
+                                "type": "Control",
+                                "label": "Gateway",
+                                "scope": "#/properties/gateway",
+                                "options": { "format": "radio" }
+                            },
+                            {
+                                "type": "Control",
+                                "label": "Strip path prefix before forwarding",
+                                "scope": "#/properties/strip_prefix"
+                            }
+                        ]
                     },
                     {
-                        "type": "Control",
-                        "label": "Strip path prefix before forwarding",
-                        "scope": "#/properties/strip_prefix"
+                        "type": "Group",
+                        "label": "Routes",
+                        "elements": [
+                            {
+                                "type": "Control",
+                                "scope": "#/properties/routes",
+                                "options": {
+                                    "elementLabelProp": "path_prefix",
+                                    "detail": {
+                                        "type": "HorizontalLayout",
+                                        "elements": [
+                                            {
+                                                "type": "Control",
+                                                "label": "Path Prefix",
+                                                "scope": "#/properties/path_prefix"
+                                            },
+                                            {
+                                                "type": "Control",
+                                                "label": "Scope",
+                                                "scope": "#/properties/scope"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        ]
                     }
                 ]
             },
@@ -53,6 +86,31 @@
                     "title": "Strip path prefix",
                     "description": "Remove the path prefix before forwarding to the backend. When enabled, /APP1/health is forwarded as /health.",
                     "default": true
+                },
+                "routes": {
+                    "type": "array",
+                    "title": "Routes",
+                    "minItems": 1,
+                    "items": {
+                        "type": "object",
+                        "required": ["path_prefix", "scope"],
+                        "properties": {
+                            "path_prefix": {
+                                "type": "string",
+                                "title": "Path Prefix",
+                                "pattern": "^/[a-zA-Z0-9_\\-]+$",
+                                "description": "Path prefix to route. Example: /APP1, /api-gateway"
+                            },
+                            "scope": {
+                                "type": "string",
+                                "title": "Scope",
+                                "description": "Target scope to route traffic to.",
+                                "additionalKeywords": {
+                                    "enum": "[.scopes[]?.slug] | if length == 0 then [\"No scopes available for selected environment\"] else . end"
+                                }
+                            }
+                        }
+                    }
                 }
             }
         },
