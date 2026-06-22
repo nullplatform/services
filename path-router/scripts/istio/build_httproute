@@ -4,6 +4,13 @@ set -euo pipefail
 
 source "$SERVICE_PATH/scripts/istio/config"
 
+# Service-level action (no link) — nothing to generate
+if [[ -z "${PATH_PREFIX:-}" ]]; then
+    echo "Service-level action — skipping HTTPRoute generation"
+    export HTTPROUTE_FILE=""
+    exit 0
+fi
+
 echo "=== Building path-router HTTPRoute ==="
 echo "BASE_DOMAIN:  $BASE_DOMAIN"
 echo "PATH_PREFIX:  $PATH_PREFIX"
