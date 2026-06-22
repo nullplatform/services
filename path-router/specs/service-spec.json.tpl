@@ -58,7 +58,7 @@
                     "type": "string",
                     "title": "Base Domain",
                     "description": "Shared domain for path-based routing.",
-                    "enum": {{ env.Getenv "PATH_ROUTER_DOMAINS" | strings.Split "," | conv.ToJSON }}
+                    "enum": ["path-router.api-private.playground.nullapps.io"]
                 },
                 "gateway": {
                     "type": "string",
