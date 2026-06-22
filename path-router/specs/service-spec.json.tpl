@@ -57,7 +57,8 @@
                 "base_domain": {
                     "type": "string",
                     "title": "Base Domain",
-                    "description": "Shared domain for path-based routing. Example: svc.dev.galiciaseguro.com.ar"
+                    "description": "Shared domain for path-based routing.",
+                    "enum": {{ env.Getenv "PATH_ROUTER_DOMAINS" | strings.Split "," | conv.ToJSON }}
                 },
                 "gateway": {
                     "type": "string",
