@@ -1,0 +1,25 @@
+#!/bin/bash
+set -euo pipefail
+
+SERVICE_ID=$(echo "$CONTEXT" | jq -r '.service.id')
+LINK_JSON=$(echo "$CONTEXT" | jq '.link // "null"')
+export SERVICE_ID
+
+# For link-level deletes, resolve scope slug → scope ID
+if [[ "$LINK_JSON" != '"null"' && "$LINK_JSON" != "null" ]]; then
+    APPLICATION_ID=$(echo "$CONTEXT" | jq -r '.tags.application_id // ""')
+    SCOPE_SLUG=$(echo "$CONTEXT" | jq -r '.link.attributes.scope // ""')
+
+    if [[ -n "$SCOPE_SLUG" && -n "$APPLICATION_ID" ]]; then
+        echo "Resolving scope '$SCOPE_SLUG' for application $APPLICATION_ID..."
+        SCOPES_JSON=$(np scope list --application_id "$APPLICATION_ID" --limit 200 --format json | jq '.results // []')
+        SCOPE_ID=$(echo "$SCOPES_JSON" | jq -r --arg s "$SCOPE_SLUG" '.[] | select(.slug == $s) | .id')
+        echo "Resolved scope: $SCOPE_SLUG → $SCOPE_ID"
+        export SCOPE_ID
+    else
+        export SCOPE_ID=""
+    fi
+else
+    echo "Service-level delete — will remove all HTTPRoutes for service $SERVICE_ID"
+    export SCOPE_ID=""
+fi
