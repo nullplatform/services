@@ -34,7 +34,10 @@
                 "scope": {
                     "type": "string",
                     "title": "Scope",
-                    "description": "Slug of the target scope to route traffic to. Example: develop, production, staging."
+                    "description": "Target scope of this application to route traffic to.",
+                    "additionalKeywords": {
+                        "enum": "[.scopes[]? | select(.status == \"active\")] | if length == 0 then [\"No scopes available\"] else [.[].slug] end"
+                    }
                 }
             }
         },
