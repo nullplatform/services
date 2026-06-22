@@ -29,6 +29,9 @@ steps:
         type: environment
       - name: SCOPE_SLUG
         type: environment
+  - name: "check path conflict"
+    type: script
+    file: "$SERVICE_PATH/scripts/istio/check_path_conflict"
   - name: "build httproute"
     type: script
     file: "$SERVICE_PATH/scripts/istio/build_httproute"
