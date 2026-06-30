@@ -17,6 +17,9 @@ echo "DEBUG: Scope JSON retrieved"
 IN_PROGRESS_DEPLOYMENT=$(echo "$SCOPE_JSON" | jq -r '.in_progress_deployment // "null"')
 echo "DEBUG: IN_PROGRESS_DEPLOYMENT=$IN_PROGRESS_DEPLOYMENT"
 
+SCOPE_VISIBILITY=$(echo "$SCOPE_JSON" | jq -r '.visibility // "public"')
+echo "DEBUG: SCOPE_VISIBILITY=$SCOPE_VISIBILITY"
+
 DEPLOYMENT_STATUS=""
 SWITCHED_TRAFFIC=0
 
@@ -180,3 +183,4 @@ else
 fi
 
 export SCOPE_RULE
+export SCOPE_VISIBILITY

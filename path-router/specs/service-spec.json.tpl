@@ -21,20 +21,9 @@
                         "scope": "#/properties/base_domain"
                     },
                     {
-                        "type": "HorizontalLayout",
-                        "elements": [
-                            {
-                                "type": "Control",
-                                "label": "Gateway",
-                                "scope": "#/properties/gateway",
-                                "options": { "format": "radio" }
-                            },
-                            {
-                                "type": "Control",
-                                "label": "Strip path prefix before forwarding",
-                                "scope": "#/properties/strip_prefix"
-                            }
-                        ]
+                        "type": "Control",
+                        "label": "Strip path prefix before forwarding",
+                        "scope": "#/properties/strip_prefix"
                     },
                     {
                         "type": "HorizontalLayout",
@@ -59,15 +48,6 @@
                     "title": "Base Domain",
                     "description": "Shared domain for path-based routing.",
                     "enum": ["path-router.api-private.playground.nullapps.io"]
-                },
-                "gateway": {
-                    "type": "string",
-                    "title": "Gateway",
-                    "oneOf": [
-                        {"const": "public", "title": "Public (internet-facing)"},
-                        {"const": "private", "title": "Private (internal)"}
-                    ],
-                    "default": "public"
                 },
                 "strip_prefix": {
                     "type": "boolean",

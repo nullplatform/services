@@ -8,16 +8,7 @@ echo "=== Building path-router HTTPRoute ==="
 echo "BASE_DOMAIN:  $BASE_DOMAIN"
 echo "PATH_PREFIX:  $PATH_PREFIX"
 echo "SCOPE_SLUG:   $SCOPE_SLUG"
-echo "GATEWAY:      $GATEWAY"
 echo "STRIP_PREFIX: $STRIP_PREFIX"
-
-if [[ "$GATEWAY" == "private" ]]; then
-    GATEWAY_NAME="$PRIVATE_GATEWAY_NAME"
-else
-    GATEWAY_NAME="$PUBLIC_GATEWAY_NAME"
-fi
-
-echo "Gateway: $GATEWAY_NAME (namespace: $GATEWAY_NAMESPACE)"
 
 echo "Resolving scope '$SCOPE_SLUG' for application $APPLICATION_ID..."
 SCOPES_JSON=$(np scope list --application_id "$APPLICATION_ID" --limit 200 --format json | jq '.results // []')
@@ -32,6 +23,14 @@ echo "Resolved: $SCOPE_SLUG → $SCOPE_ID"
 
 export SCOPE_ID
 source "$SERVICE_PATH/scripts/istio/build_rule"
+
+if [[ "$SCOPE_VISIBILITY" == "private" ]]; then
+    GATEWAY_NAME="$PRIVATE_GATEWAY_NAME"
+else
+    GATEWAY_NAME="$PUBLIC_GATEWAY_NAME"
+fi
+
+echo "Gateway: $GATEWAY_NAME (namespace: $GATEWAY_NAMESPACE) — inferred from scope visibility: $SCOPE_VISIBILITY"
 
 SERVICE_NAME=$(echo "$SCOPE_RULE" | jq -r '.service.name')
 SERVICE_PORT=$(echo "$SCOPE_RULE" | jq -r '.service.port.number')

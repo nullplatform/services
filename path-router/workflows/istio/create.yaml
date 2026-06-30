@@ -21,8 +21,6 @@ steps:
         type: environment
       - name: BASE_DOMAIN
         type: environment
-      - name: GATEWAY
-        type: environment
       - name: STRIP_PREFIX
         type: environment
       - name: PATH_PREFIX
