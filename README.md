@@ -6,11 +6,23 @@ This repository contains a collection of service definitions for the null platfo
 
 ## Table of Contents
 
-- Service Catalog
-  - Databases
-    - [PostgreSQL Database](./databases/postgres/k8s/README.md)
+- [Service Catalog](#service-catalog)
 - [Usage](#usage)
 - [Contributing](#contributing)
+
+## Service Catalog
+
+### Services in this repository
+
+- Databases
+  - [Azure Cosmos DB](./databases/azure-cosmos-db)
+  - [RDS PostgreSQL Database](./databases/rds-postgres-db/README.md)
+  - [RDS PostgreSQL Server](./databases/rds-postgres-server/README.md)
+
+### Services in other repositories
+
+- PostgreSQL (Kubernetes) → [nullplatform/services-postgresql-k-8-s](https://github.com/nullplatform/services-postgresql-k-8-s)
+- Endpoint Exposer → [nullplatform/services-endpoint-exposer](https://github.com/nullplatform/services-endpoint-exposer)
 
 ## Usage
 
