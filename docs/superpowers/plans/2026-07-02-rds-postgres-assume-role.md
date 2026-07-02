@@ -504,7 +504,7 @@ terraform {
 
 - [ ] **Step 5: Create `main.tf`**
 
-The permissions role and trust policy, plus the one Secrets Manager policy this service's README already documents as required (`secretsmanager:GetSecretValue`), scoped to the `nullplatform/rds/*` secret-name prefix that `rds-postgres-server`'s `db_setup/main.tf` actually uses (`name = "nullplatform/rds/${var.instance_name}/master"`) rather than `*`:
+The permissions role and trust policy, plus the one Secrets Manager policy this service's README already documents as required (`secretsmanager:GetSecretValue`), scoped to the `nullplatform/rds/*` secret-name prefix that `rds-postgres-server`'s `deployment/main.tf` actually uses (`name = "nullplatform/rds/${var.instance_name}/master"`) rather than `*`:
 
 ```hcl
 ################################################################################

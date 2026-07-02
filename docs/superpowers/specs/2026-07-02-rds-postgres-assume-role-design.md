@@ -214,7 +214,7 @@ each `local.iam_create ? aws_iam_role.nullplatform_rds_postgres_server[0].<attr>
   }
   ```
   The resource is scoped to the `nullplatform/rds/*` secret-name prefix that
-  `rds-postgres-server`'s `db_setup/main.tf` actually uses
+  `rds-postgres-server`'s `deployment/main.tf` actually uses
   (`name = "nullplatform/rds/${var.instance_name}/master"`) and to this
   account, instead of `*`. Region is left wildcarded since RDS instances
   aren't pinned to one region across the fleet; the trailing `*` after the
