@@ -194,7 +194,7 @@ each `local.iam_create ? aws_iam_role.nullplatform_rds_postgres_server[0].<attr>
   ```hcl
   resource "aws_iam_policy" "nullplatform_rds_postgres_db_secretsmanager_policy" {
     count       = local.iam_create ? 1 : 0
-    name        = "nullplatform-${var.cluster_name}-rds-secretsmanager-policy"
+    name        = "nullplatform-${var.cluster_name}-rds-postgres-db-secretsmanager-policy"
     description = "Policy for reading the RDS master password from Secrets Manager"
 
     policy = jsonencode({
@@ -224,6 +224,17 @@ each `local.iam_create ? aws_iam_role.nullplatform_rds_postgres_server[0].<attr>
   (still `Resource = "*"`, untouched since it's out of scope), but there's no
   reason to carry that permissiveness into a brand-new policy when we know
   the exact naming convention.
+
+  The policy name uses the full `rds-postgres-db` service name rather than
+  the bare `rds-*` pattern `rds-postgres-server`'s policies use — both
+  services can be deployed against the same `cluster_name`, and
+  `rds-postgres-server` already owns
+  `nullplatform-<cluster_name>-rds-secretsmanager-policy` for its own
+  (different, full-CRUD) Secrets Manager policy. Reusing that name for
+  `rds-postgres-db`'s policy collides in IAM (policy names are account-wide
+  unique) — confirmed by an actual `tofu apply` against a real AWS account
+  with both modules deployed together, which is exactly the kind of
+  cross-module collision `tofu validate` run per-module can't catch.
 - `output.tf`: add a `secretsmanager_policy_arn` output alongside the 3
   `permissions_role_*` outputs, mirroring `rds-postgres-server`'s existing
   `rds_secretsmanager_policy_arn` output.
