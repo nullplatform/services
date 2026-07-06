@@ -1,43 +1,18 @@
 # Services
 
-This repository contains a collection of service definitions for the null platform. It provides pre-configured services that can be deployed and managed within Kubernetes environments.
+Catálogo de **service specifications** disponibles en nullplatform. Cada servicio
+vive en su propio repositorio; este repositorio funciona como índice.
 
-⚠️ **Development Status**: This repository is currently under development. It's not recommended to use any service in production environments.
+⚠️ **Development Status**: en desarrollo. No se recomienda usar los servicios en
+entornos productivos todavía.
 
-## Table of Contents
+## Available services
 
-- [Service Catalog](#service-catalog)
-- [Usage](#usage)
-- [Contributing](#contributing)
-
-## Service Catalog
-
-### Services in this repository
-
-- Databases
-  - [RDS PostgreSQL Database](./databases/rds-postgres-db/README.md)
-  - [RDS PostgreSQL Server](./databases/rds-postgres-server/README.md)
-
-### Services in other repositories
-
-- PostgreSQL (Kubernetes) → [nullplatform/services-postgresql-k-8-s](https://github.com/nullplatform/services-postgresql-k-8-s)
-- Endpoint Exposer → [nullplatform/services-endpoint-exposer](https://github.com/nullplatform/services-endpoint-exposer)
-
-## Usage
-
-Each service is defined by its specification files and includes:
-
-1. **Service Specification** (`service-spec.json`): Defines the service metadata, attributes, and capabilities
-2. **Action Definitions**: JSON files describing custom actions the service can perform
-3. **Link Definitions**: JSON files describing how the service can be linked to other resources
-4. **Implementation Scripts**: Shell scripts that handle the actual service operations
-
-## Contributing
-
-When adding new services:
-
-1. Follow the existing directory structure pattern
-2. Include proper service specifications with required attributes
-3. Document all available actions and links
-4. Ensure proper security configurations for production readiness
-
+| Service | Repository | Description |
+|---|---|---|
+| AWS S3 Bucket | [nullplatform/services-s-3](https://github.com/nullplatform/services-s-3) | Buckets S3 en AWS, con acceso por link |
+| Azure Cosmos DB | [nullplatform/services-azure-cosmos-db](https://github.com/nullplatform/services-azure-cosmos-db) | Bases de datos Azure Cosmos DB, con acceso por link |
+| PostgreSQL (Kubernetes) | [nullplatform/services-postgresql-k-8-s](https://github.com/nullplatform/services-postgresql-k-8-s) | PostgreSQL desplegado en Kubernetes |
+| Endpoint Exposer | [nullplatform/services-endpoint-exposer](https://github.com/nullplatform/services-endpoint-exposer) | Exposición de endpoints |
+| RDS PostgreSQL Server | _(pendiente de desacople a su repo)_ | Servidor RDS PostgreSQL en AWS |
+| RDS PostgreSQL Database | _(pendiente de desacople a su repo)_ | Base RDS PostgreSQL sobre un server existente |
