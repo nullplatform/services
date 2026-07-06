@@ -15,7 +15,6 @@ This repository contains a collection of service definitions for the null platfo
 ### Services in this repository
 
 - Databases
-  - [Azure Cosmos DB](./databases/azure-cosmos-db)
   - [RDS PostgreSQL Database](./databases/rds-postgres-db/README.md)
   - [RDS PostgreSQL Server](./databases/rds-postgres-server/README.md)
 
