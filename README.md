@@ -3,9 +3,6 @@
 Catálogo de **service specifications** disponibles en nullplatform. Cada servicio
 vive en su propio repositorio; este repositorio funciona como índice.
 
-⚠️ **Development Status**: en desarrollo. No se recomienda usar los servicios en
-entornos productivos todavía.
-
 ## Available services
 
 | Service | Repository | Description |
@@ -14,5 +11,5 @@ entornos productivos todavía.
 | Azure Cosmos DB | [nullplatform/services-azure-cosmos-db](https://github.com/nullplatform/services-azure-cosmos-db) | Bases de datos Azure Cosmos DB, con acceso por link |
 | PostgreSQL (Kubernetes) | [nullplatform/services-postgresql-k-8-s](https://github.com/nullplatform/services-postgresql-k-8-s) | PostgreSQL desplegado en Kubernetes |
 | Endpoint Exposer | [nullplatform/services-endpoint-exposer](https://github.com/nullplatform/services-endpoint-exposer) | Exposición de endpoints |
-| RDS PostgreSQL Server | _(pendiente de desacople a su repo)_ | Servidor RDS PostgreSQL en AWS |
-| RDS PostgreSQL Database | _(pendiente de desacople a su repo)_ | Base RDS PostgreSQL sobre un server existente |
+| RDS PostgreSQL Server | [nullplatform/services-rds](https://github.com/nullplatform/services-rds) | Servidor RDS PostgreSQL en AWS |
+| RDS PostgreSQL Database | [nullplatform/services-rds](https://github.com/nullplatform/services-rds) | Base RDS PostgreSQL sobre un server existente |
