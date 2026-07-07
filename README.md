@@ -3,9 +3,6 @@
 Catálogo de **service specifications** disponibles en nullplatform. Cada servicio
 vive en su propio repositorio; este repositorio funciona como índice.
 
-⚠️ **Development Status**: en desarrollo. No se recomienda usar los servicios en
-entornos productivos todavía.
-
 ## Available services
 
 | Service | Repository | Description |
