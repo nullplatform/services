@@ -16,3 +16,6 @@ gen
 .terraform/
 *.tfvars
 .DS_Store
+
+# Local scratch docs (specs/plans from AI-assisted workflows) — not part of the repo
+docs/superpowers/

@@ -94,14 +94,49 @@ Exposed in the nullplatform UI when creating or updating the service:
 
 ### nullplatform Prerequisites
 
-- An active nullplatform account with at least one **provider** exposing:
-  - `account.region` — the AWS region where the RDS instance will be created
-  - `vpc.id` — the VPC where the RDS instance will be placed
-- The VPC must have private subnets tagged with `nullplatform/subnet-type=private`
+- The service itself must be registered on the nullplatform account first — see
+  [`specs/install/README.md`](specs/install/README.md) for the Terraform that
+  registers the service specification and agent association.
+- An active nullplatform account with the following providers configured for the target namespace/dimensions:
+  - **`aws-configuration`** (from `tofu-modules//nullplatform/cloud/aws/cloud`) — exposes `account.region`. `build_context` resolves this via `np provider list --nrn <account-level NRN>` filtered by `stored_keys` containing `account.region`.
+  - **`aws-networking-configuration`** (from `tofu-modules//nullplatform/cloud/aws/vpc`) — exposes `vpc.id`, `vpc.subnets`, `vpc.security_groups`. Same lookup mechanism, filtered by `vpc.id`.
+- The VPC must have private subnets tagged with `nullplatform/subnet-type=private`.
+- For AssumeRole to work (not just fail open to agent credentials — see below): an **`aws-iam-configuration`** provider (from `tofu-modules//nullplatform/identity-access-control`) registered at the **namespace-level NRN**.
+
+Example registering the `aws-configuration` and `aws-networking-configuration`
+providers (typically applied once per cluster/account, at the account-level
+NRN — no `:namespace=...`):
+
+```hcl
+module "aws_cloud_provider" {
+  source = "git::https://github.com/nullplatform/tofu-modules.git//nullplatform/cloud/aws/cloud?ref=<tag>"
+
+  nrn                     = "organization=<org>:account=<account>"
+  domain_name             = "<your-domain>"
+  hosted_private_zone_id  = "<private-hosted-zone-id>"
+}
+
+module "vpc_provider" {
+  source = "git::https://github.com/nullplatform/tofu-modules.git//nullplatform/cloud/aws/vpc?ref=<tag>"
+
+  nrn                 = "organization=<org>:account=<account>"
+  vpc_id              = "<vpc-id>"
+  vpc_subnets         = ["<private-subnet-id-1>", "<private-subnet-id-2>", "..."]
+  vpc_security_groups = ["<node/cluster-security-group-id>", "..."]
+}
+```
+
+`vpc_subnets`/`vpc_security_groups` don't need to be scoped down to only
+what this service uses — pass whatever the cluster's VPC provider already
+uses for other scopes/services (e.g. all node/pod subnets and the cluster
+security group). This service only reads `vpc.id` from this provider; the
+actual subnets it deploys into come separately from
+`data.aws_subnets.private` (filtered by the `nullplatform/subnet-type=private`
+tag, not from this provider's `vpc_subnets` list).
 
 ### AWS IAM Permissions
 
-The agent executing this service needs the following IAM permissions (see `requirements/main.tf`):
+The agent executing this service needs the following IAM permissions (see `specs/requirements/aws/main.tf`):
 
 - **RDS**: `CreateDBInstance`, `DeleteDBInstance`, `ModifyDBInstance`, `DescribeDBInstances`, subnet group management, tagging
 - **EC2**: Security group management, `DescribeVpcs`, `DescribeSubnets`
@@ -109,7 +144,106 @@ The agent executing this service needs the following IAM permissions (see `requi
 - **S3**: Full lifecycle on the `np-service-<SERVICE_ID>` bucket
 - **IAM**: `CreateServiceLinkedRole` (for RDS)
 
-The `requirements/` Terraform module can be used to create and attach the necessary IAM policies to an existing role.
+The `requirements/` Terraform module creates a dedicated IAM role
+(`nullplatform-<cluster_name>-rds-postgres-server-role`) holding these
+policies, with a trust policy allowing the nullplatform agent role to
+`sts:AssumeRole` on it. Pass `cluster_name` (required) and optionally
+`agent_role_arn` (defaults to `nullplatform-<cluster_name>-agent-role`),
+`role_name` (defaults to `nullplatform-<cluster_name>-rds-postgres-server-role`)
+and `policies_name_prefix` (defaults to `nullplatform-<cluster_name>`) when
+applying it. Granting the agent itself permission to assume this role is
+handled separately, outside this module.
+
+### AssumeRole Setup Guide
+
+Three separate pieces must all be in place for the agent to actually assume
+`nullplatform-<cluster_name>-rds-postgres-server-role` at runtime — applying
+`requirements/` alone is not enough:
+
+1. **Apply `requirements/`** with `cluster_name` (and optionally
+   `agent_role_arn`) — creates the role and its trust policy (see above):
+   ```hcl
+   module "service_requirements_rds_postgres_server" {
+     source = "git::https://github.com/nullplatform/services.git//databases/rds-postgres-server/specs/requirements/aws?ref=<tag>"
+
+     cluster_name = "<cluster-name>"
+     # agent_role_arn = ""  # optional override; defaults to
+     #   arn:aws:iam::<account-id>:role/nullplatform-<cluster-name>-agent-role
+   }
+   ```
+   Read `module.service_requirements_rds_postgres_server.permissions_role_arn`
+   for the ARN needed in steps 2 and 3 below.
+2. **Grant the agent permission to assume it.** Not managed by
+   `requirements/` — add an inline (or managed) policy to the **agent's own**
+   IAM role:
+   ```json
+   {
+     "Effect": "Allow",
+     "Action": "sts:AssumeRole",
+     "Resource": "arn:aws:iam::<account-id>:role/nullplatform-<cluster_name>-rds-postgres-server-role"
+   }
+   ```
+3. **Register the role as an `identity-access-control` provider** in
+   nullplatform, at the **namespace-level NRN**
+   (`organization=...:account=...:namespace=...` — without `:application=...`),
+   with selector `rds-postgres-server`:
+   ```hcl
+   module "identity_access_control" {
+     source = "git::https://github.com/nullplatform/tofu-modules.git//nullplatform/identity-access-control?ref=<tag>"
+     nrn    = "organization=<org>:account=<account>:namespace=<namespace>"
+     attributes = {
+       iam_role_arns = {
+         arns = [{ selector = "rds-postgres-server", arn = "<role ARN from step 1>" }]
+       }
+     }
+   }
+   ```
+
+`scripts/aws/assume_role_step` resolves the role by querying
+`np provider list` / `np provider read` for this provider at the service's
+**namespace NRN** — not by reading `CONTEXT.providers[...]`. This was
+confirmed live: this platform's agent never populates `CONTEXT.providers`
+regardless of the `provider_categories` declared in `values.yaml` or the
+workflow YAMLs, so the lookup goes through the `np` CLI directly instead
+(the same mechanism `build_context` already uses for the region/VPC
+providers above).
+
+The lookup also passes `--dimensions` (derived from `.service.dimensions` in
+`CONTEXT`, e.g. `cluster:prod`) so that if more than one
+`identity-access-control` provider is ever registered at the same namespace
+NRN for different dimensions, `np` resolves the most-specific match instead
+of an arbitrary one being picked client-side. Today the setup above
+registers a single, dimension-less provider per namespace, so this is a
+no-op — it only matters if per-dimension AssumeRole roles are introduced
+later.
+
+**If any of the 3 steps is missing**, `assume_role_step` logs
+`assume_role=skipped (using agent credentials)` and the workflow proceeds
+under the **agent's own role** — which fails with `AccessDenied` on
+RDS/EC2/Secrets Manager/S3 calls unless the agent happens to have those
+permissions directly attached (the old, pre-AssumeRole model). This
+fail-open behavior is intentional (mirrors `nullplatform/scopes-static-files`),
+but it means a misconfigured AssumeRole setup fails *silently* as what looks
+like a permissions problem rather than a missing-provider problem — check
+the `assume role` step's log line first when debugging `AccessDenied`
+errors from later steps.
+
+### Networking Requirements
+
+`deployment/main.tf`'s RDS security group allows ingress on 5432 from
+**every CIDR block associated with the VPC**
+(`data.aws_vpc.main.cidr_block_associations`), not just the primary one.
+This matters because EKS clusters commonly add a **secondary CIDR block**
+for pod networking (e.g. primary `10.x.x.x` for nodes, secondary
+`100.x.x.x` for pods via the AWS VPC CNI's custom networking/prefix
+delegation) — agent pods get IPs from the secondary range, not the
+primary one. If the VPC has more than one CIDR association, all of them
+are allowed automatically; no extra configuration is needed here. Symptom
+if this were ever restricted to a single CIDR: any step that touches the
+`postgresql` Terraform provider (this service's `db_setup`, or
+`rds-postgres-db`'s workflows) **hangs indefinitely** — the TCP connection
+attempt to the RDS endpoint never completes or times out quickly, it just
+stalls — rather than failing fast with a clear error.
 
 ### Runtime Dependencies
 
