@@ -1,0 +1,101 @@
+#!/bin/bash
+
+set -euo pipefail
+
+SERVICE_ID=$(echo "$CONTEXT" | jq -r .service.id)
+SERVICE_SLUG=$(echo "$CONTEXT" | jq -r .service.slug)
+
+ACTION_ID=$(echo "$CONTEXT" | jq -r .id)
+ACTION_NAME=$(echo "$CONTEXT" | jq -r .slug)
+
+# Link context (when action comes from a link)
+LINK_ID=$(echo "$CONTEXT" | jq -r '.link.id // ""')
+LINK_NAME=$(echo "$CONTEXT" | jq -r '.link.slug // ""')
+SCOPE_ID=$(echo "$CONTEXT" | jq -r '.tags.scope_id // ""')
+SCOPE_NRN=$(echo "$CONTEXT" | jq -r '.tags.nrn // ""')
+
+# Link parameters
+LINK_ACCESS_LEVEL=$(echo "$CONTEXT" | jq -r '.parameters.access_level // .link.attributes.access_level // "receiver"')
+
+# Read static configuration from values.yaml
+VALUES_FILE="$SERVICE_PATH/values.yaml"
+
+if [ -f "$VALUES_FILE" ]; then
+  NAMESPACE_RESOURCE_GROUP=$(yq -r '.resource_group_name // ""' "$VALUES_FILE")
+  NAMESPACE_NAME=$(yq -r '.servicebus_namespace_name // ""' "$VALUES_FILE")
+  APP_RESOURCE_GROUP=$(yq -r '.app_resource_group // ""' "$VALUES_FILE")
+else
+  echo "WARNING: values.yaml not found at $VALUES_FILE"
+  NAMESPACE_RESOURCE_GROUP=""
+  NAMESPACE_NAME=""
+  APP_RESOURCE_GROUP=""
+fi
+
+# Azure subscription ID from environment
+SUBSCRIPTION_ID="$AZURE_SUBSCRIPTION_ID"
+
+# Parse queues array from service parameters
+QUEUES=$(echo "$CONTEXT" | jq -c '[.parameters.queues // [] | .[] | {name: .name}]')
+
+# Parse topics array from service parameters (including subscriptions)
+TOPICS=$(echo "$CONTEXT" | jq -c '[.parameters.topics // [] | .[] | {
+  name: .name,
+  subscriptions: [.subscriptions // [] | .[] | {name: .name}]
+}]')
+
+OUTPUT_DIR="$SERVICE_PATH/output/$SERVICE_SLUG-$SERVICE_ID/$ACTION_NAME-$ACTION_ID"
+mkdir -p "$OUTPUT_DIR"
+
+TOFU_MODULE_DIR="$SERVICE_PATH/deployment"
+
+# Backend config for tfstate
+if [ -n "${AZURE_TFSTATE_STORAGE_ACCOUNT:-}" ] && [ -n "${AZURE_TFSTATE_CONTAINER:-}" ]; then
+  echo "Using Azure backend for tfstate"
+
+  TFSTATE_RESOURCE_GROUP="${AZURE_TFSTATE_RESOURCE_GROUP:-$NAMESPACE_RESOURCE_GROUP}"
+  TFSTATE_KEY="service-bus/${SERVICE_ID}/infrastructure.tfstate"
+
+  cat > "$TOFU_MODULE_DIR/backend.tf" <<EOF
+terraform {
+  backend "azurerm" {}
+}
+EOF
+
+  TOFU_INIT_VARIABLES="-backend-config=resource_group_name=${TFSTATE_RESOURCE_GROUP} -backend-config=storage_account_name=${AZURE_TFSTATE_STORAGE_ACCOUNT} -backend-config=container_name=${AZURE_TFSTATE_CONTAINER} -backend-config=key=${TFSTATE_KEY}"
+else
+  echo "Using local backend for tfstate"
+  rm -f "$TOFU_MODULE_DIR/backend.tf"
+  TOFU_INIT_VARIABLES=""
+fi
+
+TOFU_VARIABLES=$(jq -n \
+  --arg subscription_id "$SUBSCRIPTION_ID" \
+  --arg resource_group_name "$NAMESPACE_RESOURCE_GROUP" \
+  --arg servicebus_namespace_name "$NAMESPACE_NAME" \
+  --argjson queues "$QUEUES" \
+  --argjson topics "$TOPICS" \
+  '{
+    subscription_id: $subscription_id,
+    resource_group_name: $resource_group_name,
+    servicebus_namespace_name: $servicebus_namespace_name,
+    queues: $queues,
+    topics: $topics
+  }')
+
+export SERVICE_ID
+export SERVICE_SLUG
+export ACTION_ID
+export ACTION_NAME
+export LINK_ID
+export LINK_NAME
+export SCOPE_ID
+export SCOPE_NRN
+export LINK_ACCESS_LEVEL
+export SUBSCRIPTION_ID
+export NAMESPACE_RESOURCE_GROUP
+export NAMESPACE_NAME
+export APP_RESOURCE_GROUP
+export OUTPUT_DIR
+export TOFU_MODULE_DIR
+export TOFU_INIT_VARIABLES
+export TOFU_VARIABLES

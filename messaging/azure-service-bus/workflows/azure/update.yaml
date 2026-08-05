@@ -1,0 +1,19 @@
+steps:
+  - name: build context
+    type: script
+    file: $SERVICE_PATH/scripts/azure/build_context
+    output:
+      - name: OUTPUT_DIR
+        type: environment
+      - name: TOFU_MODULE_DIR
+        type: environment
+      - name: TOFU_INIT_VARIABLES
+        type: environment
+      - name: TOFU_VARIABLES
+        type: environment
+
+  - name: tofu
+    type: script
+    file: $SERVICE_PATH/scripts/azure/do_tofu
+    configuration:
+      TOFU_ACTION: apply
