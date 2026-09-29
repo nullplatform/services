@@ -15,3 +15,6 @@ vive en su propio repositorio; este repositorio funciona como índice.
 | RDS PostgreSQL Database | [nullplatform/services-rds](https://github.com/nullplatform/services-rds) | Base RDS PostgreSQL sobre un server existente |
 | AWS DynamoDB | [nullplatform/services-dynamo-db](https://github.com/nullplatform/services-dynamo-db) | Tablas DynamoDB en AWS, con acceso por link y trigger del stream a una Lambda |
 | AWS Valkey | [nullplatform/services-valkey](https://github.com/nullplatform/services-valkey) | Instancias Valkey en AWS ElastiCache |
+| Azure Blob Storage | [nullplatform/services-blob-storage](https://github.com/nullplatform/services-blob-storage) |  Storage account en Azure. Creacion de containers por link |
+| AWS DocumentDB Cluster | [nullplatform/services-document-db](https://github.com/nullplatform/services-document-db) | Cluster DocumentDB en AWS |
+| AWS DocumentDB Database | [nullplatform/services-document-db](https://github.com/nullplatform/services-document-db) | Base de datos sobre un cluster existente |
