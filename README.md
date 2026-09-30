@@ -16,5 +16,6 @@ vive en su propio repositorio; este repositorio funciona como índice.
 | AWS DynamoDB | [nullplatform/services-dynamo-db](https://github.com/nullplatform/services-dynamo-db) | Tablas DynamoDB en AWS, con acceso por link y trigger del stream a una Lambda |
 | AWS Valkey | [nullplatform/services-valkey](https://github.com/nullplatform/services-valkey) | Instancias Valkey en AWS ElastiCache |
 | Azure Blob Storage | [nullplatform/services-blob-storage](https://github.com/nullplatform/services-blob-storage) |  Storage account en Azure. Creacion de containers por link |
+| Azure PostgreSQL Flexible Server | [nullplatform/services-postgresql-flexible-server](https://github.com/nullplatform/services-postgresql-flexible-server) | Azure Database for PostgreSQL (Flexible Server) con su base, un rol por link y exports `DATABASE_URL` / `DATABASE_USER` / `DATABASE_PASSWORD` |
 | AWS DocumentDB Cluster | [nullplatform/services-document-db](https://github.com/nullplatform/services-document-db) | Cluster DocumentDB en AWS |
 | AWS DocumentDB Database | [nullplatform/services-document-db](https://github.com/nullplatform/services-document-db) | Base de datos sobre un cluster existente |
