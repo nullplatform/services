@@ -15,6 +15,8 @@ vive en su propio repositorio; este repositorio funciona como índice.
 | RDS PostgreSQL Database | [nullplatform/services-rds](https://github.com/nullplatform/services-rds) | Base RDS PostgreSQL sobre un server existente |
 | AWS DynamoDB | [nullplatform/services-dynamo-db](https://github.com/nullplatform/services-dynamo-db) | Tablas DynamoDB en AWS, con acceso por link y trigger del stream a una Lambda |
 | AWS Valkey | [nullplatform/services-valkey](https://github.com/nullplatform/services-valkey) | Instancias Valkey en AWS ElastiCache |
+| AWS SQS | [nullplatform/services-aws-sqs](https://github.com/nullplatform/services-aws-sqs) | Colas SQS Standard o FIFO en AWS, siempre cifradas, con dead-letter queue opcional y un usuario IAM por link |
+| AWS SNS | [nullplatform/services-aws-sns](https://github.com/nullplatform/services-aws-sns) | Topics SNS Standard o FIFO en AWS, con un usuario IAM por link para publicar y suscribirse |
 | Azure Blob Storage | [nullplatform/services-blob-storage](https://github.com/nullplatform/services-blob-storage) |  Storage account en Azure. Creacion de containers por link |
 | Azure PostgreSQL Flexible Server | [nullplatform/services-postgresql-flexible-server](https://github.com/nullplatform/services-postgresql-flexible-server) | Azure Database for PostgreSQL (Flexible Server) con su base, un rol por link y exports `DATABASE_URL` / `DATABASE_USER` / `DATABASE_PASSWORD` |
 | AWS DocumentDB Cluster | [nullplatform/services-document-db](https://github.com/nullplatform/services-document-db) | Cluster DocumentDB en AWS |
