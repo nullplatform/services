@@ -1,23 +1,31 @@
 # Services
 
-Catálogo de **service specifications** disponibles en nullplatform. Cada servicio
-vive en su propio repositorio; este repositorio funciona como índice.
+This repository used to hold nullplatform's services and later served as their index. Each service now lives in its
+own repository, and the list of what's available is in the documentation:
 
-## Available services
+- **[Sample services](https://docs.nullplatform.com/docs/services/sample-services)** — every sample service, with its
+  repository, the directory that holds its specs, and how to adopt it. It is kept in sync with the repositories
+  automatically.
+- **[Agent-backed scopes](https://docs.nullplatform.com/docs/public-repos-reference#agent-backed-scopes)** — the base
+  scopes.
 
-| Service | Repository | Description |
-|---|---|---|
-| AWS S3 Bucket | [nullplatform/services-s-3](https://github.com/nullplatform/services-s-3) | Buckets S3 en AWS, con acceso por link |
-| Azure Cosmos DB | [nullplatform/services-azure-cosmos-db](https://github.com/nullplatform/services-azure-cosmos-db) | Bases de datos Azure Cosmos DB, con acceso por link |
-| PostgreSQL (Kubernetes) | [nullplatform/services-postgresql-k-8-s](https://github.com/nullplatform/services-postgresql-k-8-s) | PostgreSQL desplegado en Kubernetes |
-| Endpoint Exposer | [nullplatform/services-endpoint-exposer](https://github.com/nullplatform/services-endpoint-exposer) | Exposición de endpoints |
-| RDS PostgreSQL Server | [nullplatform/services-rds](https://github.com/nullplatform/services-rds) | Servidor RDS PostgreSQL en AWS |
-| RDS PostgreSQL Database | [nullplatform/services-rds](https://github.com/nullplatform/services-rds) | Base RDS PostgreSQL sobre un server existente |
-| AWS DynamoDB | [nullplatform/services-dynamo-db](https://github.com/nullplatform/services-dynamo-db) | Tablas DynamoDB en AWS, con acceso por link y trigger del stream a una Lambda |
-| AWS Valkey | [nullplatform/services-valkey](https://github.com/nullplatform/services-valkey) | Instancias Valkey en AWS ElastiCache |
-| AWS SQS | [nullplatform/services-aws-sqs](https://github.com/nullplatform/services-aws-sqs) | Colas SQS Standard o FIFO en AWS, siempre cifradas, con dead-letter queue opcional y un usuario IAM por link |
-| AWS SNS | [nullplatform/services-aws-sns](https://github.com/nullplatform/services-aws-sns) | Topics SNS Standard o FIFO en AWS, con un usuario IAM por link para publicar y suscribirse |
-| Azure Blob Storage | [nullplatform/services-blob-storage](https://github.com/nullplatform/services-blob-storage) |  Storage account en Azure. Creacion de containers por link |
-| Azure PostgreSQL Flexible Server | [nullplatform/services-postgresql-flexible-server](https://github.com/nullplatform/services-postgresql-flexible-server) | Azure Database for PostgreSQL (Flexible Server) con su base, un rol por link y exports `DATABASE_URL` / `DATABASE_USER` / `DATABASE_PASSWORD` |
-| AWS DocumentDB Cluster | [nullplatform/services-document-db](https://github.com/nullplatform/services-document-db) | Cluster DocumentDB en AWS |
-| AWS DocumentDB Database | [nullplatform/services-document-db](https://github.com/nullplatform/services-document-db) | Base de datos sobre un cluster existente |
+There is no code on `main`, and nothing new is added here.
+
+## Coming from an older setup
+
+Setups that read services from this repository keep working while they are pinned to a branch or commit that still
+has the code, such as the `1.0.0` branch. Nothing is deleted from its history. `main` has no code, so anything that
+points at `main` here — a `?ref=main` module source, or an agent cloning this repository at `main` — finds no service.
+
+Where each service moved:
+
+| Was in this repository | Now |
+| --- | --- |
+| `databases/rds-postgres-server` | [services-postgresql-rds](https://github.com/nullplatform/services-postgresql-rds), `rds-postgres-server/` |
+| `databases/rds-postgres-db` | [services-postgresql-rds](https://github.com/nullplatform/services-postgresql-rds), `rds-postgres-db/` |
+| `databases/postgres/k8s` (Postgres DB) | [services-postgresql-k-8-s](https://github.com/nullplatform/services-postgresql-k-8-s), `postgres-db/` |
+| `databases/azure-cosmos-db` | [services-azure-cosmos-db](https://github.com/nullplatform/services-azure-cosmos-db), `azure-cosmos-db/` |
+| `endpoint-exposer` | [services-endpoint-exposer](https://github.com/nullplatform/services-endpoint-exposer), repository root |
+
+To move a setup, point its module sources and agent repositories at the new repository, pinned to its latest release,
+and use the new directory as the service path. The service's README has the exact steps and values.
